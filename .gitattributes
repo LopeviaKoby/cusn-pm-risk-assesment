@@ -3,3 +3,4 @@
 *.ttf binary
 # Preserve upstream skill formatting, including Markdown hard breaks.
 .agents/skills/** whitespace=-blank-at-eol,-blank-at-eof
+.agents/licenses/** whitespace=-blank-at-eol,-blank-at-eof
