@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.png binary
+*.ttf binary
+# Preserve upstream skill formatting, including Markdown hard breaks.
+.agents/skills/** whitespace=-blank-at-eol,-blank-at-eof
