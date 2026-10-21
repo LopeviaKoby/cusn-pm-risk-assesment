@@ -1,0 +1,176 @@
+[
+  {
+    "id": "RSK-041",
+    "title": "Dependencia de proveedor internacional",
+    "description": "La integración de pagos depende de un proveedor externo cuya ventana de soporte no cubre el calendario completo de la Fase 2.",
+    "type": "Amenaza",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-001",
+    "ownerId": "USR-001",
+    "status": "Activo",
+    "strategy": "Mitigar",
+    "probability": 4,
+    "impact": 3,
+    "scopes": [
+      "Plazo",
+      "Costo"
+    ],
+    "identifiedAt": "2026-04-12",
+    "identifiedById": "USR-001",
+    "responsePlan": "Precalificar un proveedor alterno, reservar una ventana de contingencia y revisar la cláusula de continuidad con Compras.",
+    "contingencyPrepared": true,
+    "categoryId": "COM"
+  },
+  {
+    "id": "RSK-078",
+    "title": "Indisponibilidad del servicio de identidad federada",
+    "description": "Una interrupción del servicio de identidad federada impide el acceso de usuarios al módulo de conciliación durante la operación.",
+    "type": "Amenaza",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-001",
+    "ownerId": "USR-001",
+    "status": "Materializado",
+    "strategy": "Mitigar",
+    "probability": 4,
+    "impact": 4,
+    "scopes": [
+      "Alcance",
+      "Plazo"
+    ],
+    "identifiedAt": "2026-06-03",
+    "identifiedById": "USR-001",
+    "responsePlan": "Activar la ruta alterna de autenticación y mantener el monitoreo reforzado hasta estabilizar el servicio.",
+    "contingencyPrepared": true,
+    "categoryId": "TEC"
+  },
+  {
+    "id": "RSK-079",
+    "title": "Aceleración por reutilización de componentes",
+    "description": "La reutilización de componentes de la Fase 1 puede reducir el esfuerzo de configuración de la Fase 2 y liberar capacidad del equipo.",
+    "type": "Oportunidad",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-001",
+    "ownerId": "USR-009",
+    "status": "Activa",
+    "strategy": "Potenciar",
+    "probability": 3,
+    "impact": 4,
+    "scopes": [
+      "Costo",
+      "Calidad"
+    ],
+    "identifiedAt": "2026-08-21",
+    "identifiedById": "USR-001",
+    "responsePlan": "Reservar capacidad del equipo de datos y documentar los componentes reutilizables para la Fase 2.",
+    "contingencyPrepared": false,
+    "categoryId": "TEC"
+  },
+  {
+    "id": "RSK-033",
+    "title": "Ventana anticipada de puesta en producción",
+    "description": "La disponibilidad anticipada de la ventana de producción permite adelantar la validación operativa y reducir el riesgo de cierre.",
+    "type": "Oportunidad",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-002",
+    "ownerId": "USR-004",
+    "status": "Potenciada",
+    "strategy": "Potenciar",
+    "probability": 4,
+    "impact": 4,
+    "scopes": [
+      "Plazo"
+    ],
+    "identifiedAt": "2026-07-14",
+    "identifiedById": "USR-004",
+    "responsePlan": "Coordinar la ventana con Operaciones y preparar el plan de validación anticipada.",
+    "contingencyPrepared": false,
+    "categoryId": "CRO"
+  },
+  {
+    "id": "RSK-026",
+    "title": "Disponibilidad de especialistas críticos",
+    "description": "La asignación simultánea de especialistas críticos a otros cierres puede retrasar la habilitación del módulo clínico.",
+    "type": "Amenaza",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-003",
+    "ownerId": "USR-002",
+    "status": "Activo",
+    "strategy": "Mitigar",
+    "probability": 3,
+    "impact": 4,
+    "scopes": [
+      "Plazo",
+      "Calidad"
+    ],
+    "identifiedAt": "2026-07-28",
+    "identifiedById": "USR-002",
+    "responsePlan": "Escalar la demanda de capacidad al PMO y acordar una reserva de especialistas para la puesta en marcha.",
+    "contingencyPrepared": false,
+    "categoryId": "ORG"
+  },
+  {
+    "id": "RSK-052",
+    "title": "Retrasos en aprobación de alcance",
+    "description": "La aprobación tardía de cambios de alcance puede desplazar la aceptación formal del cierre de transición.",
+    "type": "Amenaza",
+    "scopeType": "Proyecto",
+    "projectId": "PRJ-004",
+    "ownerId": "USR-003",
+    "status": "Controlado",
+    "strategy": "Mitigar",
+    "probability": 2,
+    "impact": 3,
+    "scopes": [
+      "Alcance",
+      "Plazo"
+    ],
+    "identifiedAt": "2026-05-20",
+    "identifiedById": "USR-003",
+    "responsePlan": "Formalizar cada aprobación en acta y mantener una revisión semanal con el cliente.",
+    "contingencyPrepared": false,
+    "categoryId": "COM"
+  },
+  {
+    "id": "TRS-005",
+    "title": "Variación de plazos de proveedores",
+    "description": "Los cambios de plazo de proveedores compartidos afectan compromisos de costo y entrega en más de un proyecto del portafolio.",
+    "type": "Amenaza",
+    "scopeType": "Transversal",
+    "projectId": null,
+    "ownerId": "USR-004",
+    "status": "Activo",
+    "strategy": "Escalar",
+    "probability": 4,
+    "impact": 4,
+    "scopes": [
+      "Costo",
+      "Plazo"
+    ],
+    "identifiedAt": "2026-08-30",
+    "identifiedById": "USR-004",
+    "responsePlan": "Escalar la variación al comité de portafolio y consolidar las fechas comprometidas por proveedor.",
+    "contingencyPrepared": false,
+    "categoryId": "COM"
+  },
+  {
+    "id": "TRS-006",
+    "title": "Consolidación de capacidad técnica compartida",
+    "description": "La consolidación de una reserva técnica compartida puede mejorar la calidad de las entregas y reducir la dependencia de especialistas aislados.",
+    "type": "Oportunidad",
+    "scopeType": "Transversal",
+    "projectId": null,
+    "ownerId": "USR-005",
+    "status": "Activa",
+    "strategy": "Compartir",
+    "probability": 3,
+    "impact": 3,
+    "scopes": [
+      "Calidad"
+    ],
+    "identifiedAt": "2026-09-05",
+    "identifiedById": "USR-005",
+    "responsePlan": "Compartir la reserva técnica entre proyectos y documentar las prácticas de transferencia de conocimiento.",
+    "contingencyPrepared": false,
+    "categoryId": "ORG"
+  }
+]

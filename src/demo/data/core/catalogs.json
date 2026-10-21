@@ -1,0 +1,83 @@
+{
+  "lobs": [
+    {
+      "id": "LOB-DIG",
+      "label": "Soluciones digitales"
+    },
+    {
+      "id": "LOB-CLD",
+      "label": "Cloud e infraestructura"
+    },
+    {
+      "id": "LOB-OPS",
+      "label": "Servicios operativos"
+    }
+  ],
+  "services": [
+    {
+      "id": "SVC-INT",
+      "lobId": "LOB-DIG",
+      "label": "Integración de aplicaciones"
+    },
+    {
+      "id": "SVC-DAT",
+      "lobId": "LOB-DIG",
+      "label": "Plataformas de datos"
+    },
+    {
+      "id": "SVC-MIG",
+      "lobId": "LOB-CLD",
+      "label": "Migración cloud"
+    },
+    {
+      "id": "SVC-INF",
+      "lobId": "LOB-CLD",
+      "label": "Infraestructura regional"
+    },
+    {
+      "id": "SVC-TRA",
+      "lobId": "LOB-OPS",
+      "label": "Transición operativa"
+    }
+  ],
+  "squads": [
+    {
+      "id": "SQ-INT",
+      "label": "Integraciones",
+      "techLeadId": "USR-008"
+    },
+    {
+      "id": "SQ-DAT",
+      "label": "Datos y plataformas",
+      "techLeadId": "USR-009"
+    },
+    {
+      "id": "SQ-OPS",
+      "label": "Continuidad operativa",
+      "techLeadId": "USR-008"
+    }
+  ],
+  "riskCategories": [
+    {
+      "id": "TEC",
+      "label": "Técnico"
+    },
+    {
+      "id": "CRO",
+      "label": "Cronograma"
+    },
+    {
+      "id": "COM",
+      "label": "Comercial"
+    },
+    {
+      "id": "ORG",
+      "label": "Organizacional"
+    }
+  ],
+  "complexities": [
+    "Baja",
+    "Media",
+    "Alta"
+  ]
+}

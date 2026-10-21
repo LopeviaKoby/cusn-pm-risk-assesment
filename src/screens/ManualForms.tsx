@@ -1,0 +1,62 @@
+import { useRef, useState, type ReactNode } from "react";
+import { Button, ExposureBadge } from "@/components/ui/primitives";
+import { RecordDialog } from "@/components/ui/record-dialog";
+import { asOfDate, catalogs, clients, getRiskExposure, users } from "@/demo/data";
+import { countries, impactDomains, managers, projectStates, riskCatalog, riskTypes } from "@/demo/catalogs";
+import { currentUser, sessionProjects, useDemoSession } from "@/demo/session";
+import type { ManualRiskDraft, ProjectDraft } from "@/demo/records";
+import { contextualPath, useNavigation } from "@/navigation";
+
+type Controls = { close: () => void; cancel: () => void; dirty: () => void };
+function FormFooter({ cancel, label, children }: { cancel: () => void; label: string; children?: ReactNode }) {
+  return <footer className="record-dialog-footer">{children}<Button type="button" onClick={cancel}>Cancelar</Button><Button variant="primary" type="submit">{label}</Button></footer>;
+}
+function ProjectForm({ close, cancel, dirty }: Controls) {
+  const { createProject } = useDemoSession();
+  const { url, navigate } = useNavigation();
+  const [draft, setDraft] = useState<ProjectDraft>({ id: "", name: "", clientId: "", managerId: currentUser.id, country: "", lob: "", status: projectStates[0]!, description: "", startDate: "", plannedEndDate: "" });
+  const [error, setError] = useState("");
+  const errorRef = useRef<HTMLParagraphElement>(null), submitted = useRef(false);
+  const update = (patch: Partial<ProjectDraft>) => { setDraft(value => ({ ...value, ...patch })); dirty(); setError(""); };
+  return <form className="manual-form" onSubmit={event => { event.preventDefault(); if (submitted.current) return; const failure = createProject(draft); if (failure) { setError(failure); requestAnimationFrame(() => errorRef.current?.focus()); return; } submitted.current = true; close(); navigate(contextualPath(`/proyectos/${draft.id.trim()}/resumen`, url)); }}>
+    <div className="record-dialog-body"><fieldset><legend>Datos del proyecto</legend><div className="field-grid">
+      <label className="field">Identificador único<input name="project-id" required maxLength={64} value={draft.id} onChange={event => update({ id: event.target.value })} /></label>
+      <label className="field">Nombre del proyecto<input name="project-name" required value={draft.name} onChange={event => update({ name: event.target.value })} /></label>
+      <label className="field">Cliente<select aria-label="Cliente" required value={draft.clientId} onChange={event => update({ clientId: event.target.value })}><option value="">Selecciona un cliente</option>{clients.map(client => <option key={client.id} value={client.id}>{client.name}</option>)}</select></label>
+      <label className="field">Gestor<select aria-label="Gestor" required value={draft.managerId} onChange={event => update({ managerId: event.target.value })}>{managers.map(user => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
+      <label className="field">País<select aria-label="País" required value={draft.country} onChange={event => update({ country: event.target.value })}><option value="">Selecciona un país</option>{countries.map(country => <option key={country.code}>{country.name}</option>)}</select></label>
+      <label className="field">Línea de negocio (LOB)<select aria-label="Línea de negocio (LOB)" required value={draft.lobId ?? ""} onChange={event => update({ lobId: event.target.value, lob: catalogs.lobs.find(row => row.id === event.target.value)?.label ?? "", serviceId: "" })}><option value="">Selecciona una LOB</option>{catalogs.lobs.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+      <label className="field">Estado inicial<select aria-label="Estado inicial" value={draft.status} onChange={event => update({ status: event.target.value })}>{projectStates.map(status => <option key={status}>{status}</option>)}</select></label>
+    </div></fieldset><details className="form-disclosure"><summary>Información adicional (opcional)</summary><label className="field">Descripción del proyecto<textarea rows={3} value={draft.description} onChange={event => update({ description: event.target.value })} /></label><div className="field-grid">
+      <label className="field">Servicio LOB<select aria-label="Servicio LOB" value={draft.serviceId ?? ""} disabled={!draft.lobId} onChange={event => update({ serviceId: event.target.value })}><option value="">Sin asignar</option>{catalogs.services.filter(row => row.lobId === draft.lobId).map(row => <option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+      <label className="field">Squad<select aria-label="Squad" value={draft.squadId ?? ""} onChange={event => update({ squadId: event.target.value })}><option value="">Sin asignar</option>{catalogs.squads.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+      <label className="field">Líder técnico<select aria-label="Líder técnico" value={draft.techLeadId ?? ""} onChange={event => update({ techLeadId: event.target.value })}><option value="">Sin asignar</option>{users.filter(row => row.active && catalogs.squads.some(squad => squad.techLeadId === row.id)).map(row => <option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
+      <label className="field">Complejidad<select aria-label="Complejidad" value={draft.complexity ?? ""} onChange={event => update({ complexity: event.target.value })}><option value="">Sin dato</option>{catalogs.complexities.map(value => <option key={value}>{value}</option>)}</select></label>
+      <label className="field">Recepción P1P2<input type="date" max={asOfDate} value={draft.p1p2ReceivedAt ?? ""} onChange={event => update({ p1p2ReceivedAt: event.target.value })} /></label>
+      <label className="field">Fecha de inicio<input type="date" value={draft.startDate} onChange={event => update({ startDate: event.target.value })} /></label><label className="field">Término previsto<input type="date" min={draft.startDate || undefined} value={draft.plannedEndDate} onChange={event => update({ plannedEndDate: event.target.value })} /></label></div></details>
+    {error && <p ref={errorRef} tabIndex={-1} role="alert" className="form-error">{error}</p>}</div><FormFooter cancel={cancel} label="Crear proyecto" />
+  </form>;
+}
+export function NewProject() { return <RecordDialog title="Nuevo proyecto" trigger="Nuevo proyecto">{controls => <ProjectForm {...controls} />}</RecordDialog>; }
+
+function RiskForm({ projectId, close, cancel, dirty }: Controls & { projectId?: string }) {
+  const { session, createRisk } = useDemoSession(), { url, navigate } = useNavigation();
+  const projects = sessionProjects(session);
+  const [draft, setDraft] = useState<ManualRiskDraft>({ title: "", description: "", type: riskTypes[0]!, ownerId: currentUser.id, scopeType: "Proyecto", projectId: projectId ?? null, scopes: [], probability: 1, impact: 1, strategy: "", responsePlan: "", trigger: "", contingency: "", contingencyPrepared: false, nextReviewAt: "" });
+  const [error, setError] = useState("");
+  const errorRef = useRef<HTMLParagraphElement>(null), submitted = useRef(false);
+  const update = (patch: Partial<ManualRiskDraft>) => { setDraft(value => ({ ...value, ...patch })); dirty(); setError(""); };
+  return <form className="manual-form" onSubmit={event => { event.preventDefault(); if (submitted.current) return; const result = createRisk(draft); if (result.error || !result.id) { setError(result.error); requestAnimationFrame(() => errorRef.current?.focus()); return; } submitted.current = true; close(); navigate(contextualPath(draft.projectId ? `/proyectos/${draft.projectId}/riesgos/${result.id}` : `/riesgos/${result.id}`, url, true)); }}>
+    <div className="record-dialog-body"><fieldset><legend>Identificación y evaluación</legend><label className="field">Título del riesgo<input required value={draft.title} onChange={event => update({ title: event.target.value })} /></label><label className="field">Descripción y causa<textarea required rows={3} value={draft.description} onChange={event => update({ description: event.target.value })} /></label>
+    <div className="field-grid"><label className="field">Tipo<select aria-label="Tipo" value={draft.type} onChange={event => update({ type: event.target.value as ManualRiskDraft["type"], strategy: "" })}>{riskTypes.map(type => <option key={type}>{type}</option>)}</select></label><label className="field">Responsable<select aria-label="Responsable" required value={draft.ownerId} onChange={event => update({ ownerId: event.target.value })}>{users.filter(user => user.active).map(user => <option key={user.id} value={user.id}>{user.name}</option>)}</select></label>
+    <label className="field">Categoría<select aria-label="Categoría" value={draft.categoryId ?? ""} onChange={event => update({ categoryId: event.target.value })}><option value="">Sin clasificar</option>{catalogs.riskCategories.map(row => <option key={row.id} value={row.id}>{row.label}</option>)}</select></label>
+    <label className="field">Alcance<select aria-label="Alcance" disabled={!!projectId} value={draft.scopeType} onChange={event => update({ scopeType: event.target.value, projectId: null })}><option>Proyecto</option><option>Transversal</option></select></label>
+    {draft.scopeType === "Proyecto" && <label className="field">Proyecto<select aria-label="Proyecto" required disabled={!!projectId} value={draft.projectId ?? ""} onChange={event => update({ projectId: event.target.value || null })}><option value="">Selecciona un proyecto</option>{projects.map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label>}
+    {([{ key: "probability", label: "Probabilidad" }, { key: "impact", label: "Impacto" }] as const).map(field => <label key={field.key} className="field">{field.label}<input type="number" inputMode="numeric" required min={1} max={5} step={1} value={draft[field.key]} onChange={event => update({ [field.key]: event.target.valueAsNumber })} /></label>)}
+    <label className="field">Estrategia<select aria-label="Estrategia" required value={draft.strategy} onChange={event => update({ strategy: event.target.value })}><option value="">Selecciona una estrategia</option>{riskCatalog[draft.type].strategies.map(strategy => <option key={strategy}>{strategy}</option>)}</select></label><label className="field">Estado inicial<input readOnly value={riskCatalog[draft.type].initial} /></label></div>
+    <fieldset className="scope-options"><legend>Ámbitos impactados</legend>{impactDomains.map(scope => <label key={scope}><input type="checkbox" checked={draft.scopes.includes(scope)} onChange={event => update({ scopes: event.target.checked ? [...draft.scopes, scope] : draft.scopes.filter(value => value !== scope) })} />{scope}</label>)}</fieldset><div className="proposal-score"><span>Puntuación</span>{Number.isInteger(draft.probability) && draft.probability >= 1 && draft.probability <= 5 && Number.isInteger(draft.impact) && draft.impact >= 1 && draft.impact <= 5 ? <ExposureBadge type={draft.type} score={getRiskExposure(draft)} /> : <span>—</span>}</div></fieldset>
+    <details className="form-disclosure"><summary>Respuesta y seguimiento (opcional)</summary><label className="field">Plan de respuesta<textarea rows={3} value={draft.responsePlan} onChange={event => update({ responsePlan: event.target.value })} /></label><label className="field">Disparador<input value={draft.trigger} onChange={event => update({ trigger: event.target.value })} /></label><label className="field">Contingencia<textarea rows={3} value={draft.contingency} onChange={event => update({ contingency: event.target.value })} /></label><label className="approval-check"><input type="checkbox" checked={draft.contingencyPrepared} onChange={event => update({ contingencyPrepared: event.target.checked })} />Contingencia preparada</label><label className="field">Próxima revisión<input type="date" min={asOfDate} value={draft.nextReviewAt} onChange={event => update({ nextReviewAt: event.target.value })} /></label></details>
+    {error && <p ref={errorRef} tabIndex={-1} role="alert" className="form-error">{error}</p>}</div><FormFooter cancel={cancel} label="Registrar riesgo" />
+  </form>;
+}
+export function NewRisk({ projectId }: { projectId?: string }) { return <RecordDialog title="Registrar riesgo" trigger="Registrar riesgo">{controls => <RiskForm {...controls} projectId={projectId} />}</RecordDialog>; }

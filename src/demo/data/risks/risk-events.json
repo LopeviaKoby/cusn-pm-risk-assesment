@@ -1,0 +1,128 @@
+[
+  {
+    "id": "EVT-001",
+    "riskId": "RSK-041",
+    "occurredAt": "2026-04-12T15:00:00Z",
+    "actorId": "USR-001",
+    "eventType": "Registro",
+    "summary": "Se registra la dependencia del proveedor internacional y se asigna María Torres como responsable.",
+    "relatedId": "RRV-001"
+  },
+  {
+    "id": "EVT-002",
+    "riskId": "RSK-041",
+    "occurredAt": "2026-10-05T14:00:00Z",
+    "actorId": "USR-001",
+    "eventType": "Revisión",
+    "summary": "Se actualiza el impacto de 4 a 3 y se fija la próxima revisión para el 19 de octubre.",
+    "relatedId": "RRV-002"
+  },
+  {
+    "id": "EVT-003",
+    "riskId": "RSK-041",
+    "occurredAt": "2026-10-09T17:20:00Z",
+    "actorId": "USR-008",
+    "eventType": "Acción completada",
+    "summary": "Se completa la evaluación del proveedor alterno; la evaluación del riesgo no cambia por esta acción.",
+    "relatedId": "ACT-041A"
+  },
+  {
+    "id": "EVT-004",
+    "riskId": "RSK-041",
+    "occurredAt": "2026-09-30T16:00:00Z",
+    "actorId": "USR-001",
+    "eventType": "Preparación de contingencia",
+    "summary": "Se documenta el procedimiento de contingencia y se designa al proveedor alterno.",
+    "relatedId": null
+  },
+  {
+    "id": "EVT-005",
+    "riskId": "RSK-078",
+    "occurredAt": "2026-06-03T15:10:00Z",
+    "actorId": "USR-001",
+    "eventType": "Registro",
+    "summary": "Se registra la dependencia del servicio de identidad federada.",
+    "relatedId": "RRV-003"
+  },
+  {
+    "id": "EVT-006",
+    "riskId": "RSK-078",
+    "occurredAt": "2026-10-12T14:30:00Z",
+    "actorId": "USR-008",
+    "eventType": "Materialización",
+    "summary": "Se registra la indisponibilidad del servicio de identidad y la afectación al módulo de conciliación.",
+    "relatedId": "RRV-004"
+  },
+  {
+    "id": "EVT-007",
+    "riskId": "RSK-078",
+    "occurredAt": "2026-10-13T09:00:00Z",
+    "actorId": "USR-001",
+    "eventType": "Contingencia activada",
+    "summary": "El PM aprueba por separado la activación de la ruta alterna de autenticación.",
+    "relatedId": null
+  },
+  {
+    "id": "EVT-008",
+    "riskId": "RSK-079",
+    "occurredAt": "2026-08-21T16:40:00Z",
+    "actorId": "USR-009",
+    "eventType": "Registro",
+    "summary": "Se registra la oportunidad de reutilización de componentes para la Fase 2.",
+    "relatedId": "RRV-005"
+  },
+  {
+    "id": "EVT-009",
+    "riskId": "RSK-033",
+    "occurredAt": "2026-07-14T11:00:00Z",
+    "actorId": "USR-004",
+    "eventType": "Registro",
+    "summary": "Se registra la oportunidad vinculada a la ventana anticipada de producción.",
+    "relatedId": "RRV-007"
+  },
+  {
+    "id": "EVT-010",
+    "riskId": "RSK-026",
+    "occurredAt": "2026-10-04T15:30:00Z",
+    "actorId": "USR-002",
+    "eventType": "Revisión",
+    "summary": "Se eleva el impacto a 4 y se programa la revisión para el 18 de octubre.",
+    "relatedId": "RRV-010"
+  },
+  {
+    "id": "EVT-011",
+    "riskId": "RSK-052",
+    "occurredAt": "2026-08-14T17:00:00Z",
+    "actorId": "USR-003",
+    "eventType": "Cierre",
+    "summary": "Se aprueba el cierre con revisión final y formalización del alcance en acta.",
+    "relatedId": "RRV-012"
+  },
+  {
+    "id": "EVT-012",
+    "riskId": "RSK-052",
+    "occurredAt": "2026-09-12T10:15:00Z",
+    "actorId": "USR-003",
+    "eventType": "Reapertura",
+    "summary": "Se reabre el riesgo por una nueva solicitud de alcance y se mantiene en estado controlado.",
+    "relatedId": "RRV-013"
+  },
+  {
+    "id": "EVT-013",
+    "riskId": "TRS-005",
+    "occurredAt": "2026-10-03T16:10:00Z",
+    "actorId": "USR-004",
+    "eventType": "Revisión",
+    "summary": "Se actualiza la probabilidad a 4 y se fija la revisión vencida del 17 de octubre.",
+    "relatedId": "RRV-015"
+  },
+  {
+    "id": "EVT-014",
+    "riskId": "TRS-006",
+    "occurredAt": "2026-10-14T14:45:00Z",
+    "actorId": "USR-005",
+    "eventType": "Revisión",
+    "summary": "Se mantiene la oportunidad activa con seguimiento del PMO.",
+    "relatedId": "RRV-017"
+  }
+]

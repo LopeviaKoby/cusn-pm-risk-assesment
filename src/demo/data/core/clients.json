@@ -1,0 +1,58 @@
+[
+  {
+    "id": "CLI-001",
+    "name": "Grupo Prisma",
+    "segment": "Retail y consumo",
+    "country": "Perú",
+    "relationship": "Antiguo"
+  },
+  {
+    "id": "CLI-002",
+    "name": "Neova Retail",
+    "segment": "Retail",
+    "country": "Chile",
+    "relationship": "Antiguo"
+  },
+  {
+    "id": "CLI-003",
+    "name": "Vertex Salud",
+    "segment": "Salud",
+    "country": "Perú",
+    "relationship": "Nuevo"
+  },
+  {
+    "id": "CLI-004",
+    "name": "Delta Servicios",
+    "segment": "Servicios financieros",
+    "country": "Colombia",
+    "relationship": "Antiguo"
+  },
+  {
+    "id": "CLI-005",
+    "name": "Aurora Logística",
+    "segment": "Logística",
+    "country": "Chile",
+    "relationship": "Antiguo"
+  },
+  {
+    "id": "CLI-006",
+    "name": "Campo Norte",
+    "segment": "Agroindustria",
+    "country": "Perú",
+    "relationship": "Nuevo"
+  },
+  {
+    "id": "CLI-007",
+    "name": "Solventa",
+    "segment": "Energía",
+    "country": "Colombia",
+    "relationship": "Antiguo"
+  },
+  {
+    "id": "CLI-008",
+    "name": "Círculo Digital",
+    "segment": "Medios digitales",
+    "country": "Perú",
+    "relationship": "Antiguo"
+  }
+]

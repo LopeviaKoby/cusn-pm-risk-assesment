@@ -1,0 +1,79 @@
+[
+  {
+    "id": "ACT-041A",
+    "riskId": "RSK-041",
+    "title": "Preparar proveedor alterno precalificado",
+    "description": "Completar la evaluación técnica y comercial del proveedor alterno para la integración de pagos.",
+    "ownerId": "USR-008",
+    "createdAt": "2026-04-20",
+    "dueDate": "2026-10-10",
+    "status": "Completada",
+    "completedAt": "2026-10-09"
+  },
+  {
+    "id": "ACT-041B",
+    "riskId": "RSK-041",
+    "title": "Reservar ventana de contingencia en el cronograma",
+    "description": "Mantener una ventana reservada para la activación del proveedor alterno sin afectar la puesta en producción.",
+    "ownerId": "USR-001",
+    "createdAt": "2026-04-20",
+    "dueDate": "2026-10-24",
+    "status": "En curso",
+    "completedAt": null
+  },
+  {
+    "id": "ACT-041C",
+    "riskId": "RSK-041",
+    "title": "Revisar cláusula de continuidad con Compras",
+    "description": "Confirmar con Compras la vigencia de la cláusula de continuidad y el plazo de sustitución del proveedor.",
+    "ownerId": "USR-007",
+    "createdAt": "2026-04-20",
+    "dueDate": "2026-10-30",
+    "status": "Pendiente",
+    "completedAt": null
+  },
+  {
+    "id": "ACT-026A",
+    "riskId": "RSK-026",
+    "title": "Escalar requerimiento de especialistas al PMO",
+    "description": "Solicitar al PMO una reserva formal de especialistas para la habilitación del módulo clínico.",
+    "ownerId": "USR-002",
+    "createdAt": "2026-09-29",
+    "dueDate": "2026-10-21",
+    "status": "En curso",
+    "completedAt": null
+  },
+  {
+    "id": "ACT-052A",
+    "riskId": "RSK-052",
+    "title": "Formalizar aprobación de alcance en acta",
+    "description": "Registrar en acta la aprobación del alcance acordada con el cliente.",
+    "ownerId": "USR-003",
+    "createdAt": "2026-08-18",
+    "dueDate": "2026-09-30",
+    "status": "Completada",
+    "completedAt": "2026-09-28"
+  },
+  {
+    "id": "ACT-078A",
+    "riskId": "RSK-078",
+    "title": "Habilitar ruta alterna de autenticación",
+    "description": "Configurar y probar la ruta alterna de autenticación para los usuarios del módulo de conciliación.",
+    "ownerId": "USR-008",
+    "createdAt": "2026-10-12",
+    "dueDate": "2026-10-16",
+    "status": "En curso",
+    "completedAt": null
+  },
+  {
+    "id": "ACT-079A",
+    "riskId": "RSK-079",
+    "title": "Reservar capacidad del equipo de datos",
+    "description": "Acordar con el equipo de datos una reserva de capacidad para reutilizar componentes en la Fase 2.",
+    "ownerId": "USR-001",
+    "createdAt": "2026-08-24",
+    "dueDate": "2026-11-06",
+    "status": "Pendiente",
+    "completedAt": null
+  }
+]

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "PCR-001",
+    "projectId": "PRJ-001",
+    "title": "Solicitud de cambio de fecha de término",
+    "requestedEndDate": "2026-12-12",
+    "currentEndDate": "2026-11-14",
+    "status": "Pendiente",
+    "requestedById": "USR-001",
+    "requestedAt": "2026-10-17",
+    "decidedById": null,
+    "decidedAt": null,
+    "decisionNote": null,
+    "relatedRiskId": "RSK-041"
+  },
+  {
+    "id": "PCR-002",
+    "projectId": "PRJ-002",
+    "title": "Ajuste de fecha de cierre de migración",
+    "requestedEndDate": "2026-12-04",
+    "currentEndDate": "2026-11-30",
+    "status": "Aprobado",
+    "requestedById": "USR-001",
+    "requestedAt": "2026-09-20",
+    "decidedById": "USR-007",
+    "decidedAt": "2026-09-28",
+    "decisionNote": "Aprobado para cubrir la validación posterior a la ventana anticipada.",
+    "relatedRiskId": "RSK-033"
+  },
+  {
+    "id": "PCR-003",
+    "projectId": "PRJ-006",
+    "title": "Reprogramación de reanudación a noviembre",
+    "requestedEndDate": "2026-12-15",
+    "currentEndDate": "2026-11-15",
+    "status": "Descartado",
+    "requestedById": "USR-005",
+    "requestedAt": "2026-10-03",
+    "decidedById": "USR-007",
+    "decidedAt": "2026-10-08",
+    "decisionNote": "Descartado hasta contar con el plan de reanudación aprobado.",
+    "relatedRiskId": null
+  }
+]

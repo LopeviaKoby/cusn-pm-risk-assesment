@@ -1,0 +1,18 @@
+registry: https://registry.npmjs.org/
+strictSsl: true
+saveExact: true
+engineStrict: true
+strictPeerDependencies: true
+autoInstallPeers: false
+minimumReleaseAge: 10080
+minimumReleaseAgeStrict: true
+minimumReleaseAgeIgnoreMissingTime: false
+trustPolicy: no-downgrade
+trustLockfile: false
+blockExoticSubdeps: true
+strictDepBuilds: true
+allowBuilds: {}
+skills:
+  dirs: []
+pmOnFail: ignore
+verifyDepsBeforeRun: error

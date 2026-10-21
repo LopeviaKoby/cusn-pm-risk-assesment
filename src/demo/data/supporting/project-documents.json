@@ -1,0 +1,52 @@
+[
+  {
+    "id": "DOC-001",
+    "projectId": "PRJ-001",
+    "type": "SOW",
+    "title": "SOW ampliación de Fase 2",
+    "version": "v0.9",
+    "status": "En elaboración",
+    "ownerId": "USR-001",
+    "updatedAt": "2026-10-16"
+  },
+  {
+    "id": "DOC-002",
+    "projectId": "PRJ-001",
+    "type": "Acta",
+    "title": "Acta de comité de seguimiento",
+    "version": "v1.0",
+    "status": "Enviado",
+    "ownerId": "USR-001",
+    "updatedAt": "2026-10-18"
+  },
+  {
+    "id": "DOC-003",
+    "projectId": "PRJ-002",
+    "type": "Entregable",
+    "title": "Plan de migración de datos",
+    "version": "v2.0",
+    "status": "Firmado",
+    "ownerId": "USR-004",
+    "updatedAt": "2026-10-02"
+  },
+  {
+    "id": "DOC-004",
+    "projectId": "PRJ-003",
+    "type": "Entregable",
+    "title": "Diseño de disponibilidad operativa",
+    "version": "v0.4",
+    "status": "En elaboración",
+    "ownerId": "USR-002",
+    "updatedAt": "2026-10-17"
+  },
+  {
+    "id": "DOC-005",
+    "projectId": "PRJ-006",
+    "type": "Acta",
+    "title": "Acta de suspensión temporal",
+    "version": "v1.0",
+    "status": "Firmado",
+    "ownerId": "USR-005",
+    "updatedAt": "2026-10-01"
+  }
+]

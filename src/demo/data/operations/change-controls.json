@@ -1,0 +1,41 @@
+[
+  {
+    "id": "CHG-001",
+    "projectId": "PRJ-003",
+    "title": "Ajuste de alcance del módulo de agenda",
+    "description": "Se incorpora la integración con la agenda de especialistas al alcance del módulo clínico.",
+    "status": "Aprobado",
+    "requestedById": "USR-002",
+    "requestedAt": "2026-09-10",
+    "decisionDueDate": "2026-09-18",
+    "decidedById": "USR-007",
+    "decidedAt": "2026-09-18",
+    "decisionNote": "Aprobado con ajuste de cronograma dentro de la ventana vigente."
+  },
+  {
+    "id": "CHG-002",
+    "projectId": "PRJ-001",
+    "title": "Incorporación de validación adicional de conciliación",
+    "description": "El cliente solicita una validación adicional sobre la conciliación de pagos internacionales.",
+    "status": "Pendiente",
+    "requestedById": "USR-001",
+    "requestedAt": "2026-10-09",
+    "decisionDueDate": "2026-10-23",
+    "decidedById": null,
+    "decidedAt": null,
+    "decisionNote": null
+  },
+  {
+    "id": "CHG-003",
+    "projectId": "PRJ-006",
+    "title": "Reducción temporal del alcance del piloto",
+    "description": "Se propone reducir el alcance del piloto para habilitar una reanudación parcial del despliegue.",
+    "status": "Rechazado",
+    "requestedById": "USR-005",
+    "requestedAt": "2026-09-29",
+    "decisionDueDate": "2026-10-06",
+    "decidedById": "USR-007",
+    "decidedAt": "2026-10-06",
+    "decisionNote": "Rechazado hasta contar con un plan de reanudación aprobado."
+  }
+]

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "MS-001",
+    "projectId": "PRJ-001",
+    "title": "Validación de alcance de Fase 2",
+    "dueDate": "2026-10-16",
+    "status": "En curso",
+    "ownerId": "USR-001",
+    "completedAt": null,
+    "note": "Pendiente de aprobación formal del cliente."
+  },
+  {
+    "id": "MS-002",
+    "projectId": "PRJ-001",
+    "title": "Puesta en producción de Fase 2",
+    "dueDate": "2026-11-14",
+    "status": "Pendiente",
+    "ownerId": "USR-001",
+    "completedAt": null,
+    "note": "Sujeta a la validación de alcance y a la revisión de riesgos."
+  },
+  {
+    "id": "MS-003",
+    "projectId": "PRJ-002",
+    "title": "Migración de datos maestros",
+    "dueDate": "2026-10-22",
+    "status": "En curso",
+    "ownerId": "USR-004",
+    "completedAt": null,
+    "note": "Ventana de migración coordinada con la operación."
+  },
+  {
+    "id": "MS-004",
+    "projectId": "PRJ-003",
+    "title": "Habilitación del módulo clínico",
+    "dueDate": "2026-10-30",
+    "status": "Pendiente",
+    "ownerId": "USR-002",
+    "completedAt": null,
+    "note": "Requiere confirmar especialistas para la puesta en marcha."
+  },
+  {
+    "id": "MS-005",
+    "projectId": "PRJ-004",
+    "title": "Cierre de transición operativa",
+    "dueDate": "2026-11-09",
+    "status": "En curso",
+    "ownerId": "USR-003",
+    "completedAt": null,
+    "note": "Cierre documental y transferencia al equipo de operación."
+  },
+  {
+    "id": "MS-006",
+    "projectId": "PRJ-005",
+    "title": "Certificación de interfaz logística",
+    "dueDate": "2026-10-25",
+    "status": "En curso",
+    "ownerId": "USR-004",
+    "completedAt": null,
+    "note": "Certificación con dos socios de transporte."
+  },
+  {
+    "id": "MS-007",
+    "projectId": "PRJ-006",
+    "title": "Reanudación del despliegue piloto",
+    "dueDate": "2026-10-10",
+    "status": "Pendiente",
+    "ownerId": "USR-005",
+    "completedAt": null,
+    "note": "Bloqueado hasta aprobar el plan de reanudación."
+  },
+  {
+    "id": "MS-008",
+    "projectId": "PRJ-007",
+    "title": "Aprobación P1P2",
+    "dueDate": "2026-10-28",
+    "status": "Pendiente",
+    "ownerId": "USR-006",
+    "completedAt": null,
+    "note": "Aprobación requerida para iniciar la movilización."
+  },
+  {
+    "id": "MS-009",
+    "projectId": "PRJ-008",
+    "title": "Entrega de release 3",
+    "dueDate": "2026-11-04",
+    "status": "Pendiente",
+    "ownerId": "USR-004",
+    "completedAt": null,
+    "note": "Entrega planificada con el equipo de producto."
+  },
+  {
+    "id": "MS-010",
+    "projectId": "PRJ-001",
+    "title": "Validación de alcance de Fase 1",
+    "dueDate": "2026-09-18",
+    "status": "Completado",
+    "ownerId": "USR-001",
+    "completedAt": "2026-09-17",
+    "note": "Aprobación recibida con una semana de anticipación."
+  }
+]
