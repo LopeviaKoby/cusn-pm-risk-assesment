@@ -12,6 +12,8 @@ Apply this sequence: **verify identity → review versions and direct/transitive
 3. Review every newly requested build script and the files/downloads it invokes. Authorize only an indispensable exact `name@version` in `allowBuilds`, after review. Do not blanket approve. Review project root scripts before `pnpm run`.
 4. Review manifest and lock changes with Git. Resolve with pnpm, then check all new transitives for source, age, scripts and integrity. Use `pnpm install --frozen-lockfile` for a clean reproduction. Run `pnpm audit`, `pnpm audit signatures`, tree, TypeScript and build checks; report actual coverage and failures separately.
 
-The temporary Node 22.23.3 exception is limited to local development and demonstration. Upgrade to the official security fix before deployment, production, public access or sensitive data.
+Node 22.23.4 replaces the temporary 22.23.3 exception after verification against the official security release and SHA256. Preserve the reviewed runtime and package-manager pins.
 
 Official references: [pnpm installation](https://pnpm.io/installation), [dependency resolution](https://pnpm.io/settings/dependency-resolution), [build approvals](https://pnpm.io/settings/build), [audit](https://pnpm.io/cli/audit), [install](https://pnpm.io/cli/install).
+
+Project-only exception authorized by the owner on 2026-10-22: `trustPolicyExclude: [semver@6.3.1]`, required by the reviewed React Doctor/Babel tree. SHA-512 and npm registry signature were verified, no known audit findings; provenance attestation is unavailable. No other trust exception is authorized. Remove this selector when the reviewed tree no longer requires this exact version; reproduce the frozen install, audit and signatures. All other policies remain mandatory.

@@ -8,6 +8,10 @@ minimumReleaseAge: 10080
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
+# Owner authorized 2026-10-22: legacy Babel dependency of react-doctor@0.9.18.
+# Remove when the reviewed Doctor tree no longer needs this exact version.
+trustPolicyExclude:
+  - semver@6.3.1
 trustLockfile: false
 blockExoticSubdeps: true
 strictDepBuilds: true

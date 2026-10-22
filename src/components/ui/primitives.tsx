@@ -1,20 +1,19 @@
 import { useEffect, useRef, useState, type ComponentProps, type ReactNode } from "react";
-import { Button as BaseButton } from "@base-ui/react/button";
-import { Tabs as BaseTabs } from "@base-ui/react/tabs";
+import * as RadixTabs from "@radix-ui/react-tabs";
 import { Search } from "lucide-react";
 import { riskPresentation } from "@/demo/presentation";
 
-// Local Base UI primitives, styled with the GPL semantic tokens. No generator/runtime additions.
-export function Button({ variant = "secondary", className = "", ...props }: ComponentProps<typeof BaseButton> & { variant?: "secondary" | "primary" | "ghost" }) {
-  return <BaseButton {...props} className={`button button-${variant} ${className}`} />;
+// Native buttons and Radix tabs retain the existing GPL semantic tokens.
+export function Button({ variant = "secondary", className = "", type = "button", ...props }: ComponentProps<"button"> & { variant?: "secondary" | "primary" | "ghost" }) {
+  return <button {...props} type={type} className={`button button-${variant} ${className}`} />;
 }
-export const Tabs = BaseTabs.Root;
-export const TabsContent = BaseTabs.Panel;
-export function TabsList(props: ComponentProps<typeof BaseTabs.List>) {
-  return <BaseTabs.List {...props} className="tabs-list" activateOnFocus />;
+export const Tabs = RadixTabs.Root;
+export const TabsContent = RadixTabs.Content;
+export function TabsList(props: ComponentProps<typeof RadixTabs.List>) {
+  return <RadixTabs.List {...props} className="tabs-list" />;
 }
-export function TabsTrigger(props: ComponentProps<typeof BaseTabs.Tab>) {
-  return <BaseTabs.Tab {...props} className="tabs-trigger" />;
+export function TabsTrigger(props: ComponentProps<typeof RadixTabs.Trigger>) {
+  return <RadixTabs.Trigger {...props} className="tabs-trigger" />;
 }
 type BadgeTone = "neutral" | "info" | "danger" | "positive" | "review";
 export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: BadgeTone }) {

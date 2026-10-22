@@ -1,3 +1,4 @@
+import { loadScreen } from "@/components/ui/route-loader";
 import { Badge, ExposureBadge, TableRegion } from "@/components/ui/primitives";
 import { SeriesChart } from "@/components/ui/series-chart";
 import { billingMilestones } from "@/demo/data";
@@ -7,9 +8,9 @@ import { useDemoSession } from "@/demo/session";
 import { asOfDate, date, getUser, number, percent, unique } from "@/demo/view-models";
 import { contextualPath, Link, useNavigation } from "@/navigation";
 import { Difference, Facts, Panel, PendingSuggestions, ProjectHeader, UnavailableRecord } from "./ProjectFrame";
-import Risks from "./Risks";
-import RiskDetail from "./RiskDetail";
-import SuggestionReview from "./SuggestionReview";
+const Risks = loadScreen(() => import("./Risks"));
+const RiskDetail = loadScreen(() => import("./RiskDetail"));
+const SuggestionReview = loadScreen(() => import("./SuggestionReview"));
 
 function Economics({ model }: { model: ProjectContext }) {
   const p = model.project;

@@ -41,3 +41,8 @@ Thumbs.db
 README.md
 GUIA_DEMO.md
 AGENTS.md
+.opencode/
+opencode.json
+.workflow/
+FRAMEWORK_ADOPTION.md
+tests/e2e/

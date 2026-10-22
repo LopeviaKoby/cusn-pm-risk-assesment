@@ -1,5 +1,7 @@
-@import "tailwindcss";
+@import "tailwindcss" source(none);
 @import "./tokens.css";
+@source "../";
+@source "../../index.html";
 
 @theme inline {
   --font-sans: var(--gpl-font-body);
@@ -132,7 +134,7 @@ strong { font-weight: 500; }
 .tabs-list { display: flex; flex-wrap: wrap; gap: 0; border-bottom: 1px solid var(--divider); margin-bottom: 16px; }
 .tabs-trigger { position: relative; display: flex; align-items: center; gap: 8px; border: 0; border-bottom: 2px solid transparent; color: var(--muted-foreground); background: transparent; padding: 12px 0; margin-right: 24px; font-size: 13px; }
 .tabs-trigger:hover { color: var(--foreground); }
-.tabs-trigger[data-active] { color: var(--foreground); border-bottom-color: var(--primary); }
+.tabs-trigger[data-state="active"] { color: var(--foreground); border-bottom-color: var(--primary); }
 .count { background: var(--accent); color: var(--text-secondary); border-radius: var(--gpl-radius-full); padding: 0 5px; font-size: 12px; }
 .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 0 0 16px; }
 .surface-toolbar { background: var(--surface); border-radius: var(--gpl-radius-md); padding: 12px; margin-bottom: 16px; }

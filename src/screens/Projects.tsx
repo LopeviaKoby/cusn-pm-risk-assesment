@@ -1,16 +1,10 @@
-import { Badge, Button, Empty, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
+import { Button, Empty, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
 import { date, defaultProjectFilters, filterProjects, percent, projectRows, projectViews, readProjectFilters, relativeDate, unique, type ProjectFilters, type ProjectRow } from "@/demo/view-models";
-import { projectStatusTone } from "@/demo/presentation";
+import { Progress, Status } from "@/components/ui/project-indicators";
 import { useDemoSession } from "@/demo/session";
 import { contextualPath, Link, useNavigation } from "@/navigation";
 import { NewProject } from "./ManualForms";
 
-export function Progress({ planned, actual }: { planned: number | null; actual: number | null }) {
-  return <div className="progress-cell"><span>Plan {percent(planned)} · Real {percent(actual)}</span><div className="progress-track" aria-hidden="true"><i className="planned" style={{ width: `${(planned ?? 0) * 100}%` }} /><i className="actual" style={{ width: `${(actual ?? 0) * 100}%` }} /></div></div>;
-}
-export function Status({ value }: { value: string }) {
-  return <Badge tone={projectStatusTone(value)}>{value}</Badge>;
-}
 export function ProjectTable({ rows }: { rows: ProjectRow[] }) {
   const { url } = useNavigation();
   return <TableRegion label="Proyectos, todas las columnas"><table className="projects-table"><thead><tr>

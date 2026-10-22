@@ -1,11 +1,12 @@
-import Finance from "./Finance";
+import { loadScreen, RouteContent } from "@/components/ui/route-loader";
+const Finance = loadScreen(() => import("./Finance"));
 import { ChartLegend } from "@/components/ui/analytics";
 import { useNavigation } from "@/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/primitives";
 import { CircleAlert } from "lucide-react";
 import { Badge, Button, Empty, Filter, MetricStrip, PageHeading, TableRegion } from "@/components/ui/primitives";
 import { asOfDate, date, filteredPortfolioRisks, number, percent, projectRows, unique } from "@/demo/view-models";
-import { Progress, Status } from "./Projects";
+import { Progress, Status } from "@/components/ui/project-indicators";
 import { useDemoSession } from "@/demo/session";
 
 function PortfolioOverview() {
@@ -48,5 +49,5 @@ export default function Portfolio() {
   const { url, navigate } = useNavigation();
   const params = new URLSearchParams(url.split("?")[1]);
   const tab = params.get("vista") === "finanzas" ? "finanzas" : "general";
-  return <div className="page portfolio-page"><PageHeading title="Portafolio" description="Visión consolidada del desempeño, avance y riesgos de los proyectos."><span className="cutoff">Corte: {date(asOfDate)}</span></PageHeading><Tabs value={tab} onValueChange={value => { const next = new URLSearchParams(params); if (value === "finanzas") next.set("vista", "finanzas"); else next.delete("vista"); navigate(`/portafolio${next.size ? `?${next}` : ""}`); }}><TabsList aria-label="Vistas de Portafolio"><TabsTrigger value="general">Visión general</TabsTrigger><TabsTrigger value="finanzas">Finanzas</TabsTrigger></TabsList><TabsContent value="general"><PortfolioOverview /></TabsContent><TabsContent value="finanzas"><Finance /></TabsContent></Tabs></div>;
+  return <div className="page portfolio-page"><PageHeading title="Portafolio" description="Visión consolidada del desempeño, avance y riesgos de los proyectos."><span className="cutoff">Corte: {date(asOfDate)}</span></PageHeading><Tabs value={tab} onValueChange={value => { const next = new URLSearchParams(params); if (value === "finanzas") next.set("vista", "finanzas"); else next.delete("vista"); navigate(`/portafolio${next.size ? `?${next}` : ""}`); }}><TabsList aria-label="Vistas de Portafolio"><TabsTrigger value="general">Visión general</TabsTrigger><TabsTrigger value="finanzas">Finanzas</TabsTrigger></TabsList><TabsContent value="general"><PortfolioOverview /></TabsContent><TabsContent value="finanzas"><RouteContent><Finance /></RouteContent></TabsContent></Tabs></div>;
 }

@@ -4,18 +4,18 @@ Frontend local para demostrar el trabajo del Project Manager: seguimiento de pro
 
 ## Stack y requisitos
 
-- React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, Tailwind CSS 4.3.3, Base UI 1.9.0 y Motion 14.2.0.
-- Node.js **22.23.3** y pnpm **12.12.1**, fijados en `package.json`; versiones exactas y dependencias resueltas en `pnpm-lock.yaml`.
+- React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, Tailwind CSS 4.3.3, Radix Dialog 1.3.1 y Tabs 1.2.1 y Motion 14.2.0.
+- Node.js **22.23.4** y pnpm **12.12.1**, fijados en `package.json`; versiones exactas y dependencias resueltas en `pnpm-lock.yaml`.
 - Git; para contenedores, Docker con motor Linux y acceso a Docker Hub, GHCR y al registro oficial npm.
 
-Node 22.23.3 tiene una excepción temporal exclusiva para desarrollo y demostración local. Antes de cualquier uso público, productivo o con información sensible, actualizar a la corrección oficial de seguridad y volver a validar. Esta imagen se entrega para uso local.
+Node 22.23.4 incorpora la corrección oficial de seguridad que sustituye la excepción temporal anterior. La imagen sigue siendo una demostración local.
 
 Para desarrollo, instala esa versión de Node desde su distribución oficial y el binario independiente de [pnpm 12.12.1](https://github.com/pnpm/pnpm/releases/tag/v12.12.1) correspondiente a tu sistema. Verifica su procedencia y añade ambos a `PATH`; no ejecutes instaladores remotos sin revisión. La [guía oficial de pnpm](https://pnpm.io/installation) describe las alternativas. Docker no requiere Node/pnpm en el host.
 
 ## Instalación y ejecución local
 
 ```sh
-git clone --branch dev https://github.com/LopeviaKoby/cusn-pm-risk-assesment.git
+git clone --branch dev-tvt-foundry https://github.com/LopeviaKoby/cusn-pm-risk-assesment.git
 cd cusn-pm-risk-assesment
 node --version
 pnpm --version
@@ -23,7 +23,7 @@ pnpm install --frozen-lockfile
 pnpm run dev
 ```
 
-La clonación de `dev` estará disponible después de que su propietario publique esa rama. Vite sirve en loopback; abre la URL que imprime y detén el proceso con `Ctrl+C` al terminar.
+La clonación de `dev-tvt-foundry` estará disponible después de que su propietario publique esa rama. Vite sirve en loopback; abre la URL que imprime y detén el proceso con `Ctrl+C` al terminar.
 
 La política de `pnpm-workspace.yaml` conserva registro HTTPS, antigüedad mínima estricta de siete días, comprobación de confianza, engines/peers estrictos y scripts de dependencias sin autorización general. No cambies el lockfile para sortear errores ni uses `pnpm dlx` o generadores sin revisión. No se necesita ningún archivo `.env`.
 
@@ -32,21 +32,31 @@ La política de `pnpm-workspace.yaml` conserva registro HTTPS, antigüedad míni
 ```sh
 pnpm run validate:demo
 pnpm run test:demo
+pnpm run test:coverage
 pnpm run typecheck
 pnpm run build
 pnpm audit
 pnpm audit signatures
 pnpm ls --depth Infinity
+pnpm run test:e2e
+pnpm run check:react
+pnpm run check:distribution
 pnpm run preview
 ```
 
-`validate:demo` comprueba los 23 JSON y siete casos de control. `test:demo` ejecuta seis pruebas de persistencia, relaciones y finanzas sobre los selectores reales; usa las API experimentales de VM y eliminación de tipos de Node, que emiten avisos. `build` verifica tipos y genera `dist/`; `preview` sirve ese resultado localmente y se detiene con `Ctrl+C`. Las auditorías requieren red. No hay un runner de navegador instalado como dependencia del proyecto.
+`validate:demo` comprueba los 23 JSON y siete casos de control. Vitest conserva las seis pruebas anteriores de persistencia, relaciones y finanzas y añade límites, navegación, acceso y componentes. La cobertura mide explícitamente records, finance, access, navigation, primitivas, diálogo y carga de rutas; los umbrales por archivo están en `vitest.config.ts`. No mide toda la aplicación. `typecheck` incluye las pruebas. Los tipos Node 24.10.0 se usan únicamente al compilar herramientas; el runtime permanece en Node 22.23.4.
 
-El build puede advertir de un chunk JavaScript de aproximadamente 586 kB antes de gzip. No impide compilar y su umbral no se ha modificado.
+Playwright usa Page Objects y comprueba acceso, historial, pestañas por teclado, formularios y persistencia. Axe aplica reglas WCAG A/AA; las imágenes comparan cuatro pantallas a 1440 y 390 px con la referencia anterior a la migración. No actualices referencias para ocultar diferencias. En Windows puede usarse Edge instalado con `$env:PLAYWRIGHT_CHANNEL='msedge'`; en otros entornos instala el navegador compatible del runner fijado con `pnpm exec playwright install chromium`. El runner cierra sus navegadores y servidor propio. `PLAYWRIGHT_BASE_URL` permite probar un contenedor local ya iniciado, cuyo ciclo de vida controla quien lo ejecuta. `preview` manual se detiene con Ctrl+C.
+
+La referencia previa presenta un fallo de accesibilidad en Finanzas: elementos small fuera de dt/dd en indicator-cards. La prueba permanece activa y falla hasta corregirlo en un cambio de aplicación autorizado. React Doctor 0.9.18 se ejecuta con ESLint 10.12.0, su peer obligatorio, mediante `check:react`: bloquea errores y conserva advertencias. El análisis es completo en local/push y compara cambios con la rama base en pull requests; falta de base Git produce fallo. Se desactivan telemetría/score remoto y consultas a Socket.dev; pnpm mantiene las auditorías y firmas independientes. La CI conserva el fallo de accesibilidad sin omitirlo.
+
+El propietario autorizó el 22 de octubre de 2026 exclusivamente `trustPolicyExclude: ['semver@6.3.1']`, requerido por Babel dentro de React Doctor. Se verificaron SHA-512, firma npm y ausencia de avisos conocidos; esa versión no aporta atestación de procedencia. Se conservan no-downgrade global, antigüedad, peers/engines estrictos y bloqueo de scripts. Al actualizar Doctor, revisar `pnpm why semver`: retirar la excepción cuando deje de requerirse 6.3.1 y reproducir instalación congelada, auditoría y firmas. No se extiende a otras versiones ni paquetes.
+
+`build` genera pantallas con carga diferida y una recuperación visible si falla su descarga; conserva los proveedores de navegación y sesión. Tailwind escanea únicamente src e index.html, para que los archivos de asistencia no afecten al CSS. No modifica el umbral de tamaño de Vite. Las auditorías requieren red. No se ejecutan actualizadores de instrucciones al iniciar una sesión.
 
 ## Docker
 
-El Dockerfile multietapa fija versiones y digests de Node, pnpm y NGINX. El build conserva la política pnpm, ejecuta validación, pruebas y compilación. La etapa final contiene el frontend compilado y sus avisos de licencia; sirve con NGINX 1.30.6 sobre Alpine 3.24, usuario `101:101` y puerto 8080. No ejecuta Vite ni contiene Node/pnpm o el código fuente de la aplicación.
+El Dockerfile multietapa fija versiones y digests de Node, pnpm y NGINX. El build conserva la política pnpm, ejecuta validación, cobertura, tipos y compilación. La etapa final contiene el frontend compilado y sus avisos de licencia; sirve con NGINX 1.30.6 sobre Alpine 3.24, usuario `101:101` y puerto 8080. Las cabeceras CSP, DENY, nosniff y Referrer-Policy también se aplican al fallback SPA; CSP permite estilos inline requeridos por gráficos y progreso. No ejecuta Vite ni contiene Node/pnpm o el código fuente de la aplicación.
 
 ```sh
 docker build --pull -t gpl-frontend:local .
@@ -108,6 +118,8 @@ Finanzas filtra una sola moneda y no aplica conversiones. La diferencia comparab
 ## Distribución y licencias
 
 Todo dato de negocio publicado es ficticio. Las carpetas privadas de requisitos y referencias visuales, archivos de entorno, cachés, salidas de pruebas y herramientas locales se excluyen de Git y del contexto Docker; no deben importarse desde el frontend. Revisa también `dist/` antes de distribuir: los fixtures importados son públicos en el navegador.
+
+El material interno de herramientas de asistencia, sus roles y configuración permanecen locales, fuera del índice y del contexto Docker. Las copias locales se comprueban con `pnpm run check:adoption` y se alinean solo a petición mediante `pnpm run sync:adoption`; estos comandos no descargan versiones. La CI pública no depende de esos archivos privados.
 
 Google Sans y Manrope conservan sus licencias SIL OFL 1.1 y avisos de autoría en `src/assets/fonts/`. El build los publica en `/licenses/google-sans.txt` y `/licenses/manrope.txt`, junto con `/licenses/dependencies.txt` para las dependencias empaquetadas. La autoría de las fuentes se comprobó también en sus metadatos internos.
 
