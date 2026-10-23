@@ -3,7 +3,7 @@ import { TableRegion } from "./primitives";
 import { money, monthLabel } from "@/demo/finance";
 
 export function IndicatorCards({ items }: { items: { label: string; value: ReactNode; note?: string }[] }) {
-  return <dl className="indicator-cards">{items.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}</dd>{item.note && <small>{item.note}</small>}</div>)}</dl>;
+  return <dl className="indicator-cards">{items.map(item => <div key={item.label}><dt>{item.label}</dt><dd>{item.value}{item.note && <small style={{ fontFamily: "var(--gpl-font-body)", fontWeight: 400 }}>{item.note}</small>}</dd></div>)}</dl>;
 }
 export function ChartLegend({ items }: { items: { label: string; className: string }[] }) {
   return <div className="legend">{items.map(item => <span key={item.label}><i className={item.className} />{item.label}</span>)}</div>;

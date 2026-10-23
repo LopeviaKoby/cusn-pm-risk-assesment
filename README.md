@@ -1,16 +1,14 @@
 # GPL — Gestión de proyectos y riesgos
 
-Frontend local para demostrar el trabajo del Project Manager: seguimiento de proyectos, riesgos oficiales, revisión humana de sugerencias y análisis de portafolio. Usa datos ficticios y no incluye backend, OAuth, integraciones ni IA real. El acceso local no protege información privada.
+Frontend local de demostración para seguimiento de proyectos, riesgos, revisión humana de sugerencias y análisis de portafolio. Usa datos ficticios; no incluye backend, OAuth, integraciones ni IA real. El acceso y el almacenamiento local no protegen información privada.
 
 ## Stack y requisitos
 
-- React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, Tailwind CSS 4.3.3, Radix Dialog 1.3.1 y Tabs 1.2.1 y Motion 14.2.0.
-- Node.js **22.23.4** y pnpm **12.12.1**, fijados en `package.json`; versiones exactas y dependencias resueltas en `pnpm-lock.yaml`.
+- React 19.3.0, TypeScript 7.0.2, Vite 8.3.4, Tailwind CSS 4.3.3, Radix Dialog 1.3.1 y Tabs 1.2.1, y Motion 14.2.0.
+- Node.js **22.23.4** y pnpm **12.12.1** exactos, fijados en `package.json`; `pnpm-lock.yaml` resuelve las dependencias.
 - Git; para contenedores, Docker con motor Linux y acceso a Docker Hub, GHCR y al registro oficial npm.
 
-Node 22.23.4 incorpora la corrección oficial de seguridad que sustituye la excepción temporal anterior. La imagen sigue siendo una demostración local.
-
-Para desarrollo, instala esa versión de Node desde su distribución oficial y el binario independiente de [pnpm 12.12.1](https://github.com/pnpm/pnpm/releases/tag/v12.12.1) correspondiente a tu sistema. Verifica su procedencia y añade ambos a `PATH`; no ejecutes instaladores remotos sin revisión. La [guía oficial de pnpm](https://pnpm.io/installation) describe las alternativas. Docker no requiere Node/pnpm en el host.
+No cambies Node ni pnpm: la versión de Node incorpora la corrección de seguridad oficial. Instala Node desde su distribución oficial y el binario independiente de [pnpm 12.12.1](https://github.com/pnpm/pnpm/releases/tag/v12.12.1); verifica su procedencia y añade ambos a `PATH`. Docker no requiere Node ni pnpm en el host.
 
 ## Instalación y ejecución local
 
@@ -23,9 +21,9 @@ pnpm install --frozen-lockfile
 pnpm run dev
 ```
 
-La clonación de `dev-tvt-foundry` estará disponible después de que su propietario publique esa rama. Vite sirve en loopback; abre la URL que imprime y detén el proceso con `Ctrl+C` al terminar.
+Vite sirve en loopback; abre la URL que imprime y detén el proceso con `Ctrl+C`. No se necesita ningún archivo `.env`.
 
-La política de `pnpm-workspace.yaml` conserva registro HTTPS, antigüedad mínima estricta de siete días, comprobación de confianza, engines/peers estrictos y scripts de dependencias sin autorización general. No cambies el lockfile para sortear errores ni uses `pnpm dlx` o generadores sin revisión. No se necesita ningún archivo `.env`.
+La política de `pnpm-workspace.yaml` conserva registro HTTPS, antigüedad mínima de siete días, comprobación de confianza, engines/peers estrictos y scripts de dependencias sin autorización general. No cambies el lockfile para sortear errores ni uses `pnpm dlx` o generadores sin revisión.
 
 ## Comprobaciones
 
@@ -35,28 +33,25 @@ pnpm run test:demo
 pnpm run test:coverage
 pnpm run typecheck
 pnpm run build
+pnpm run test:e2e
+pnpm run check:adoption
+pnpm run check:react
+pnpm run check:distribution
 pnpm audit
 pnpm audit signatures
 pnpm ls --depth Infinity
-pnpm run test:e2e
-pnpm run check:react
-pnpm run check:distribution
 pnpm run preview
 ```
 
-`validate:demo` comprueba los 23 JSON y siete casos de control. Vitest conserva las seis pruebas anteriores de persistencia, relaciones y finanzas y añade límites, navegación, acceso y componentes. La cobertura mide explícitamente records, finance, access, navigation, primitivas, diálogo y carga de rutas; los umbrales por archivo están en `vitest.config.ts`. No mide toda la aplicación. `typecheck` incluye las pruebas. Los tipos Node 24.10.0 se usan únicamente al compilar herramientas; el runtime permanece en Node 22.23.4.
+`validate:demo` valida los fixtures y los casos de control. `test:demo` ejecuta las pruebas de datos; `test:coverage` mide records, finanzas, acceso, navegación, primitivas, diálogo y carga de rutas con umbrales por archivo, no toda la aplicación. `typecheck` incluye las pruebas. `build` genera el frontend estático; `preview` lo sirve en `127.0.0.1:4173` hasta `Ctrl+C`.
 
-Playwright usa Page Objects y comprueba acceso, historial, pestañas por teclado, formularios y persistencia. Axe aplica reglas WCAG A/AA; las imágenes comparan cuatro pantallas a 1440 y 390 px con la referencia anterior a la migración. No actualices referencias para ocultar diferencias. En Windows puede usarse Edge instalado con `$env:PLAYWRIGHT_CHANNEL='msedge'`; en otros entornos instala el navegador compatible del runner fijado con `pnpm exec playwright install chromium`. El runner cierra sus navegadores y servidor propio. `PLAYWRIGHT_BASE_URL` permite probar un contenedor local ya iniciado, cuyo ciclo de vida controla quien lo ejecuta. `preview` manual se detiene con Ctrl+C.
+Playwright usa Page Objects y comprueba acceso, historial, pestañas por teclado, formularios, persistencia, reglas axe WCAG A/AA y capturas a 1440 y 390 px. Las violaciones de axe y las diferencias visuales fallan; no actualices las referencias para ocultarlas. En Windows puede usarse Edge con `$env:PLAYWRIGHT_CHANNEL='msedge'`; en otros entornos, instala Chromium con `pnpm exec playwright install chromium`. El runner inicia y cierra su propio servidor; `PLAYWRIGHT_BASE_URL` permite probar un contenedor local cuyo ciclo de vida controla quien lo ejecuta.
 
-La referencia previa presenta un fallo de accesibilidad en Finanzas: elementos small fuera de dt/dd en indicator-cards. La prueba permanece activa y falla hasta corregirlo en un cambio de aplicación autorizado. React Doctor 0.9.18 se ejecuta con ESLint 10.12.0, su peer obligatorio, mediante `check:react`: bloquea errores y conserva advertencias. El análisis es completo en local/push y compara cambios con la rama base en pull requests; falta de base Git produce fallo. Se desactivan telemetría/score remoto y consultas a Socket.dev; pnpm mantiene las auditorías y firmas independientes. La CI conserva el fallo de accesibilidad sin omitirlo.
-
-El propietario autorizó el 22 de octubre de 2026 exclusivamente `trustPolicyExclude: ['semver@6.3.1']`, requerido por Babel dentro de React Doctor. Se verificaron SHA-512, firma npm y ausencia de avisos conocidos; esa versión no aporta atestación de procedencia. Se conservan no-downgrade global, antigüedad, peers/engines estrictos y bloqueo de scripts. Al actualizar Doctor, revisar `pnpm why semver`: retirar la excepción cuando deje de requerirse 6.3.1 y reproducir instalación congelada, auditoría y firmas. No se extiende a otras versiones ni paquetes.
-
-`build` genera pantallas con carga diferida y una recuperación visible si falla su descarga; conserva los proveedores de navegación y sesión. Tailwind escanea únicamente src e index.html, para que los archivos de asistencia no afecten al CSS. No modifica el umbral de tamaño de Vite. Las auditorías requieren red. No se ejecutan actualizadores de instrucciones al iniciar una sesión.
+`check:adoption` compara las copias locales del perfil de asistencia; no descarga Foundry ni certifica la aplicación. `check:react` es un análisis adicional y `check:distribution` revisa la distribución. Las auditorías requieren red. La excepción revisada `semver@6.3.1` está documentada en `pnpm-workspace.yaml`; no amplíes excepciones sin revisión.
 
 ## Docker
 
-El Dockerfile multietapa fija versiones y digests de Node, pnpm y NGINX. El build conserva la política pnpm, ejecuta validación, cobertura, tipos y compilación. La etapa final contiene el frontend compilado y sus avisos de licencia; sirve con NGINX 1.30.6 sobre Alpine 3.24, usuario `101:101` y puerto 8080. Las cabeceras CSP, DENY, nosniff y Referrer-Policy también se aplican al fallback SPA; CSP permite estilos inline requeridos por gráficos y progreso. No ejecuta Vite ni contiene Node/pnpm o el código fuente de la aplicación.
+El Dockerfile multietapa fija versiones y digests de Node, pnpm y NGINX. El build ejecuta validación, cobertura, tipos y compilación. La imagen final sirve el frontend con NGINX 1.30.6 sobre Alpine 3.24, usuario `101:101` y puerto 8080, con cabeceras CSP, DENY, nosniff y Referrer-Policy. No incluye Node, pnpm ni el código fuente de la aplicación.
 
 ```sh
 docker build --pull -t gpl-frontend:local .
@@ -64,7 +59,7 @@ docker run --rm -d --name gpl-demo --read-only --tmpfs /tmp:rw,noexec,nosuid,siz
 docker inspect --format '{{.State.Health.Status}}' gpl-demo
 ```
 
-Abre [GPL local](http://127.0.0.1:8080). La comprobación de salud tarda unos segundos en actualizarse. Las rutas SPA admiten acceso directo y recarga; un asset inexistente responde 404. El contenedor necesita únicamente `/tmp` escribible. Para detenerlo y eliminarlo:
+Abre [GPL local](http://127.0.0.1:8080). La comprobación de salud tarda unos segundos. Las rutas SPA admiten acceso directo y recarga; un asset inexistente responde 404. El contenedor solo necesita `/tmp` escribible. Para detenerlo y eliminarlo:
 
 ```sh
 docker stop gpl-demo
@@ -77,9 +72,9 @@ Opcionalmente, con Docker Scout disponible y su sesión iniciada, analiza la ima
 docker scout cves local://gpl-frontend:local --only-severity critical,high --exit-code
 ```
 
-No se requiere ningún volumen ni servicio externo para ejecutar la demo. Reiniciar Docker no crea persistencia compartida ni guarda registros en el contenedor.
+No se necesita ningún volumen ni servicio externo. Reiniciar Docker no crea persistencia compartida ni guarda registros en el contenedor.
 
-## Acceso, rutas y persistencia
+## Acceso y rutas
 
 Cuenta **ficticia y pública, no segura**: `pm@gpl.example.test` / `GPL-local-2026!`. No la reutilices en otro servicio. La comprobación está en el frontend; un indicador no sensible de sesión ocupa `sessionStorage`, sin contraseñas ni tokens persistidos.
 
@@ -98,6 +93,8 @@ Cuenta **ficticia y pública, no segura**: `pm@gpl.example.test` / `GPL-local-20
 
 Sin sesión, las rutas llevan a Login; tras entrar se retoma el destino. Light es inicial y Dark se puede seleccionar durante la sesión. La [guía de demostración](GUIA_DEMO.md) propone un recorrido breve.
 
+## Persistencia y límites
+
 Los JSON son semilla determinista de solo lectura, con corte `2026-10-20`. Las altas manuales se superponen mediante la clave `localStorage` **`gpl.demo.records.v1`**. Se leen formatos 1 y 2; el próximo guardado válido escribe versión 2 conservando registros anteriores. Datos inválidos o un fallo de almacenamiento producen error, sin borrar silenciosamente el contenido anterior ni simular un guardado.
 
 Los registros locales pertenecen **solo al mismo navegador y origen** (protocolo, host y puerto). `localhost`, `127.0.0.1`, Vite y Docker pueden tener almacenes distintos. No son almacenamiento seguro ni multiusuario. Para restablecer deliberadamente solo la semilla de GPL, ejecuta en la consola de ese origen y recarga:
@@ -115,12 +112,10 @@ Las decisiones de propuestas IA mantienen su alcance de sesión y se reinician a
 
 Finanzas filtra una sola moneda y no aplica conversiones. La diferencia comparable suma real menos plan únicamente en pares proyecto/mes con ambos valores. El real no es pronóstico y solo se presenta como factura emitida cuando existe referencia explícita. Los egresos esperados/reales por compras se muestran aparte: no se restan para inventar margen o presupuesto.
 
-## Distribución y licencias
+## Distribución, licencias y adopción local
 
-Todo dato de negocio publicado es ficticio. Las carpetas privadas de requisitos y referencias visuales, archivos de entorno, cachés, salidas de pruebas y herramientas locales se excluyen de Git y del contexto Docker; no deben importarse desde el frontend. Revisa también `dist/` antes de distribuir: los fixtures importados son públicos en el navegador.
+Todo dato de negocio publicado es ficticio y los fixtures importados son públicos en el navegador. Las carpetas privadas de requisitos y referencias visuales, archivos de entorno, cachés, salidas de pruebas y herramientas locales se excluyen de Git y del contexto Docker; no deben importarse desde el frontend. Revisa también `dist/` antes de distribuir.
 
-El material interno de herramientas de asistencia, sus roles y configuración permanecen locales, fuera del índice y del contexto Docker. Las copias locales se comprueban con `pnpm run check:adoption` y se alinean solo a petición mediante `pnpm run sync:adoption`; estos comandos no descargan versiones. La CI pública no depende de esos archivos privados.
+El perfil local de OpenCode, sus roles y la configuración de asistencia no se publican y no viajan en un clon del repositorio. `pnpm run check:adoption` compara copias locales; `pnpm run sync:adoption` solo se ejecuta tras una revisión explícita. Ninguno descarga Foundry ni certifica la aplicación, y la CI pública no depende de esos archivos privados.
 
-Google Sans y Manrope conservan sus licencias SIL OFL 1.1 y avisos de autoría en `src/assets/fonts/`. El build los publica en `/licenses/google-sans.txt` y `/licenses/manrope.txt`, junto con `/licenses/dependencies.txt` para las dependencias empaquetadas. La autoría de las fuentes se comprobó también en sus metadatos internos.
-
-El propietario confirmó el 21 de octubre de 2026 autorización para redistribuir `tivit-logo-no-bg.png` y `tivit-login-banner.jpeg` en este repositorio público y la imagen Docker. Esa autorización no concede una licencia general sobre las marcas. Se conservan las licencias y avisos presentes en las skills incluidas; no se concede aquí una licencia distinta para materiales de terceros.
+Google Sans y Manrope conservan sus licencias SIL OFL 1.1 y avisos de autoría en `src/assets/fonts/`. El build los publica en `/licenses/google-sans.txt` y `/licenses/manrope.txt`, junto con `/licenses/dependencies.txt` para las dependencias empaquetadas. La autorización del 21 de octubre de 2026 para redistribuir `tivit-logo-no-bg.png` y `tivit-login-banner.jpeg` no concede una licencia general sobre las marcas. Se conservan las licencias y avisos de las skills incluidas; no se concede aquí una licencia distinta para materiales de terceros.
