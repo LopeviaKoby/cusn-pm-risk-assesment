@@ -18,8 +18,7 @@
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "check:react": "node scripts/check-react.mjs",
-    "check:adoption": "node scripts/sync-adoption.mjs --check",
-    "sync:adoption": "node scripts/sync-adoption.mjs --write",
+    "check:adoption": "node scripts/verify-foundry-adoption.mjs",
     "check:distribution": "node scripts/check-distribution.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },

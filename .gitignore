@@ -44,6 +44,11 @@ Thumbs.db
 /.agents/foundry/
 /.agents/roles/
 /FRAMEWORK_ADOPTION.md
+/.opencode-backup-*/
+/VERSIONS.md
+/.gitleaks.toml
+/.env.example
+/foundry-seal-*
 /.agents/skills/framework-governance/
 /.agents/skills/react/
 /.agents/skills/typescript/

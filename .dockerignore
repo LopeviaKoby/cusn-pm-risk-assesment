@@ -44,5 +44,10 @@ AGENTS.md
 .opencode/
 opencode.json
 .workflow/
+.opencode-backup-*/
+VERSIONS.md
+.gitleaks.toml
+.env.example
+foundry-seal-*
 FRAMEWORK_ADOPTION.md
 tests/e2e/

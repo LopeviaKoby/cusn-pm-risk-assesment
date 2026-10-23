@@ -47,7 +47,7 @@ pnpm run preview
 
 Playwright usa Page Objects y comprueba acceso, historial, pestañas por teclado, formularios, persistencia, reglas axe WCAG A/AA y capturas a 1440 y 390 px. Las violaciones de axe y las diferencias visuales fallan; no actualices las referencias para ocultarlas. En Windows puede usarse Edge con `$env:PLAYWRIGHT_CHANNEL='msedge'`; en otros entornos, instala Chromium con `pnpm exec playwright install chromium`. El runner inicia y cierra su propio servidor; `PLAYWRIGHT_BASE_URL` permite probar un contenedor local cuyo ciclo de vida controla quien lo ejecuta.
 
-`check:adoption` compara las copias locales del perfil de asistencia; no descarga Foundry ni certifica la aplicación. `check:react` es un análisis adicional y `check:distribution` revisa la distribución. Las auditorías requieren red. La excepción revisada `semver@6.3.1` está documentada en `pnpm-workspace.yaml`; no amplíes excepciones sin revisión.
+`check:adoption` ejecuta los verificadores originales del sello Foundry cuando el payload interno está presente; no descarga Foundry ni certifica la aplicación. `check:react` es un análisis adicional y `check:distribution` revisa la distribución. Las auditorías requieren red. La excepción revisada `semver@6.3.1` está documentada en `pnpm-workspace.yaml`; no amplíes excepciones sin revisión.
 
 ## Docker
 
@@ -116,6 +116,8 @@ Finanzas filtra una sola moneda y no aplica conversiones. La diferencia comparab
 
 Todo dato de negocio publicado es ficticio y los fixtures importados son públicos en el navegador. Las carpetas privadas de requisitos y referencias visuales, archivos de entorno, cachés, salidas de pruebas y herramientas locales se excluyen de Git y del contexto Docker; no deben importarse desde el frontend. Revisa también `dist/` antes de distribuir.
 
-El perfil local de OpenCode, sus roles y la configuración de asistencia no se publican y no viajan en un clon del repositorio. `pnpm run check:adoption` compara copias locales; `pnpm run sync:adoption` solo se ejecuta tras una revisión explícita. Ninguno descarga Foundry ni certifica la aplicación, y la CI pública no depende de esos archivos privados.
+El árbol oficial de Foundry, la configuración de OpenCode, sus roles y las skills propias no se publican y no viajan en un clon del repositorio. La verificación del sello se realiza con el archivo interno y la nota entregada por el owner; `pnpm run check:adoption` ejecuta los verificadores originales cuando ese payload está presente. Ninguno descarga Foundry ni certifica la aplicación, y la CI pública no depende de esos archivos privados.
 
 Google Sans y Manrope conservan sus licencias SIL OFL 1.1 y avisos de autoría en `src/assets/fonts/`. El build los publica en `/licenses/google-sans.txt` y `/licenses/manrope.txt`, junto con `/licenses/dependencies.txt` para las dependencias empaquetadas. La autorización del 21 de octubre de 2026 para redistribuir `tivit-logo-no-bg.png` y `tivit-login-banner.jpeg` no concede una licencia general sobre las marcas. Se conservan las licencias y avisos de las skills incluidas; no se concede aquí una licencia distinta para materiales de terceros.
+
+<!-- tivit-foundry-signature: $2a$12$WX6l8g9An0Tz8UxbqqxV/eEorqzHariOJmGexnJnxM2RA4WtJnYfK -->
