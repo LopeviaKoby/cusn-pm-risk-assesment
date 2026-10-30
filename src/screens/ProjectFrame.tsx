@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Badge } from "@/components/ui/primitives";
+import { dataMode } from "@/data/mode";
 import { date, number, percent } from "@/demo/view-models";
 import type { ProjectContext } from "@/demo/project-context";
 import { contextualPath, Link, safeReturn, useNavigation } from "@/navigation";
@@ -39,6 +40,7 @@ export function UnavailableRecord({ title, back }: { title: string; back: string
 }
 export function PendingSuggestions({ model }: { model: ProjectContext }) {
   const { url } = useNavigation();
+  if (dataMode === "api") return null;
   return <Panel title="Sugerencias pendientes" after={<Badge tone="info">{model.pendingSuggestions.length}</Badge>}>
     {model.pendingSuggestions.length ? <ul className="context-list">{model.pendingSuggestions.map(item => <li key={item.id}><div><small>{item.id}</small><Badge tone="info">No registrada</Badge></div><strong>{item.title}</strong><Link href={contextualPath(`/proyectos/${model.project.id}/sugerencias/${item.id}`, url, true)}>Ver sugerencia</Link></li>)}</ul> : <p className="muted">Sin sugerencias pendientes.</p>}
   </Panel>;

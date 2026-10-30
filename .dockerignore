@@ -51,3 +51,4 @@ VERSIONS.md
 foundry-seal-*
 FRAMEWORK_ADOPTION.md
 tests/e2e/
+server/tests/

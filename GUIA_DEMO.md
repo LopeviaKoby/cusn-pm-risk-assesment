@@ -2,6 +2,8 @@
 
 GPL ayuda al Project Manager a consultar avances, priorizar seguimiento y formalizar riesgos. Esta demostración usa información ficticia y una fecha de corte fija; las propuestas de IA son sugerencias simuladas que requieren decisión humana.
 
+Esta guía cubre solo el artefacto demo. El entorno local conectado descrito en [`specs/migracion-apps-script-a-bun.md`](specs/migracion-apps-script-a-bun.md) se ejecuta aparte con `pnpm run dev:web:api` y no forma parte de este recorrido.
+
 Accede con la cuenta ficticia pública `pm@gpl.example.test` y clave `GPL-local-2026!`. Este acceso es de presentación, no autenticación segura. La aplicación comienza en Light; Dark está disponible durante la sesión.
 
 | Área | Qué puedes consultar y hacer |

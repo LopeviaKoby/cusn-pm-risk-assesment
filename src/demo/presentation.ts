@@ -24,7 +24,7 @@ export function projectStatusTone(status: string) {
   switch (status) {
     case "Cancelado": return "danger" as const;
     case "Detenido": return "review" as const;
-    case "Terminado": return "positive" as const;
+    case "Terminado": case "Cerrado exitoso": return "positive" as const;
     case "En ejecución": case "En transición": return "info" as const;
     default: return "neutral" as const;
   }

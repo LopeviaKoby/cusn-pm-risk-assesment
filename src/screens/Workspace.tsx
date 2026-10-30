@@ -1,8 +1,38 @@
 import { FileText, Folder, ShieldCheck, Sparkles } from "lucide-react";
 import { Badge, Button, Empty, ExposureBadge, Filter, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
+import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/ui/table-tools";
 import { date, getSuggestionEvidence, matches, officialRiskRows, projectRows, relativeDate, unique, workItems, type WorkItem } from "@/demo/view-models";
 import { sessionProject, useDemoSession } from "@/demo/session";
+import { dataMode } from "@/data/mode";
 import { contextualPath, Link, useNavigation } from "@/navigation";
+
+function WorkspaceTable({ rows, selectedId, onSelect }: { rows: WorkItem[]; selectedId?: string; onSelect: (id: string) => void }) {
+  const { session } = useDemoSession();
+  const edits = useRowEdits("workspace", rows);
+  const table = useTableSort(edits.rows, {
+    title: row => row.title,
+    project: row => sessionProject(row.projectId ?? "", session)?.name ?? "Transversal",
+    kind: row => row.kind,
+    date: row => row.date,
+  });
+  const fields = [
+    { key: "title", label: "Asunto", value: (row: WorkItem) => row.title, required: true },
+    { key: "kind", label: "Tipo", type: "select" as const, options: unique(rows.map(row => row.kind)).map(value => ({ value, label: value })), value: (row: WorkItem) => row.kind },
+    { key: "date", label: "Fecha", type: "date" as const, value: (row: WorkItem) => row.date },
+  ];
+  return <TableRegion label="Bandeja de asuntos"><table className="workspace-table"><thead><tr>
+    <SortHeader label="Asunto" column="title" sort={table.sort} onToggle={table.toggle} />
+    <SortHeader label="Proyecto" column="project" sort={table.sort} onToggle={table.toggle} />
+    <SortHeader label="Tipo" column="kind" sort={table.sort} onToggle={table.toggle} />
+    <RowActionsHeader />
+  </tr></thead><tbody>
+    {table.rows.map(item => <tr key={item.id} className="data-row" data-selected={selectedId === item.id}>
+      <th scope="row"><button className="row-select" onClick={() => onSelect(item.id)} aria-pressed={selectedId === item.id}><strong>{item.title}</strong><small>{item.id} · {relativeDate(item.date)}{item.overdue && " · Vencida"}</small></button></th>
+      <td>{sessionProject(item.projectId ?? "", session)?.name ?? "Transversal"}</td><td><Badge tone={item.suggestionId ? "info" : item.overdue ? "review" : "neutral"}>{item.kind}</Badge></td>
+      <RowActions><RowEdit row={item} label="asunto" record={item.title} fields={fields} onSave={edits.save} /></RowActions>
+    </tr>)}
+  </tbody></table></TableRegion>;
+}
 
 function Preview({ item }: { item: WorkItem | undefined }) {
   const { session } = useDemoSession();
@@ -31,6 +61,7 @@ function Preview({ item }: { item: WorkItem | undefined }) {
 export default function Workspace() {
   const { session } = useDemoSession();
   const { url, navigate } = useNavigation();
+  const isApi = dataMode === "api";
   const params = new URLSearchParams(url.split("?")[1]);
   const tab = params.get("bandeja") === "seguimiento" ? "following" : "review";
   const query = params.get("q") ?? "", kind = params.get("type") ?? "", project = params.get("project") ?? "";
@@ -38,7 +69,7 @@ export default function Workspace() {
   const navigateParams = (next: URLSearchParams, replace = true) => navigate(`/workspace${next.size ? `?${next}` : ""}`, replace);
   const set = (field: string, value: string) => { const next = new URLSearchParams(params); if (value) next.set(field, value); else next.delete(field); navigateParams(next); };
   const setQuery = (value: string) => set("q", value), setKind = (value: string) => set("type", value), setProject = (value: string) => set("project", value);
-  const setSort = (value: string) => set("sort", value), setSelectedId = (value: string) => set("asunto", value);
+  const setSelectedId = (value: string) => set("asunto", value);
   const all = workItems(tab === "following", session);
   const rows = all.filter(item => matches(query, item.title, item.id, sessionProject(item.projectId ?? "", session)?.name)
     && (!kind || item.kind === kind) && (!project || item.projectId === project))
@@ -52,16 +83,10 @@ export default function Workspace() {
   const content = <><div className="toolbar workspace-toolbar"><SearchField label="Buscar en Workspace" value={query} onChange={setQuery} />
     <Filter label="Tipo" value={kind} onChange={setKind} options={unique(all.map(item => item.kind))} />
     <Filter label="Proyecto" value={project} onChange={setProject} options={projectRows(session).map(row => ({ value: row.id, label: row.name }))} />
-    <Filter label="Ordenar" value={sort} onChange={setSort} all="" options={[{ value: "default", label: "Por tipo de asunto" }, { value: "recent", label: "Más recientes" }, { value: "oldest", label: "Más antiguos" }]} />
     {(query || kind || project) && <Button variant="ghost" onClick={clear}>Limpiar filtros</Button>}</div>
-    {rows.length ? <TableRegion label="Bandeja de asuntos"><table className="workspace-table"><thead><tr><th scope="col">Asunto</th><th scope="col">Proyecto</th><th scope="col">Tipo</th></tr></thead><tbody>
-      {rows.map(item => <tr key={item.id} data-selected={selected?.id === item.id}>
-        <th scope="row"><button className="row-select" onClick={() => setSelectedId(item.id)} aria-pressed={selected?.id === item.id}><strong>{item.title}</strong><small>{item.id} · {relativeDate(item.date)}{item.overdue && " · Vencida"}</small></button></th>
-        <td>{sessionProject(item.projectId ?? "", session)?.name ?? "Transversal"}</td><td><Badge tone={item.suggestionId ? "info" : item.overdue ? "review" : "neutral"}>{item.kind}</Badge></td>
-      </tr>)}
-    </tbody></table></TableRegion> : <Empty onClear={clear} />}<TableFooter count={rows.length} total={all.length} noun="asuntos" /></>;
+    {rows.length ? <WorkspaceTable rows={rows} selectedId={selected?.id} onSelect={setSelectedId} /> : <Empty onClear={clear} />}<TableFooter count={rows.length} total={all.length} noun="asuntos" /></>;
   return <div className="workspace-layout"><div className="page workspace-main"><PageHeading title="Workspace" description="Asuntos que requieren atención y seguimiento en los proyectos." />
-    <p className="workspace-summary" role="status"><span>{rows.length} {tab === "following" ? "en seguimiento" : "por revisar"}</span><span className="review-overdue">{overdueCount} {overdueCount === 1 ? "vencido" : "vencidos"}</span><span><Sparkles aria-hidden="true" />{suggestionCount} {suggestionCount === 1 ? "sugerencia de IA" : "sugerencias de IA"}</span></p>
+    <p className="workspace-summary" role="status"><span>{rows.length} {tab === "following" ? "en seguimiento" : "por revisar"}</span><span className="review-overdue">{overdueCount} {overdueCount === 1 ? "vencido" : "vencidos"}</span>{!isApi && <span><Sparkles aria-hidden="true" />{suggestionCount} {suggestionCount === 1 ? "sugerencia de IA" : "sugerencias de IA"}</span>}</p>
     <section className="table-card"><Tabs value={tab} onValueChange={value => changeTab(String(value))}><TabsList aria-label="Bandeja de trabajo"><TabsTrigger value="review">Por revisar <span className="count">{workItems(false, session).length}</span></TabsTrigger><TabsTrigger value="following">En seguimiento <span className="count">{workItems(true, session).length}</span></TabsTrigger></TabsList>
       {["review", "following"].map(value => <TabsContent key={value} value={value}>{content}</TabsContent>)}
     </Tabs></section></div><Preview item={selected} /></div>;
