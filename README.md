@@ -37,3 +37,9 @@ pnpm run test:e2e
 - `NULL` en evaluación de riesgos o importes significa ausencia de registro y se presenta como “Sin dato” o “Sin evaluación”; cero se conserva como importe registrado. El tipo amenaza/oportunidad tampoco se infiere cuando el esquema no lo aporta.
 
 El diseño visual y Atomic Design se documentan en [`app/src/design-system/DESIGN.md`](app/src/design-system/DESIGN.md) y [`AGENTS.md`](AGENTS.md). `specs/migracion-apps-script-a-bun.md` conserva decisiones históricas previas a esta estructura; esta página y el código vigente describen el estado ejecutable.
+
+## Foundry (solo `dev-tvt-foundry`)
+
+`pnpm run check:adoption` usa los verificadores originales cuando el payload interno está presente. No descarga Foundry ni certifica la aplicación. El árbol oficial, la configuración de OpenCode y sus roles permanecen fuera del repositorio y del contexto Docker; la CI pública no depende de ellos.
+
+<!-- tivit-foundry-signature: $2a$12$WX6l8g9An0Tz8UxbqqxV/eEorqzHariOJmGexnJnxM2RA4WtJnYfK -->
