@@ -1,6 +1,8 @@
 * text=auto eol=lf
 *.png binary
 *.ttf binary
+# Preserve the supplied SQL contract bytes and its migration checksum (CRLF).
+app/api/migrations/005_pmo_cusn_v200.sql -text whitespace=cr-at-eol
 # Preserve upstream skill formatting, including Markdown hard breaks.
 .agents/skills/** whitespace=-blank-at-eol,-blank-at-eof
 .agents/licenses/** whitespace=-blank-at-eol,-blank-at-eof

@@ -5,7 +5,7 @@ name: gpl-pmo
 x-api-image: &api-image
   build:
     context: .
-    dockerfile: server/Dockerfile
+    dockerfile: app/api/Dockerfile
   image: gpl-pmo-api:local
 
 x-logging: &default-logging
@@ -41,7 +41,7 @@ services:
   migrate:
     <<: *api-image
     restart: "no"
-    command: ["bun", "run", "server/scripts/migrate.ts", "--mode=${DB_MIGRATE_MODE:-schema}"]
+    command: ["bun", "run", "app/api/scripts/migrate.ts", "--mode=${DB_MIGRATE_MODE:-schema}"]
     environment:
       MIGRATOR_DATABASE_URL: postgres://${POSTGRES_USER:-pmo_owner}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pmo}
     depends_on:
@@ -56,7 +56,7 @@ services:
   bootstrap:
     <<: *api-image
     restart: "no"
-    command: ["bun", "run", "server/scripts/bootstrap-db.ts"]
+    command: ["bun", "run", "app/api/scripts/bootstrap-db.ts"]
     environment:
       MIGRATOR_DATABASE_URL: postgres://${POSTGRES_USER:-pmo_owner}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-pmo}
       APP_DB_ROLE: ${APP_DB_ROLE:-pmo_app}
@@ -73,7 +73,7 @@ services:
   verify:
     <<: *api-image
     restart: "no"
-    command: ["bun", "run", "server/scripts/verify-db.ts"]
+    command: ["bun", "run", "app/api/scripts/verify-db.ts"]
     environment:
       DATABASE_URL: postgres://${APP_DB_ROLE:-pmo_app}:${APP_DB_PASSWORD}@db:5432/${POSTGRES_DB:-pmo}
       EXPECT_PROJECTS: ${EXPECT_PROJECTS:-}
@@ -128,8 +128,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        APP_MODE: api
     image: gpl-pmo-web:local
     restart: unless-stopped
     ports:

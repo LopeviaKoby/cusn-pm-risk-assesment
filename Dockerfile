@@ -2,21 +2,18 @@
 FROM ghcr.io/pnpm/pnpm:12.12.1@sha256:150c9372f3a6d02039f11dc7d1f6070896567038968c97bbb224e3b03ee3cbcc AS package-manager
 
 FROM node:22.23.4-bookworm-slim@sha256:de170b39439eb0e5a3444ad7d60b015614a381e10fecae2e30ec9e735122f38d AS build
-ARG APP_MODE=demo
 COPY --from=package-manager /opt/pnpm /opt/pnpm
 RUN ln -s /opt/pnpm/pnpm /usr/local/bin/pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN node --version && pnpm --version && pnpm install --frozen-lockfile
 COPY index.html tsconfig.json tsconfig.tests.json vite.config.ts vitest.config.ts playwright.config.ts ./
-COPY src/ ./src/
+COPY app/src/ ./app/src/
 COPY scripts/ ./scripts/
 COPY tests/ ./tests/
-RUN case "$APP_MODE" in demo|api) ;; *) echo "APP_MODE inválido: $APP_MODE"; exit 1 ;; esac \
- && pnpm run validate:demo \
- && pnpm run test:coverage \
+RUN pnpm run test \
  && pnpm run typecheck \
- && if [ "$APP_MODE" = "api" ]; then pnpm run build:api; else pnpm run build; fi
+ && pnpm run build
 
 FROM nginxinc/nginx-unprivileged:1.30.6-alpine3.24@sha256:f5116ed4606f3eb015dd4a8e28cb9b351476dc0ad4bc6e9f93b19cec130cdf03 AS runtime
 USER root

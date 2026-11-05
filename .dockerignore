@@ -3,7 +3,7 @@
 .agents/
 .codex/
 .codegraph/
-/src/design-system/references/
+/app/src/design-system/references/
 /docs/
 design/
 node_modules/
@@ -51,4 +51,4 @@ VERSIONS.md
 foundry-seal-*
 FRAMEWORK_ADOPTION.md
 tests/e2e/
-server/tests/
+app/api/tests/

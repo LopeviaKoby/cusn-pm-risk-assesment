@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { expect, test } from "vitest";
-import { Link, NavigationProvider, contextualPath, safeReturn, useNavigation } from "../src/navigation";
+import { Link, NavigationProvider, contextualPath, safeReturn, useNavigation } from "../app/src/navigation";
 
 test("destinos locales y filtros contextuales no aceptan retornos externos", () => {
   for (const value of [null, "https://example.test", "//example.test", "/login", "javascript:alert(1)"]) expect(safeReturn(value, "/workspace")).toBe("/workspace");
