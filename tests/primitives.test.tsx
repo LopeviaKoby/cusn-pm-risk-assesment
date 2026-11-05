@@ -1,9 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { expect, test, vi } from "vitest";
-import { Badge, Button, Empty, ExposureBadge, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "../src/components/atoms/primitives";
-import { RecordDialog } from "../src/components/organisms/record-dialog";
-import { loadScreen, RouteContent } from "../src/components/molecules/route-loader";
+import { Badge, Button, Empty, ExposureBadge, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "../app/src/components/atoms/primitives";
+import { RecordDialog } from "../app/src/components/organisms/record-dialog";
+import { loadScreen, RouteContent } from "../app/src/components/molecules/route-loader";
 
 test("botones no envían formularios por defecto; búsquedas, filtros y estados son accesibles", () => {
   const submit = vi.fn(), search = vi.fn(), filter = vi.fn(), clear = vi.fn();

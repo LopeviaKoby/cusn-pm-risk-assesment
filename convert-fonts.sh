@@ -5,10 +5,10 @@
 # Mantiene TTF funcionales como fallback; solo tras validar WOFF2 se actualiza fonts.css.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-GS_TTF="$ROOT/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf"
-MN_TTF="$ROOT/src/assets/fonts/manrope/Manrope-VariableFont_wght.ttf"
-GS_W2="$ROOT/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.woff2"
-MN_W2="$ROOT/src/assets/fonts/manrope/Manrope-VariableFont_wght.woff2"
+GS_TTF="$ROOT/app/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf"
+MN_TTF="$ROOT/app/src/assets/fonts/manrope/Manrope-VariableFont_wght.ttf"
+GS_W2="$ROOT/app/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.woff2"
+MN_W2="$ROOT/app/src/assets/fonts/manrope/Manrope-VariableFont_wght.woff2"
 need() { command -v "$1" >/dev/null 2>&1 || { echo "FALTA prerequisito: $1" >&2; exit 2; }; }
 need python3
 python3 - <<'PY'

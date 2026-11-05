@@ -1,0 +1,48 @@
+/* PMO TIVIT–Almaviva · fuente única tipográfica. Fuente normativa de valores: DESIGN_TOKENS.md v1.0 (2026-11-05).
+ * Define @font-face locales + primitivas tipográficas (--font-*, --type-*). Sin colores/temas/layout.
+ * Google Sans variable: app/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf
+ *   ejes reales fvar: wght 400–700, opsz 17–18, GRAD -50–200. Rango declarado: 400 700 (cubre 500/600/700 de la norma).
+ * Manrope variable: app/src/assets/fonts/manrope/Manrope-VariableFont_wght.ttf
+ *   eje real fvar: wght 200–800. Rango declarado: 200 800 (cubre 400/500/600 de la norma).
+ * Ambas conservan OFL 1.1 en su carpeta (OFL.txt). Sin italics (no hay archivo real), sin CDN, rutas relativas a este archivo.
+ */
+@font-face {
+  font-family: "Google Sans";
+  src: url("../assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Manrope";
+  src: url("../assets/fonts/manrope/Manrope-VariableFont_wght.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+}
+
+:root {
+  --font-heading: "Google Sans", "Segoe UI", sans-serif;
+  --font-body: "Manrope", "Segoe UI", sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --type-h1-size: 32px; --type-h1-line: 40px; --type-h1-weight: 700; --type-h1-track: -0.030em;
+  --type-h2-size: 28px; --type-h2-line: 36px; --type-h2-weight: 600; --type-h2-track: -0.020em;
+  --type-h3-size: 24px; --type-h3-line: 32px; --type-h3-weight: 600; --type-h3-track: -0.015em;
+  --type-h4-size: 20px; --type-h4-line: 28px; --type-h4-weight: 600; --type-h4-track: -0.010em;
+  --type-subtitle-size: 18px; --type-subtitle-line: 26px; --type-subtitle-weight: 500; --type-subtitle-track: -0.005em;
+  --type-body-lg-size: 16px; --type-body-lg-line: 26px; --type-body-lg-weight: 400; --type-body-lg-track: 0em;
+  --type-body-size: 14px; --type-body-line: 22px; --type-body-weight: 400; --type-body-track: 0em;
+  --type-body-sm-size: 13px; --type-body-sm-line: 20px; --type-body-sm-weight: 400; --type-body-sm-track: +0.005em;
+  --type-caption-size: 12px; --type-caption-line: 18px; --type-caption-weight: 500; --type-caption-track: +0.010em;
+  --type-action-size: 14px; --type-action-line: 20px; --type-action-weight: 600; --type-action-track: 0em;
+  --type-entry-size: 14px; --type-entry-line: 22px; --type-entry-weight: 400; --type-entry-track: 0em;
+  --type-label-size: 13px; --type-label-line: 18px; --type-label-weight: 600; --type-label-track: 0em;
+  --type-status-size: 12px; --type-status-line: 16px; --type-status-weight: 600; --type-status-track: +0.010em;
+  --type-metric-size: 28px; --type-metric-line: 34px; --type-metric-weight: 700; --type-metric-track: -0.010em;
+  --type-h1-mobile-size: 28px; --type-h1-mobile-line: 36px;
+  --type-h2-mobile-size: 24px; --type-h2-mobile-line: 32px;
+}

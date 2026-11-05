@@ -1,0 +1,48 @@
+{
+  "schema": "pmo_cusn",
+  "source": "pmo_gestion_riesgos_esquema_logico_v200.sql",
+  "legacyMigrations": [
+    {
+      "file": "001_schema.sql",
+      "mode": "schema",
+      "sha256": "f2f2f9ec388b5821b777759d1e6b89f86af18b52ff72c25e6dcef392d6e52389"
+    },
+    {
+      "file": "004_units.sql",
+      "mode": "schema",
+      "sha256": "f8ba8d4fdde396f38cf5ab88050bb50b4c0ad6a12594349165c75a0b508c54ed"
+    }
+  ],
+  "migrations": [
+    {
+      "file": "005_pmo_cusn_v200.sql",
+      "mode": "schema",
+      "sha256": "1b209ae306ee0d1f6a3f62d2a1921a7da801ff123ffa7da067037c2967cfb9d5"
+    },
+    {
+      "file": "006_function_paths.sql",
+      "mode": "schema",
+      "sha256": "21f4fd0e2593d20b61c3bcb70f30b91704425f54f9360943f351e676f4828600"
+    },
+    {
+      "file": "007_business_patch.sql",
+      "mode": "schema",
+      "sha256": "10f210ac8bcb7db087d829b3fe18e75c95dd1d545efac9814be7a30aa9334884"
+    },
+    {
+      "file": "008_business_guards.sql",
+      "mode": "schema",
+      "sha256": "e43efb914d308a4a57f7b0f42b97ca9ac5b3871e9c04aeb6721dac505af8bc75"
+    },
+    {
+      "file": "009_cc_approval_trace.sql",
+      "mode": "schema",
+      "sha256": "2b53a5902ada6643a0ff9726bf1664db5273df5f53bbb4beda7a39615a59a769"
+    },
+    {
+      "file": "010_closed_evidence_guard.sql",
+      "mode": "schema",
+      "sha256": "1393696e8b93f8486ad6d03a43b3a7f685c194bd94c5baf88148b0a3082896bf"
+    }
+  ]
+}

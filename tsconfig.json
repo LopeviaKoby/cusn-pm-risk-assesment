@@ -6,7 +6,7 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "bundler",
-    "paths": {"@/*": ["./src/*"]},
+    "paths": {"@/*": ["./app/src/*"]},
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -20,5 +20,5 @@
     "noUncheckedIndexedAccess": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["app/src", "vite.config.ts"]
 }

@@ -1,12 +1,12 @@
 # Migración de Apps Script a Bun
 
-> **Estado:** plan aprobado por el owner el 2026-10-26; T-01 ejecutado. Ninguna otra tarea está implementada.
+> **Nota vigente 2026-11-05:** Este plan conserva el historial de decisiones del laboratorio. La aplicación ejecutable ahora está en `app/src/` y `app/api/`, con migraciones activas `app/api/migrations/005`–`010`; `README.md` y `DEPLOY.md` describen los comandos actuales. El árbol demo, sus semillas y su modo de build fueron retirados. Las rutas, modos y restricciones de publicación expresadas abajo corresponden a etapas anteriores y no describen el estado vigente.
 > **Owner:** Pedro Lopez Chavarria.
 > **Base verificada:** rama `dev-tvt-foundry`, HEAD `315bb91a3de59471e2dadb37824295d9c8666b83`, árbol limpio al iniciar la investigación.
-> **Autoridades:** `AGENTS.md`, `src/design-system/DESIGN.md`, código y fixtures vigentes; este plan para el alcance del laboratorio conectado.
-> **Límite:** este documento no certifica Foundry, no autoriza uso corporativo, carga histórica, cierre, retiro de Apps Script, commits, push ni despliegue.
+> **Autoridades actuales:** `AGENTS.md`, `app/src/design-system/DESIGN.md`, código y migraciones vigentes; el resto de este plan es registro histórico del laboratorio.
+> **Límite:** este documento no certifica Foundry, no autoriza uso corporativo, carga histórica fuera de los sintéticos comprobables, retiro de Apps Script, commits, push ni despliegue. El cierre local con evidencias explícitas fue autorizado posteriormente y se detalla en `DEPLOY.md`.
 
-La investigación original fue de solo lectura: no ejecutó instalaciones, pruebas, builds, SQL, commits ni cambios de archivos. T-01 agregó este documento y actualizó la documentación de alcance; nada del laboratorio está implementado.
+La investigación original (histórica, anterior a la implementación) fue de solo lectura: no ejecutó instalaciones, pruebas, builds, SQL, commits ni cambios de archivos. T-01 agregó este documento y actualizó la documentación de alcance; nada del laboratorio está implementado.
 
 ## 1. Resumen ejecutivo
 

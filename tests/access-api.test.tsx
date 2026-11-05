@@ -11,17 +11,17 @@ const mocks = vi.hoisted(() => {
   return { api: vi.fn(), ApiError };
 });
 
-vi.mock("@/data/mode", () => ({ dataMode: "api" }));
+
 vi.mock("@/data/client", () => ({ api: mocks.api, ApiError: mocks.ApiError }));
 
-import { AccessProvider, ThemeProvider, useAccess } from "../src/demo/access";
+import { AccessProvider, ThemeProvider, useAccess } from "../app/src/data/access";
 
 function ApiAccess() {
   const { signedIn, signIn, signOut } = useAccess();
   return <>
     <output>{signedIn ? "dentro" : "fuera"}</output>
     <button onClick={() => void signIn("lab", "pw").catch(() => undefined)}>Entrar</button>
-    <button onClick={() => void signOut()}>Salir</button>
+    <button onClick={() => void signOut().catch(() => undefined)}>Salir</button>
   </>;
 }
 
@@ -59,7 +59,7 @@ test("un fallo de red al entrar se propaga sin cambiar la sesión", async () => 
   expect(screen.getByRole("status")).toHaveTextContent("fuera");
 });
 
-test("un fallo al cerrar sesión no bloquea la salida local", async () => {
+test("un fallo al cerrar sesión conserva la sesión hasta que el servidor confirme el cierre", async () => {
   window.history.replaceState(null, "", "/login");
   mocks.api.mockResolvedValueOnce({});
   render(<ThemeProvider><AccessProvider><ApiAccess /></AccessProvider></ThemeProvider>);
@@ -67,5 +67,6 @@ test("un fallo al cerrar sesión no bloquea la salida local", async () => {
   await screen.findByText("dentro");
   mocks.api.mockRejectedValueOnce(new Error("network"));
   fireEvent.click(screen.getByText("Salir"));
-  await screen.findByText("fuera");
+  await waitFor(() => expect(mocks.api).toHaveBeenCalledWith("/api/v1/sesion", { method: "DELETE" }));
+  expect(screen.getByRole("status")).toHaveTextContent("dentro");
 });
