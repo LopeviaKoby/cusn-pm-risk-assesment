@@ -10,7 +10,6 @@ import { projectStates } from "./catalogs";
 
 export { asOfDate, getUser, getProject, getSuggestionEvidence };
 export type Project = (typeof projects)[number];
-export const demoUser = currentUser;
 export const percent = (value: number | null, digits = 0) => value === null ? "—" : new Intl.NumberFormat("es-PE", { style: "percent", maximumFractionDigits: digits }).format(value);
 export const number = (value: number) => new Intl.NumberFormat("es-PE", { maximumFractionDigits: 2 }).format(value);
 export function date(value: string | null | undefined): string {
@@ -34,11 +33,13 @@ export function projectRows(session: DemoSession = emptySession) {
     const overdueReviewCount = projectRisks.filter(risk => risk.overdue).length;
     const progress = getLatestProgress(project.id);
     const status = metrics.status?.status ?? project.initialStatus ?? "Sin estado";
+    const labels = project as typeof project & { lob?: string; service?: string; squad?: string };
     return {
       ...project, ...metrics, status, situationNote: metrics.status?.situationNote,
-      lob: catalogs.lobs.find(item => item.id === project.lobId)?.label ?? project.lob ?? "Sin dato",
-      service: catalogs.services.find(item => item.id === project.serviceId)?.label ?? "Sin dato",
-      squad: catalogs.squads.find(item => item.id === project.squadId)?.label ?? "Sin dato",
+      nextSteps: metrics.status?.nextSteps ?? null,
+      lob: catalogs.lobs.find(item => item.id === project.lobId)?.label ?? labels.lob ?? project.lob ?? "Sin dato",
+      service: catalogs.services.find(item => item.id === project.serviceId)?.label ?? labels.service ?? (project.serviceId || "Sin dato"),
+      squad: catalogs.squads.find(item => item.id === project.squadId)?.label ?? labels.squad ?? (project.squadId || "Sin dato"),
       techLead: getUser(project.techLeadId ?? "")?.name ?? "Sin dato",
       openRiskCount: projectRisks.length, overdueReviewCount,
       updatedAt: metrics.status?.updatedAt ?? progress?.snapshotDate ?? project.createdAt ?? asOfDate,
@@ -51,6 +52,7 @@ export function projectRows(session: DemoSession = emptySession) {
   });
 }
 export type ProjectRow = ReturnType<typeof projectRows>[number];
+export type RiskRow = ReturnType<typeof officialRiskRows>[number];
 
 export function officialRiskRows(session: DemoSession = emptySession) {
   return sessionRisks(session).map(risk => {
@@ -135,7 +137,7 @@ export function filterProjects(all: ProjectRow[], filters: ProjectFilters) {
   const base = all.filter(row => matches(filters.query, row.name, row.code, row.client.name)
     && (!filters.status || row.status === filters.status) && (!filters.manager || row.managerId === filters.manager) && (!filters.country || row.country === filters.country)
     && (!filters.lob || row.lob === filters.lob) && (!filters.squad || row.squad === filters.squad) && (!filters.lead || row.techLead === filters.lead));
-  const matchesView = (row: ProjectRow, view: string) => view === "mine" ? row.managerId === demoUser.id : view === "attention" ? row.needsAttention : view === "execution" ? row.executing : true;
+  const matchesView = (row: ProjectRow, view: string) => view === "mine" ? row.managerId === currentUser.id : view === "attention" ? row.needsAttention : view === "execution" ? row.executing : true;
   const rows = base.filter(row => matchesView(row, filters.view)).sort((a, b) => filters.sort === "name" ? a.name.localeCompare(b.name, "es") : filters.sort === "spi" ? (a.spi ?? Infinity) - (b.spi ?? Infinity) : filters.sort === "end" ? (a.plannedEndDate ?? "9999").localeCompare(b.plannedEndDate ?? "9999") : b.updatedAt.localeCompare(a.updatedAt));
   return { rows, counts: Object.fromEntries(projectViews.map(view => [view.value, base.filter(row => matchesView(row, view.value)).length])),
     summary: { executing: rows.filter(row => row.executing).length, behind: rows.filter(row => row.behind).length, risks: rows.reduce((sum, row) => sum + row.openRiskCount, 0) } };

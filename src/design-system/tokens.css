@@ -1,0 +1,438 @@
+/* PMO TIVIT–Almaviva · tokens centrales. Fuente normativa: DESIGN_TOKENS.md v1.0 (2026-11-05).
+ * Importado una vez desde la hoja global de la aplicación (src/design-system/app.css),
+ * después de ./fonts.css que es la fuente única tipográfica (--font-*, --type-*).
+ * Este archivo no declara @font-face ni primitivas tipográficas; solo aliases
+ * gpl-font y gpl-type vía var() hacia fonts.css.
+ * Light es el tema inicial (:root). Familia completa con .light / .dark (clases en
+ * <html>, ver src/demo/access.tsx). Se conserva ese mecanismo: no migrar a
+ * [data-theme] ni a prefers-color-scheme.
+ * Solo define variables: sin estilos de elementos ni reglas de layout. Los valores
+ * --bp-* y --grid-container-* son referencias documentales; @media/@container deben
+ * usar literales (no var() en la condición). Cifras comparables con
+ * font-variant-numeric: tabular-nums donde aplique.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* 1. Escala espacial y estructura (tipografía en ./fonts.css) */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --bp-mobile: 640px; --bp-tablet: 1024px; --bp-laptop: 1280px;
+  --bp-desktop: 1440px; --bp-wide: 1920px;
+  --grid-columns-desktop: 12; --grid-columns-tablet: 8; --grid-columns-mobile: 4;
+  --grid-gutter: 16px; --grid-gutter-mobile: 12px;
+  --grid-container-compact: 600px; --grid-container-medium: 900px;
+  --shell-sidebar: 236px; --shell-sidebar-compact: 72px;
+  --shell-header: 64px; --shell-header-mobile: 56px;
+  --shell-max-content: 1600px;
+  --layout-margin-compact: 16px; --layout-margin-medium: 20px;
+  --layout-margin-laptop: 24px; --layout-margin-desktop: 28px;
+  --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 20px;
+
+  /* 2. Escalas cromáticas primitivas (12 familias, 104 HEX literales) */
+  /* Rojo TIVIT (identidad) */
+  --color-brand-red-100: #FACCD3;
+  --color-brand-red-200: #F599A7;
+  --color-brand-red-300: #EF667A;
+  --color-brand-red-400: #EA334E;
+  --color-brand-red-500: #E50022;
+  --color-brand-red-600: #B7001B;
+  --color-brand-red-700: #890014;
+  --color-brand-red-800: #5C000E;
+  --color-brand-red-900: #2E0007;
+  /* Rojo adaptado (oscuro) */
+  --color-brand-red-dark-100: #FFE3E7;
+  --color-brand-red-dark-200: #FFC8CF;
+  --color-brand-red-dark-300: #FFACB6;
+  --color-brand-red-dark-400: #FF919E;
+  --color-brand-red-dark-500: #FF7586;
+  --color-brand-red-dark-600: #CC5E6B;
+  --color-brand-red-dark-700: #994650;
+  --color-brand-red-dark-800: #662F36;
+  --color-brand-red-dark-900: #33171B;
+  /* Azul Almaviva */
+  --color-brand-blue-100: #CDDBE8;
+  --color-brand-blue-200: #9BB8D1;
+  --color-brand-blue-300: #6894BA;
+  --color-brand-blue-400: #3671A3;
+  --color-brand-blue-500: #044D8C;
+  --color-brand-blue-600: #033E70;
+  --color-brand-blue-700: #022E54;
+  --color-brand-blue-800: #021F38;
+  --color-brand-blue-900: #010F1C;
+  /* Azul adaptado (oscuro) */
+  --color-brand-blue-dark-100: #E6F3FF;
+  --color-brand-blue-dark-200: #CDE6FF;
+  --color-brand-blue-dark-300: #B4DAFF;
+  --color-brand-blue-dark-400: #9BCDFF;
+  --color-brand-blue-dark-500: #82C1FF;
+  --color-brand-blue-dark-600: #689ACC;
+  --color-brand-blue-dark-700: #4E7499;
+  --color-brand-blue-dark-800: #344D66;
+  --color-brand-blue-dark-900: #1A2733;
+  /* Texto principal (escala oscura) */
+  --color-neutral-text-primary-100: #FDFDFE;
+  --color-neutral-text-primary-200: #FAFBFD;
+  --color-neutral-text-primary-300: #F8F9FB;
+  --color-neutral-text-primary-400: #F5F7FA;
+  --color-neutral-text-primary-500: #F3F5F9;
+  --color-neutral-text-primary-600: #C2C4C7;
+  --color-neutral-text-primary-700: #929395;
+  --color-neutral-text-primary-800: #616264;
+  --color-neutral-text-primary-900: #313132;
+  /* Títulos (escala oscura): solo 500 (base #FFFFFF) a 900, sin 100-400 */
+  --color-neutral-heading-500: #FFFFFF;
+  --color-neutral-heading-600: #CCCCCC;
+  --color-neutral-heading-700: #999999;
+  --color-neutral-heading-800: #666666;
+  --color-neutral-heading-900: #333333;
+  /* Texto fuerte (escala oscura) */
+  --color-neutral-strong-100: #F5F7F9;
+  --color-neutral-strong-200: #EBEFF3;
+  --color-neutral-strong-300: #E2E6EE;
+  --color-neutral-strong-400: #D8DEE8;
+  --color-neutral-strong-500: #CED6E2;
+  --color-neutral-strong-600: #A5ABB5;
+  --color-neutral-strong-700: #7C8088;
+  --color-neutral-strong-800: #52565A;
+  --color-neutral-strong-900: #292B2D;
+  /* Texto secundario (escala oscura) */
+  --color-neutral-secondary-100: #F0F2F5;
+  --color-neutral-secondary-200: #E1E6EC;
+  --color-neutral-secondary-300: #D2D9E2;
+  --color-neutral-secondary-400: #C3CDD9;
+  --color-neutral-secondary-500: #B4C0CF;
+  --color-neutral-secondary-600: #909AA6;
+  --color-neutral-secondary-700: #6C737C;
+  --color-neutral-secondary-800: #484D53;
+  --color-neutral-secondary-900: #242629;
+  /* Subtexto (escala oscura) */
+  --color-neutral-subtext-100: #EEF0F3;
+  --color-neutral-subtext-200: #DDE1E7;
+  --color-neutral-subtext-300: #CDD2DC;
+  --color-neutral-subtext-400: #BCC3D0;
+  --color-neutral-subtext-500: #ABB4C4;
+  --color-neutral-subtext-600: #89909D;
+  --color-neutral-subtext-700: #676C76;
+  --color-neutral-subtext-800: #44484E;
+  --color-neutral-subtext-900: #222427;
+  /* Texto terciario (escala oscura) */
+  --color-neutral-tertiary-100: #EBEDF1;
+  --color-neutral-tertiary-200: #D7DCE3;
+  --color-neutral-tertiary-300: #C3CAD4;
+  --color-neutral-tertiary-400: #AFB9C6;
+  --color-neutral-tertiary-500: #9BA7B8;
+  --color-neutral-tertiary-600: #7C8693;
+  --color-neutral-tertiary-700: #5D646E;
+  --color-neutral-tertiary-800: #3E434A;
+  --color-neutral-tertiary-900: #1F2125;
+  /* Borde de control (escala oscura) */
+  --color-neutral-border-100: #E0E3E8;
+  --color-neutral-border-200: #C1C7D1;
+  --color-neutral-border-300: #A2ACB9;
+  --color-neutral-border-400: #8390A2;
+  --color-neutral-border-500: #64748B;
+  --color-neutral-border-600: #505D6F;
+  --color-neutral-border-700: #3C4653;
+  --color-neutral-border-800: #282E38;
+  --color-neutral-border-900: #14171C;
+  /* Divisor decorativo (escala oscura) */
+  --color-neutral-divider-100: #D7D9DC;
+  --color-neutral-divider-200: #AFB3B9;
+  --color-neutral-divider-300: #888D96;
+  --color-neutral-divider-400: #606773;
+  --color-neutral-divider-500: #384150;
+  --color-neutral-divider-600: #2D3440;
+  --color-neutral-divider-700: #222730;
+  --color-neutral-divider-800: #161A20;
+  --color-neutral-divider-900: #0B0D10;
+
+  /* 3. Semánticos Light (tema por defecto) */
+  --color-bg-base: #F7F8FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-text-primary: #111827;
+  --color-text-heading: #111827;
+  --color-text-strong: #344054;
+  --color-text-secondary: #667085;
+  --color-text-tertiary: #667085;
+  --color-border-default: #E5E7EB;
+  --color-border-emphasis: #85909F;
+  --color-divider: #E5E7EB;
+  --color-brand-core: #E50022;
+  --color-brand-foreground: #AE0019;
+  --color-brand-on: #FFFFFF;
+  --color-blue-core: #044D8C;
+  --color-link: #044D8C;
+  --color-focus: #044D8C;
+  --color-success: #16794B;
+  --color-warning: #A85800;
+  --color-danger: #C4283E;
+  --color-info: #2563EB;
+  --color-success-surface: #E7F6ED;
+  --color-warning-surface: #FFF3DC;
+  --color-danger-surface: #FCE8EA;
+
+  /* 3b. Negocio PMO Fase 3 — 16 canónicos Light (una verdad por token).
+   * Riesgos 4 + Estados 7 (kebab --color-status-*) + Gráficos 5.
+   * HEX exactos autorizados. Duplicados entre dominios son intencionales
+   * (mismo HEX, distinta semántica: lifecycle ≠ salud/SPI ≠ riesgo).
+   * No usar blanco sobre medium/high (2.15:1 / 3.19:1); foregrounds abajo.
+   */
+  --color-risk-critical: #C4283E;
+  --color-risk-high: #D97706;
+  --color-risk-medium: #F59E0B;
+  --color-risk-low: #044D8C;
+  --color-status-in-handover: #044D8C;
+  --color-status-p1p2-required: #7C3AED;
+  --color-status-cancelled: #AE0019;
+  --color-status-on-hold: #9A4B00;
+  --color-status-in-progress: #0550AE;
+  --color-status-closed-successfully: #096343;
+  --color-status-closed-with-observations: #946000;
+  --color-chart-1: #044D8C;
+  --color-chart-2: #E50022;
+  --color-chart-3: #096343;
+  --color-chart-4: #F59E0B;
+  --color-chart-5: #7C3AED;
+
+  /* 3c. Foregrounds riesgo Light (pares accesibles, no blanco auto).
+   * low #044D8C vs #FFFFFF 8.59 PASA · critical #C4283E vs #FFFFFF 5.64 PASA.
+   * high #D97706 vs #FFFFFF 3.19 NO PASA → #111827 5.57 PASA.
+   * medium #F59E0B vs #FFFFFF 2.15 NO PASA → #111827 8.26 PASA.
+   */
+  --risk-low-foreground: #FFFFFF;
+  --risk-critical-foreground: #FFFFFF;
+  --risk-high-foreground: #111827;
+  --risk-medium-foreground: #111827;
+}
+
+/* Reafirma Light en el límite del tema para herencia y portales anidados (.light dentro de .dark). */
+:root:not(.dark),
+.light {
+  color-scheme: light;
+  --color-bg-base: #F7F8FA;
+  --color-bg-surface: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+  --color-text-primary: #111827;
+  --color-text-heading: #111827;
+  --color-text-strong: #344054;
+  --color-text-secondary: #667085;
+  --color-text-tertiary: #667085;
+  --color-border-default: #E5E7EB;
+  --color-border-emphasis: #85909F;
+  --color-divider: #E5E7EB;
+  --color-brand-core: #E50022;
+  --color-brand-foreground: #AE0019;
+  --color-brand-on: #FFFFFF;
+  --color-blue-core: #044D8C;
+  --color-link: #044D8C;
+  --color-focus: #044D8C;
+  --color-success: #16794B;
+  --color-warning: #A85800;
+  --color-danger: #C4283E;
+  --color-info: #2563EB;
+  --color-success-surface: #E7F6ED;
+  --color-warning-surface: #FFF3DC;
+  --color-danger-surface: #FCE8EA;
+  /* 3b (Light reafirmado para herencia/portales .light en .dark). */
+  --color-risk-critical: #C4283E;
+  --color-risk-high: #D97706;
+  --color-risk-medium: #F59E0B;
+  --color-risk-low: #044D8C;
+  --color-status-in-handover: #044D8C;
+  --color-status-p1p2-required: #7C3AED;
+  --color-status-cancelled: #AE0019;
+  --color-status-on-hold: #9A4B00;
+  --color-status-in-progress: #0550AE;
+  --color-status-closed-successfully: #096343;
+  --color-status-closed-with-observations: #946000;
+  --color-chart-1: #044D8C;
+  --color-chart-2: #E50022;
+  --color-chart-3: #096343;
+  --color-chart-4: #F59E0B;
+  --color-chart-5: #7C3AED;
+  --risk-low-foreground: #FFFFFF;
+  --risk-critical-foreground: #FFFFFF;
+  --risk-high-foreground: #111827;
+  --risk-medium-foreground: #111827;
+  /* COMPAT por tema (Light): sin token de interacción en la norma; hover derivado. */
+  --primary-hover: color-mix(in srgb, var(--color-brand-core) 80%, black);
+  --destructive-foreground: var(--color-brand-on);
+  --gpl-shadow-overlay: 0 8px 24px rgba(0, 12, 23, 0.10);
+}
+
+/* 4. Override Dark en el selector real. */
+.dark {
+  color-scheme: dark;
+  --color-bg-base: #141922;
+  --color-bg-surface: #1C222D;
+  --color-bg-elevated: #252E3B;
+  --color-text-primary: #F3F5F9;
+  --color-text-heading: #FFFFFF;
+  --color-text-strong: #CED6E2;
+  --color-text-secondary: #B4C0CF;
+  --color-text-tertiary: #9BA7B8;
+  --color-border-default: #354153;
+  --color-border-emphasis: #64748B;
+  --color-divider: #303A48;
+  --color-brand-core: #E50022;
+  --color-brand-foreground: #FF7586;
+  --color-brand-on: #FFFFFF;
+  --color-blue-core: #044D8C;
+  --color-link: #82C1FF;
+  --color-focus: #82C1FF;
+  --color-success: #44C48C;
+  --color-warning: #F1B552;
+  --color-danger: #FF8C9A;
+  --color-info: #82C1FF;
+  --color-success-surface: #173B31;
+  --color-warning-surface: #413522;
+  --color-danger-surface: #482B35;
+  /* 4b. Negocio PMO Fase 3 — 16 canónicos Dark (acentos/texto sobre oscuros,
+   * no fondos sólidos con texto blanco). HEX exactos autorizados.
+   */
+  --color-risk-critical: #FF8C9A;
+  --color-risk-high: #F3A765;
+  --color-risk-medium: #F1B552;
+  --color-risk-low: #82C1FF;
+  --color-status-in-handover: #82C1FF;
+  --color-status-p1p2-required: #C4A5FF;
+  --color-status-cancelled: #FF8C9A;
+  --color-status-on-hold: #F3A765;
+  --color-status-in-progress: #7FB6F0;
+  --color-status-closed-successfully: #44C48C;
+  --color-status-closed-with-observations: #F1B552;
+  --color-chart-1: #82C1FF;
+  --color-chart-2: #FF7586;
+  --color-chart-3: #44C48C;
+  --color-chart-4: #F1B552;
+  --color-chart-5: #BEA0FF;
+  /* 4c. Foregrounds riesgo Dark (sólido claro + texto oscuro base).
+   * #82C1FF/#F1B552/#F3A765/#FF8C9A vs #141922 todos ≥7.9 PASA.
+   * No usar blanco sobre pasteles claros.
+   */
+  --risk-low-foreground: #141922;
+  --risk-medium-foreground: #141922;
+  --risk-high-foreground: #141922;
+  --risk-critical-foreground: #141922;
+  /* COMPAT por tema (Dark): sin token de interacción en la norma; hover derivado. */
+  --primary-hover: color-mix(in srgb, var(--color-brand-core) 70%, white);
+  --destructive-foreground: var(--color-bg-base);
+  --gpl-shadow-overlay: 0 8px 24px rgba(0, 12, 23, 0.38);
+}
+
+/* 5. Puente COMPAT / pendiente de migración.
+ * Solo aliases con consumidor verificado (app.css @theme inline, reglas de
+ * app.css o TSX). Todo resuelve con var() a semánticos o primitivas nuevas;
+ * cero HEX históricos. Sin var() circular ni referencias inexistentes.
+ * Mapa tipográfico: heading-lg→H1, heading-md→H3, heading-sm→H4 (H2 y Subtitle
+ * quedan libres para la fase app.css); body-md→body, body-emphasis→action,
+ * caption→caption, label→label. Radios: sm/md/lg a la escala nueva; full se
+ * conserva literal (sin equivalente en la norma).
+ * Fase 3: riesgo (4) + chart-planned/real (contrato estable plan/real en
+ * 5+ consumidores: .planned/.actual, .series-*, .finance-*, .quick-next)
+ * + superficies neutra/positiva/revisión/progreso (derivadas de
+ * success/warning/danger) resuelven vía var(). Oportunidad (4 bandas) usa
+ * tintes color-mix de chart-3/chart-1/chart-5/chart-4 + texto acento;
+ * provisional pendiente de confirmación negocio, sin HEX nuevo.
+ * Estados genéricos on-track/completed/blocked/pending NO canónicos:
+ * no se mapean ni se crean aliases preventivos (ver reporte).
+ * --risk-*-foreground vive por tema en :root/.light/.dark (blanco solo
+ * donde PASA: low/critical Light; resto oscuro base).
+ */
+:root,
+.dark,
+.light {
+  --background: var(--color-bg-base);
+  --foreground: var(--color-text-primary);
+  --surface: var(--color-bg-surface);
+  --card: var(--color-bg-surface);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-bg-surface);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-brand-core);
+  --primary-foreground: var(--color-brand-on);
+  --secondary: var(--color-bg-surface);
+  --secondary-foreground: var(--color-text-primary);
+  --accent: var(--color-bg-elevated);
+  --accent-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-surface);
+  --muted-foreground: var(--color-text-secondary);
+  --text-secondary: var(--color-text-secondary);
+  --link: var(--color-link);
+  --destructive: var(--color-danger);
+  --success: var(--color-success);
+  --border: var(--color-border-default);
+  --input: var(--color-border-emphasis);
+  --divider: var(--color-divider);
+  --ring: var(--color-focus);
+
+  --sidebar: var(--color-bg-surface);
+  --sidebar-foreground: var(--color-text-primary);
+  --sidebar-primary: var(--color-bg-elevated);
+  --sidebar-primary-foreground: var(--color-text-primary);
+  --sidebar-accent: var(--color-bg-elevated);
+  --sidebar-accent-foreground: var(--color-text-primary);
+  --sidebar-border: var(--color-divider);
+  --sidebar-ring: var(--color-focus);
+
+  --gpl-font-heading: var(--font-heading);
+  --gpl-font-body: var(--font-body);
+  --gpl-type-heading-lg-size: var(--type-h1-size);
+  --gpl-type-heading-lg-weight: var(--type-h1-weight);
+  --gpl-type-heading-lg-line-height: var(--type-h1-line);
+  --gpl-type-heading-lg-letter-spacing: var(--type-h1-track);
+  --gpl-type-heading-md-size: var(--type-h3-size);
+  --gpl-type-heading-md-line-height: var(--type-h3-line);
+  --gpl-type-heading-sm-size: var(--type-h4-size);
+  --gpl-type-heading-sm-weight: var(--type-h4-weight);
+  --gpl-type-heading-sm-line-height: var(--type-h4-line);
+  --gpl-type-body-md-size: var(--type-body-size);
+  --gpl-type-body-md-line-height: var(--type-body-line);
+  --gpl-type-body-emphasis-size: var(--type-action-size);
+  --gpl-type-caption-size: var(--type-caption-size);
+  --gpl-type-caption-line-height: var(--type-caption-line);
+  --gpl-type-label-size: var(--type-label-size);
+  --gpl-radius-sm: var(--radius-sm);
+  --gpl-radius-md: var(--radius-md);
+  --gpl-radius-lg: var(--radius-lg);
+  --gpl-radius-full: 9999px;
+  --gpl-focus-width: 2px;
+  --gpl-focus-offset: 2px;
+  --gpl-brand-neutral: var(--color-neutral-strong-900);
+
+  /* Fase 3 COMPAT negocio (theme-agnostic: siguen al canónico por tema). */
+  --risk-low: var(--color-risk-low);
+  --risk-medium: var(--color-risk-medium);
+  --risk-high: var(--color-risk-high);
+  --risk-critical: var(--color-risk-critical);
+  --chart-planned: var(--color-chart-1);
+  --chart-real: var(--color-chart-2);
+  --neutral-status: var(--color-border-default);
+  --neutral-status-foreground: var(--color-text-primary);
+  --positive: var(--color-success-surface);
+  --positive-foreground: var(--color-success);
+  --progress-behind: var(--color-warning-surface);
+  --progress-behind-foreground: var(--color-warning);
+  --review-overdue: var(--color-danger-surface);
+  --review-overdue-foreground: var(--color-danger);
+  --opportunity-limited: color-mix(in srgb, var(--color-chart-3) 14%, var(--color-bg-surface));
+  --opportunity-limited-foreground: var(--color-chart-3);
+  --opportunity-moderate: color-mix(in srgb, var(--color-chart-1) 16%, var(--color-bg-surface));
+  --opportunity-moderate-foreground: var(--color-chart-1);
+  --opportunity-high: color-mix(in srgb, var(--color-chart-5) 18%, var(--color-bg-surface));
+  --opportunity-high-foreground: var(--color-chart-5);
+  --opportunity-very-high: color-mix(in srgb, var(--color-chart-4) 22%, var(--color-bg-surface));
+  --opportunity-very-high-foreground: var(--color-warning);
+}

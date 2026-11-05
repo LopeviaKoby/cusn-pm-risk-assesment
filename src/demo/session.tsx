@@ -1,6 +1,7 @@
 import { createContext, useContext, useRef, useState, type ReactNode } from "react";
 import { asOfDate, getProject, getUser, projects, riskEvents, riskSuggestions, risks, riskReviews, users } from "./data";
 import { riskCatalog } from "./catalogs";
+import { dataMode } from "@/data/mode";
 import { emptyRecords, loadRecords, localProject, projectError, riskError, saveRecords, validDate, type LocalRecords, type ManualRiskDraft, type ManualRiskRecord, type ProjectDraft, type ProjectRecord } from "./records";
 
 export type Risk = Omit<(typeof risks)[number], "categoryId"> & { categoryId?: string; trigger?: string; contingency?: string };
@@ -12,18 +13,20 @@ export type DemoSession = { decisions: Record<string, Decision>; local: LocalRec
 export const emptySession: DemoSession = { decisions: {}, local: emptyRecords };
 type SessionContextValue = { session: DemoSession; storageIssue: string; decide: (id: string, draft?: RiskDraft, approved?: boolean) => void; createProject: (draft: ProjectDraft) => string; createRisk: (draft: ManualRiskDraft) => { error: string; id?: string }; clearDecisions: () => void };
 const SessionContext = createContext<SessionContextValue | null>(null);
-export const currentUser = users.find(user => user.active && user.role === "Project Manager")!;
+export let currentUser = users.find(user => user.active && user.role === "Project Manager")!;
+export function setCurrentUser(user: (typeof users)[number]) { currentUser = user; }
 function nextId(prefix: string, ids: string[]) {
   const numbers = ids.filter(id => id.startsWith(prefix) && /^\d+$/.test(id.slice(prefix.length))).map(id => Number(id.slice(prefix.length)));
   return `${prefix}${String(Math.max(0, ...numbers) + 1).padStart(3, "0")}`;
 }
 
 export function DemoSessionProvider({ children }: { children: ReactNode }) {
-  const [loaded] = useState(loadRecords);
+  const [loaded] = useState(() => dataMode === "api" ? { records: emptyRecords, issue: "" } : loadRecords());
   const [session, setSession] = useState<DemoSession>({ decisions: {}, local: loaded.records });
   const current = useRef(session);
   function update(next: DemoSession) { current.current = next; setSession(next); }
   function createProject(draft: ProjectDraft) {
+    if (dataMode === "api") return "Las altas conectadas todavía no están habilitadas en este modo.";
     const previous = current.current;
     const clean = { ...draft, id: draft.id.trim(), name: draft.name.trim(), lob: draft.lob.trim(), description: draft.description.trim() };
     const error = loaded.issue || projectError(clean, sessionProjects(previous));
@@ -34,6 +37,7 @@ export function DemoSessionProvider({ children }: { children: ReactNode }) {
     return failure;
   }
   function createRisk(draft: ManualRiskDraft) {
+    if (dataMode === "api") return { error: "Las altas conectadas todavía no están habilitadas en este modo." };
     const previous = current.current;
     const clean = { ...draft, title: draft.title.trim(), description: draft.description.trim(), responsePlan: draft.responsePlan.trim(), trigger: draft.trigger.trim(), contingency: draft.contingency.trim() };
     const error = loaded.issue || riskError(clean, sessionProjects(previous));

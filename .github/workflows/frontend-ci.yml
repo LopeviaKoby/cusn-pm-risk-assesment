@@ -1,0 +1,61 @@
+name: Frontend checks
+on:
+  push:
+    branches: [dev, dev-tvt-foundry, main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    env:
+      PLAYWRIGHT_CHANNEL: msedge
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.4
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.12.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run validate:demo
+      - run: pnpm run test:coverage
+      - run: pnpm run typecheck
+      - run: pnpm run build
+      - run: pnpm run check:distribution
+      - run: pnpm run test:e2e
+  supply-chain:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.23.4
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        with:
+          version: 12.12.1
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit
+      - run: pnpm audit signatures
+      - run: pnpm ls --depth Infinity
+      - run: pnpm run build
+      - name: Scan frontend and workflow sources
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP 'gitleaks.zip'
+          $destination = Join-Path $env:RUNNER_TEMP 'gitleaks-8.30.1'
+          Invoke-WebRequest 'https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_windows_x64.zip' -OutFile $archive
+          if ((Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'd29144deff3a68aa93ced33dddf84b7fdc26070add4aa0f4513094c8332afc4e') { throw 'Gitleaks checksum mismatch' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $destination
+          foreach ($target in @('src', 'scripts', 'tests', '.github', 'dist', 'package.json', 'pnpm-lock.yaml')) {
+            & (Join-Path $destination 'gitleaks.exe') dir $target --redact --no-banner
+            if ($LASTEXITCODE -ne 0) { throw "Gitleaks failed: $target" }
+          }
+      - run: pnpm run check:react

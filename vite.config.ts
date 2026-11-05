@@ -5,10 +5,19 @@ import { defineConfig } from "vite";
 const srcPath = decodeURIComponent(new URL("./src", import.meta.url).pathname)
   .replace(/^\/(?=[A-Za-z]:)/, "");
 
+const proxy = {
+  "/api": {
+    target: "http://127.0.0.1:3001",
+    changeOrigin: false,
+  },
+};
+
 export default defineConfig({
   resolve: {
     alias: { "@": srcPath },
   },
   plugins: [react(), tailwindcss()],
   build: { license: { fileName: "licenses/dependencies.txt" } },
+  server: { proxy },
+  preview: { proxy },
 });

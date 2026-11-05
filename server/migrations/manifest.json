@@ -1,0 +1,26 @@
+{
+  "schema": "pmo",
+  "asOfDate": "2026-10-20",
+  "migrations": [
+    {
+      "file": "001_schema.sql",
+      "mode": "schema",
+      "sha256": "f2f2f9ec388b5821b777759d1e6b89f86af18b52ff72c25e6dcef392d6e52389"
+    },
+    {
+      "file": "004_units.sql",
+      "mode": "schema",
+      "sha256": "f8ba8d4fdde396f38cf5ab88050bb50b4c0ad6a12594349165c75a0b508c54ed"
+    },
+    {
+      "file": "002_seed_catalogos.sql",
+      "mode": "demo",
+      "sha256": "dd6bccff4107f3d0ea2e83afbf3f7243093463dd634a86635622817e906e9333"
+    },
+    {
+      "file": "003_seed_lab.sql",
+      "mode": "demo",
+      "sha256": "09f485d3d8f381a29205549d97eab3cbdf3f358c506a606c0321cf923ed440e2"
+    }
+  ]
+}

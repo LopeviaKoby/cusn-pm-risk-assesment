@@ -1,6 +1,7 @@
 import { useRef, useState, type ReactNode } from "react";
 import { Button, ExposureBadge } from "@/components/ui/primitives";
 import { RecordDialog } from "@/components/ui/record-dialog";
+import { dataMode } from "@/data/mode";
 import { asOfDate, catalogs, clients, getRiskExposure, users } from "@/demo/data";
 import { countries, impactDomains, managers, projectStates, riskCatalog, riskTypes } from "@/demo/catalogs";
 import { currentUser, sessionProjects, useDemoSession } from "@/demo/session";
@@ -37,7 +38,7 @@ function ProjectForm({ close, cancel, dirty }: Controls) {
     {error && <p ref={errorRef} tabIndex={-1} role="alert" className="form-error">{error}</p>}</div><FormFooter cancel={cancel} label="Crear proyecto" />
   </form>;
 }
-export function NewProject() { return <RecordDialog title="Nuevo proyecto" trigger="Nuevo proyecto">{controls => <ProjectForm {...controls} />}</RecordDialog>; }
+export function NewProject() { return dataMode === "api" ? null : <RecordDialog title="Nuevo proyecto" trigger="Nuevo proyecto">{controls => <ProjectForm {...controls} />}</RecordDialog>; }
 
 function RiskForm({ projectId, close, cancel, dirty }: Controls & { projectId?: string }) {
   const { session, createRisk } = useDemoSession(), { url, navigate } = useNavigation();
@@ -59,4 +60,4 @@ function RiskForm({ projectId, close, cancel, dirty }: Controls & { projectId?: 
     {error && <p ref={errorRef} tabIndex={-1} role="alert" className="form-error">{error}</p>}</div><FormFooter cancel={cancel} label="Registrar riesgo" />
   </form>;
 }
-export function NewRisk({ projectId }: { projectId?: string }) { return <RecordDialog title="Registrar riesgo" trigger="Registrar riesgo">{controls => <RiskForm {...controls} projectId={projectId} />}</RecordDialog>; }
+export function NewRisk({ projectId }: { projectId?: string }) { return dataMode === "api" ? null : <RecordDialog title="Registrar riesgo" trigger="Registrar riesgo">{controls => <RiskForm {...controls} projectId={projectId} />}</RecordDialog>; }
