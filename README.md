@@ -29,6 +29,8 @@ pnpm run test:e2e
 
 `test:db` instala y comprueba las seis migraciones activas en una base desechable nueva. Exige `NODE_ENV=test` y `TEST_DATABASE_URL` apuntando a `pmo_test` o `pmo_test_*`; nunca se ejecuta contra la base compartida. Tras migrar esa base, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales. `db:models` regenera ese archivo desde la misma base aislada. Los DTO REST en `app/src/data/contracts.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
 
+`pnpm run build:api` deja el bundle de Bun en `build/api/`, fuera de `dist/` y del contexto Docker del frontend.
+
 ## Alcance funcional actual
 
 - Proyectos, riesgos, facturación y portafolio leen datos de la API. Ediciones de proyecto y riesgo usan los recursos existentes y reconsultan el bootstrap después de guardar; los errores del servidor se muestran sin aplicar cambios locales aparentes.
