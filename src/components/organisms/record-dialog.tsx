@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
-import { Button } from "./primitives";
+import { Button } from "../atoms/primitives";
 
 export function RecordDialog({ title, trigger, triggerNode, children }: { title: string; trigger?: string; triggerNode?: ReactNode; children: (controls: { close: () => void; cancel: () => void; dirty: () => void }) => ReactNode }) {
   const [open, setOpen] = useState(false), [dirty, setDirty] = useState(false), [confirm, setConfirm] = useState(false);

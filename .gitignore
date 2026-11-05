@@ -1,5 +1,5 @@
 node_modules/
-/design/references/
+/src/design-system/references/
 /docs/
 /.codex/
 /.codegraph/

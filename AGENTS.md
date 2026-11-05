@@ -14,7 +14,7 @@ El producto se desarrolla por etapas. No asumir que una función del laboratorio
 - Ejecutar la tarea solicitada, no sustituirla unilateralmente por un plan, una auditoría o una recomendación. Elaborar un plan breve cuando la complejidad lo justifique, seguido de implementación y comprobación, salvo que se pida expresamente solo planificación.
 - Ante contradicciones, priorizar **el mandato actual y las decisiones recientes del propietario**, luego contratos y comportamiento comprobables del repositorio, especificaciones de negocio aplicables y, por último, recomendaciones generales de skills. Respetar siempre las restricciones reales del entorno, la seguridad y los permisos efectivos.
 - El código y los esquemas vigentes prueban el comportamiento implementado; las especificaciones aprobadas definen el comportamiento buscado. Identificar discrepancias sin asumir que la implementación antigua es la norma definitiva.
-- Consultar documentación **según relevancia**, no obligatoriamente antes de cada cambio: `README.md` para contexto, `specs/` para contratos y migraciones, `DEPLOY.md` para operación y despliegue, `src/design-system/` para tokens vigentes, y `design/DESIGN.md` si aún existe como referencia histórica. No dar prioridad automática a documentación visual desactualizada frente a tokens aprobados.
+- Consultar documentación **según relevancia**, no obligatoriamente antes de cada cambio: `README.md` para contexto, `specs/` para contratos y migraciones, `DEPLOY.md` para operación y despliegue, `src/design-system/` para tokens vigentes, y `src/design-system/DESIGN.md` si aún existe como referencia histórica. No dar prioridad automática a documentación visual desactualizada frente a tokens aprobados.
 
 ## 3. Arquitectura y convenciones
 

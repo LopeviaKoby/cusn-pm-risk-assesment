@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { Badge, Button, ExposureBadge } from "@/components/ui/primitives";
+import { Badge, Button, ExposureBadge } from "@/components/atoms/primitives";
 import { asOfDate, getRiskExposure, risks, users } from "@/demo/data";
 import type { ProjectContext } from "@/demo/project-context";
 import { currentUser, useDemoSession, type RiskDraft } from "@/demo/session";
 import { date, getSuggestionEvidence, suggestionRows, unique } from "@/demo/view-models";
 import { contextualPath, Link, safeReturn, useNavigation } from "@/navigation";
-import { Facts, Panel, ProjectTabs, UnavailableRecord } from "./ProjectFrame";
+import { Facts, Panel, ProjectTabs, UnavailableRecord } from "../layouts/ProjectFrame";
 
 export default function SuggestionReview({ model, suggestionId }: { model: ProjectContext; suggestionId: string }) {
   const { session, decide } = useDemoSession();

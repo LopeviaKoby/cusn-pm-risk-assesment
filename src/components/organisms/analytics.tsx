@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { TableRegion } from "./primitives";
+import { TableRegion } from "../atoms/primitives";
 import { money, monthLabel } from "@/demo/finance";
 
 export function IndicatorCards({ items }: { items: { label: string; value: ReactNode; note?: string }[] }) {

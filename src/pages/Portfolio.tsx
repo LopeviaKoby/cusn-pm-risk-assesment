@@ -1,14 +1,14 @@
-import { loadScreen, RouteContent } from "@/components/ui/route-loader";
+import { loadScreen, RouteContent } from "@/components/molecules/route-loader";
 const Finance = loadScreen(() => import("./Finance"));
-import { ChartLegend } from "@/components/ui/analytics";
+import { ChartLegend } from "@/components/organisms/analytics";
 import { useNavigation } from "@/navigation";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/primitives";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/atoms/primitives";
 import { CircleAlert } from "lucide-react";
-import { Badge, Button, Empty, Filter, MetricStrip, PageHeading, TableRegion } from "@/components/ui/primitives";
-import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/ui/table-tools";
+import { Badge, Button, Empty, Filter, MetricStrip, PageHeading, TableRegion } from "@/components/atoms/primitives";
+import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/organisms/table-tools";
 import { persistProjectEdit } from "@/data/edits";
 import { asOfDate, date, filteredPortfolioRisks, number, percent, projectRows, unique, type ProjectRow } from "@/demo/view-models";
-import { Progress, Status } from "@/components/ui/project-indicators";
+import { Progress, Status } from "@/components/molecules/project-indicators";
 import { useDemoSession } from "@/demo/session";
 import { dataMode } from "@/data/mode";
 

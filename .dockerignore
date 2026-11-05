@@ -3,7 +3,7 @@
 .agents/
 .codex/
 .codegraph/
-/design/references/
+/src/design-system/references/
 /docs/
 design/
 node_modules/

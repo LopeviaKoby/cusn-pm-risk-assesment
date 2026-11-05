@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Moon, Sun } from "lucide-react";
-import { Button } from "@/components/ui/primitives";
+import { Button } from "@/components/atoms/primitives";
 import { useAccess, useTheme } from "@/demo/access";
 import { safeReturn, useNavigation } from "@/navigation";
 import logo from "@/assets/img/tivit-logo-no-bg.png";

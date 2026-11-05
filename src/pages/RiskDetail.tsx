@@ -1,13 +1,13 @@
-import { Badge, ExposureBadge, TableRegion } from "@/components/ui/primitives";
-import { SortHeader, useTableSort } from "@/components/ui/table-tools";
-import { SeriesChart } from "@/components/ui/series-chart";
+import { Badge, ExposureBadge, TableRegion } from "@/components/atoms/primitives";
+import { SortHeader, useTableSort } from "@/components/organisms/table-tools";
+import { SeriesChart } from "@/components/molecules/series-chart";
 import { dataMode } from "@/data/mode";
 import { getRiskExposure } from "@/demo/data";
 import { getRiskContext, type ProjectContext } from "@/demo/project-context";
 import { useDemoSession } from "@/demo/session";
 import { date, getUser, number } from "@/demo/view-models";
 import { Link, safeReturn, useNavigation } from "@/navigation";
-import { Facts, Panel, ProjectTabs, UnavailableRecord } from "./ProjectFrame";
+import { Facts, Panel, ProjectTabs, UnavailableRecord } from "../layouts/ProjectFrame";
 
 export default function RiskDetail({ model, riskId }: { model?: ProjectContext; riskId: string }) {
   const { session } = useDemoSession();

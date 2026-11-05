@@ -1,9 +1,9 @@
-import { Button, Empty, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
-import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort, type EditField } from "@/components/ui/table-tools";
+import { Button, Empty, Filter, MetricStrip, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/atoms/primitives";
+import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort, type EditField } from "@/components/organisms/table-tools";
 import { persistProjectEdit } from "@/data/edits";
 import { date, defaultProjectFilters, filterProjects, percent, projectRows, projectViews, readProjectFilters, relativeDate, unique, type ProjectFilters, type ProjectRow } from "@/demo/view-models";
 import { projectStates } from "@/demo/catalogs";
-import { Progress, Status } from "@/components/ui/project-indicators";
+import { Progress, Status } from "@/components/molecules/project-indicators";
 import { useDemoSession } from "@/demo/session";
 import { dataMode } from "@/data/mode";
 import { contextualPath, Link, useNavigation } from "@/navigation";

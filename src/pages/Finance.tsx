@@ -4,9 +4,9 @@ import { financeModel, financeRows, money, monthLabel, type FinanceRow } from "@
 import { projectRows, unique } from "@/demo/view-models";
 import { useDemoSession } from "@/demo/session";
 import { Link, contextualPath, useNavigation } from "@/navigation";
-import { Button, Filter, TableRegion } from "@/components/ui/primitives";
-import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/ui/table-tools";
-import { ChartFrame, ChartLegend, financeSeries, IndicatorCards, MonthlyComparison } from "@/components/ui/analytics";
+import { Button, Filter, TableRegion } from "@/components/atoms/primitives";
+import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/organisms/table-tools";
+import { ChartFrame, ChartLegend, financeSeries, IndicatorCards, MonthlyComparison } from "@/components/organisms/analytics";
 
 type FinanceTableRow = FinanceRow & { id: string; projectName: string };
 const effectiveDifference = (row: FinanceTableRow) => row.actual !== null && row.planned !== null ? Math.round((row.actual - row.planned) * 100) / 100 : row.difference;

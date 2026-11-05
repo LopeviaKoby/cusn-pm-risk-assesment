@@ -1,19 +1,19 @@
-import { loadScreen, RouteContent } from "@/components/ui/route-loader";
+import { loadScreen, RouteContent } from "@/components/molecules/route-loader";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChartPie, ChevronRight, FolderKanban, LayoutGrid, Menu, Moon, Sun, TriangleAlert, X } from "lucide-react";
-import { Button } from "@/components/ui/primitives";
+import { Button } from "@/components/atoms/primitives";
 import { dataMode } from "@/data/mode";
 import { loadBootstrap } from "@/data/bootstrap";
 import { ApiError } from "@/data/client";
-const Workspace = loadScreen(() => import("@/screens/Workspace"));
-const Projects = loadScreen(() => import("@/screens/Projects"));
-const Risks = loadScreen(() => import("@/screens/Risks"));
-const Portfolio = loadScreen(() => import("@/screens/Portfolio"));
-const Project = loadScreen(() => import("@/screens/Project"));
+const Workspace = loadScreen(() => import("@/pages/Workspace"));
+const Projects = loadScreen(() => import("@/pages/Projects"));
+const Risks = loadScreen(() => import("@/pages/Risks"));
+const Portfolio = loadScreen(() => import("@/pages/Portfolio"));
+const Project = loadScreen(() => import("@/pages/Project"));
 import { DemoSessionProvider, currentUser, sessionProject, useDemoSession } from "@/demo/session";
 import { AccessProvider, ThemeProvider, useAccess, useTheme } from "@/demo/access";
-const Login = loadScreen(() => import("@/screens/Login"));
-const RiskDetail = loadScreen(() => import("@/screens/RiskDetail"));
+const Login = loadScreen(() => import("@/pages/Login"));
+const RiskDetail = loadScreen(() => import("@/pages/RiskDetail"));
 import { contextualPath, Link, NavigationProvider, safeReturn, useNavigation } from "@/navigation";
 
 const destinations = [

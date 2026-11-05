@@ -1,4 +1,4 @@
-import { Badge } from "./primitives";
+import { Badge } from "../atoms/primitives";
 import { percent } from "@/demo/view-models";
 import { projectStatusTone } from "@/demo/presentation";
 

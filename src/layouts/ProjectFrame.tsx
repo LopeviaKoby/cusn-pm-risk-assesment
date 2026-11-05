@@ -1,10 +1,10 @@
 import type { ReactNode } from "react";
-import { Badge } from "@/components/ui/primitives";
+import { Badge } from "@/components/atoms/primitives";
 import { dataMode } from "@/data/mode";
 import { date, number, percent } from "@/demo/view-models";
 import type { ProjectContext } from "@/demo/project-context";
 import { contextualPath, Link, safeReturn, useNavigation } from "@/navigation";
-import { Status } from "@/components/ui/project-indicators";
+import { Status } from "@/components/molecules/project-indicators";
 
 export function Panel({ title, children, after }: { title: string; children: ReactNode; after?: ReactNode }) {
   return <section className="panel context-panel"><header className="panel-header"><h2>{title}</h2>{after}</header>{children}</section>;
