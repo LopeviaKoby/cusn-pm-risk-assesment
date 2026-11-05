@@ -1,4 +1,5 @@
 @import "tailwindcss" source(none);
+@import "./fonts.css";
 @import "./tokens.css";
 @source "../";
 @source "../../index.html";
@@ -64,6 +65,10 @@
 }
 
 @layer base {
+  html {
+    /* Fase 3: evita síntesis de negrita/oblicua en variables (pesos reales 400-700/200-800). Heredable, una vez. */
+    font-synthesis: none;
+  }
   body {
     margin: 0;
   }
