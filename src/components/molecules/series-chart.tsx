@@ -1,5 +1,5 @@
 import { date, number, percent } from "@/demo/view-models";
-import { TableRegion } from "./primitives";
+import { TableRegion } from "../atoms/primitives";
 type Series = { label: string; className: "planned" | "actual"; values: number[] };
 function smoothPath(points: { x: number; y: number }[]): string {
   if (!points.length) return "";

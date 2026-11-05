@@ -1,6 +1,6 @@
 import { FileText, Folder, ShieldCheck, Sparkles } from "lucide-react";
-import { Badge, Button, Empty, ExposureBadge, Filter, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/primitives";
-import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/ui/table-tools";
+import { Badge, Button, Empty, ExposureBadge, Filter, PageHeading, SearchField, TableFooter, TableRegion, Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/atoms/primitives";
+import { RowActions, RowActionsHeader, RowEdit, SortHeader, useRowEdits, useTableSort } from "@/components/organisms/table-tools";
 import { date, getSuggestionEvidence, matches, officialRiskRows, projectRows, relativeDate, unique, workItems, type WorkItem } from "@/demo/view-models";
 import { sessionProject, useDemoSession } from "@/demo/session";
 import { dataMode } from "@/data/mode";

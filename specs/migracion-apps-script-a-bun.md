@@ -3,7 +3,7 @@
 > **Estado:** plan aprobado por el owner el 2026-10-26; T-01 ejecutado. Ninguna otra tarea está implementada.
 > **Owner:** Pedro Lopez Chavarria.
 > **Base verificada:** rama `dev-tvt-foundry`, HEAD `315bb91a3de59471e2dadb37824295d9c8666b83`, árbol limpio al iniciar la investigación.
-> **Autoridades:** `AGENTS.md`, `design/DESIGN.md`, código y fixtures vigentes; este plan para el alcance del laboratorio conectado.
+> **Autoridades:** `AGENTS.md`, `src/design-system/DESIGN.md`, código y fixtures vigentes; este plan para el alcance del laboratorio conectado.
 > **Límite:** este documento no certifica Foundry, no autoriza uso corporativo, carga histórica, cierre, retiro de Apps Script, commits, push ni despliegue.
 
 La investigación original fue de solo lectura: no ejecutó instalaciones, pruebas, builds, SQL, commits ni cambios de archivos. T-01 agregó este documento y actualizó la documentación de alcance; nada del laboratorio está implementado.
@@ -83,7 +83,7 @@ Fuentes: [package.json](</C:/Users/Pedro Lopevia/Escritorio/cusn-pm-risk-assesme
 **Normas aplicables:**
 
 1. `R/AGENTS.md:5–10` exige conservar el diseño, tokens, fuentes locales, wrappers y controles de seguridad/pruebas.
-2. `R/design/DESIGN.md:322–348` define estados de formularios, tablas, carga, accesibilidad y colores semánticos.
+2. `R/src/design-system/DESIGN.md:322–348` define estados de formularios, tablas, carga, accesibilidad y colores semánticos.
 3. Reutilizar `primitives.tsx`, `record-dialog.tsx`, indicadores y gráficos existentes.
 4. `R/.agents/roles/delivery.md` prohíbe ejecutar generadores y actualizadores. No se encontró un generador obligatorio de componentes del producto.
 5. La skill shadcn contiene ejemplos con CLI, pero **no prevalecen** sobre la prohibición local ni justifican ejecutar `pnpm dlx`.
@@ -99,20 +99,20 @@ Se consultaron las skills locales de shadcn, cadena de suministro y el perfil Fo
 
 | Pantalla/superficie | Datos y comportamiento comprobados | Punto de sustitución |
 |---|---|---|
-| Login | Credenciales ficticias comprobadas en cliente; marcador en `sessionStorage` | `R/src/demo/access.tsx:15–24`; `R/src/screens/Login.tsx` |
+| Login | Credenciales ficticias comprobadas en cliente; marcador en `sessionStorage` | `R/src/demo/access.tsx:15–24`; `R/src/pages/Login.tsx` |
 | Shell | Cuatro módulos, rutas contextuales, usuario ficticio | `R/src/App.tsx:17–69` |
-| Proyectos | Búsqueda, filtros, orden, cuatro vistas, alta manual | `R/src/screens/Projects.tsx:21–59`; `projectRows`, `filterProjects` |
-| Alta de proyecto | Campos obligatorios/adicionales, validación síncrona y navegación tras guardar | `R/src/screens/ManualForms.tsx:14–40`; `R/src/demo/session.tsx:26–34` |
-| Resumen de proyecto | Identidad, estado, seguimiento, riesgos, TCV/ACV y facturación | `R/src/screens/Project.tsx:15–42` |
-| Ejecución | Serie histórica, SPI, hitos y tabla de avance | `R/src/screens/Project.tsx:44–54` |
-| Registro de riesgos | Global/proyecto, filtros, orden y sugerencias separadas | `R/src/screens/Risks.tsx:8–31` |
-| Alta de riesgo | Tipo, ámbitos, categoría, responsable, escala 1–5, respuesta y próxima revisión | `R/src/screens/ManualForms.tsx:42–62` |
-| Detalle de riesgo | Datos actuales, revisiones, acciones, eventos y exposición | `R/src/screens/RiskDetail.tsx:10–30` |
-| Revisión de sugerencia | Aprobar/descartar; autorización visual por gestor; decisiones en memoria | `R/src/screens/SuggestionReview.tsx:10–51`; `session.tsx:48–66` |
-| Workspace | Riesgos, revisiones vencidas, sugerencias y cambios de planificación pendientes | `R/src/demo/view-models.ts:91–113`; `R/src/screens/Workspace.tsx:31–67` |
-| Portafolio | Estado, avance, atención y revisiones vencidas | `R/src/screens/Portfolio.tsx:12–52` |
-| Finanzas | Moneda/período, tres series con fechas propias, diferencia comparable y egresos demo | `R/src/screens/Finance.tsx:10–33`; `R/src/demo/finance.ts:7–34` |
-| Diálogos/carga | Conservación del formulario, confirmación de descarte, foco; lazy loading de código | `R/src/components/ui/record-dialog.tsx:6–22`; `route-loader.tsx:3–12` |
+| Proyectos | Búsqueda, filtros, orden, cuatro vistas, alta manual | `R/src/pages/Projects.tsx:21–59`; `projectRows`, `filterProjects` |
+| Alta de proyecto | Campos obligatorios/adicionales, validación síncrona y navegación tras guardar | `R/src/pages/ManualForms.tsx:14–40`; `R/src/demo/session.tsx:26–34` |
+| Resumen de proyecto | Identidad, estado, seguimiento, riesgos, TCV/ACV y facturación | `R/src/pages/Project.tsx:15–42` |
+| Ejecución | Serie histórica, SPI, hitos y tabla de avance | `R/src/pages/Project.tsx:44–54` |
+| Registro de riesgos | Global/proyecto, filtros, orden y sugerencias separadas | `R/src/pages/Risks.tsx:8–31` |
+| Alta de riesgo | Tipo, ámbitos, categoría, responsable, escala 1–5, respuesta y próxima revisión | `R/src/pages/ManualForms.tsx:42–62` |
+| Detalle de riesgo | Datos actuales, revisiones, acciones, eventos y exposición | `R/src/pages/RiskDetail.tsx:10–30` |
+| Revisión de sugerencia | Aprobar/descartar; autorización visual por gestor; decisiones en memoria | `R/src/pages/SuggestionReview.tsx:10–51`; `session.tsx:48–66` |
+| Workspace | Riesgos, revisiones vencidas, sugerencias y cambios de planificación pendientes | `R/src/demo/view-models.ts:91–113`; `R/src/pages/Workspace.tsx:31–67` |
+| Portafolio | Estado, avance, atención y revisiones vencidas | `R/src/pages/Portfolio.tsx:12–52` |
+| Finanzas | Moneda/período, tres series con fechas propias, diferencia comparable y egresos demo | `R/src/pages/Finance.tsx:10–33`; `R/src/demo/finance.ts:7–34` |
+| Diálogos/carga | Conservación del formulario, confirmación de descarte, foco; lazy loading de código | `R/src/components/organisms/record-dialog.tsx:6–22`; `route-loader.tsx:3–12` |
 
 **H:** no se encontraron `google.script.run`, `fetch`, Axios ni XHR en el código de aplicación inspeccionado. No existe un cliente Apps Script que simplemente pueda cambiar de URL.
 

@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from "react";
-import { Button, ExposureBadge } from "@/components/ui/primitives";
-import { RecordDialog } from "@/components/ui/record-dialog";
+import { Button, ExposureBadge } from "@/components/atoms/primitives";
+import { RecordDialog } from "@/components/organisms/record-dialog";
 import { dataMode } from "@/data/mode";
 import { asOfDate, catalogs, clients, getRiskExposure, users } from "@/demo/data";
 import { countries, impactDomains, managers, projectStates, riskCatalog, riskTypes } from "@/demo/catalogs";

@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { EditPatch } from "@/components/ui/table-tools";
+import type { EditPatch } from "@/components/organisms/table-tools";
 import type { ProjectRow, RiskRow } from "@/demo/view-models";
 
 const has = (patch: EditPatch, key: string) => Object.prototype.hasOwnProperty.call(patch, key);
