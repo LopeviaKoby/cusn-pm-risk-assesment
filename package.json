@@ -21,7 +21,7 @@
     "test:domain": "node scripts/run-bun.mjs test app/api/tests/unit",
     "db:backfill-business": "node scripts/run-bun.mjs run app/api/scripts/backfill-business.ts",
     "build": "tsc --noEmit && vite build && node scripts/copy-licenses.mjs",
-    "build:api": "node scripts/run-bun.mjs build app/api/src/index.ts --target=bun --outdir=dist/api",
+    "build:api": "node scripts/run-bun.mjs build app/api/src/index.ts --target=bun --outdir=build/api",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",

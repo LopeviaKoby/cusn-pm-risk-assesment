@@ -8,6 +8,7 @@
 design/
 node_modules/
 dist/
+build/
 .tools/
 .env*
 **/.env*

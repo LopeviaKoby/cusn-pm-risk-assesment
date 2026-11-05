@@ -1,5 +1,5 @@
 node_modules/
-/src/design-system/references/
+/app/src/design-system/references/
 /docs/
 /.codex/
 /.codegraph/
@@ -11,6 +11,7 @@ backups/
 *.zip
 docker-build-*.txt
 dist/
+build/
 storybook-static/
 coverage/
 .vite/
