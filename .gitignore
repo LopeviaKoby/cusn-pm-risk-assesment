@@ -11,6 +11,7 @@ backups/
 *.zip
 docker-build-*.txt
 dist/
+storybook-static/
 coverage/
 .vite/
 *.tsbuildinfo
