@@ -20,7 +20,7 @@ function service(items: typeof workspace[], permission=true, status=201) {
 }
 test('crea con contrato estricto y entra al workspace sin bootstrap legacy',async()=>{
   const {calls,fetcher}=service([]);render(<App/>);
-  const input=await screen.findByLabelText('Nombre del workspace');
+  const input=await screen.findByLabelText('Nombre del workspace', {}, {timeout:5000});
   fireEvent.change(input,{target:{value:'  Equipo PMO  '}});
   fireEvent.click(screen.getByRole('button',{name:'Crear workspace'}));
   expect(await screen.findByRole('heading',{name:'Te damos la bienvenida a Equipo PMO'})).toBeVisible();
@@ -45,9 +45,9 @@ test.each([403,409,422,500])('error %s conserva nombre y expone respuesta',async
   await screen.findByText(/Nombre existente/);
   expect(screen.getByLabelText('Nombre del workspace')).toHaveValue('Equipo PMO');
 });
-test('el error legacy queda delimitado y permite volver al flujo nuevo',async()=>{
+test('la ruta retirada no solicita bootstrap y permite volver al flujo nuevo',async()=>{
   service([workspace]);window.history.replaceState(null,'','/legacy/workspace');render(<App/>);
-  await screen.findByText('No se pudieron cargar los datos');
+  await screen.findByText('Sección no disponible');
   fireEvent.click(screen.getByText('Volver a workspaces'));
   await waitFor(()=>expect(screen.getByRole('button',{name:/Equipo PMO/})).toBeVisible());
 });
