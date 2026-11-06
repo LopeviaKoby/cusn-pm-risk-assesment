@@ -39,6 +39,18 @@ pnpm run build-storybook
 
 ## Alcance funcional actual
 
+El acceso inicial usa `/workspace` para descubrir espacios y `/workspace/:id` para entrar al ID estable devuelto por PMO v2.1.0. El ID de la URL se resuelve únicamente contra el listado autorizado de la sesión; no se guarda un workspace seleccionado en almacenamiento local. Seleccionar es navegación frontend. La creación envía únicamente `{nombre}` (trim, 1–200 caracteres), vuelve a consultar el listado y entra al espacio. Al recuperar foco se revalidan sesión y permisos.
+
+| Ruta UI | Gate/provider | Endpoint y contrato | Estado / frontera |
+| --- | --- | --- | --- |
+| `/login` | AccessProvider | GET/POST/DELETE `/api/v1/sesion`, cookies de mismo origen | Autenticación vigente; se conserva la pantalla TIVIT |
+| `/workspace` | AccessGate → WorkspaceEntry | GET sesión + GET workspaces → `{id,nombre,slug,version}[]` | v2.1.0, sin bootstrap |
+| Creación en `/workspace` | WorkspaceEntry | POST workspaces `{nombre}` → objeto workspace | v2.1.0, permiso efectivo `workspaces.crear` |
+| `/workspace/:id` | WorkspaceEntry | Resuelve ID desde listado autorizado | Home mínimo, sin métricas ni proyectos inventados |
+| `/legacy/workspace`, módulos anteriores | DataProvider → ApiDataGate → Shell | GET `/api/v1/datos`, DTO `Bootstrap` | Legacy; su fallo queda delimitado con enlace de regreso |
+
+La frontera nueva no importa `bootstrap.tsx` ni `Bootstrap`. Las páginas anteriores se mantienen con sus contratos históricos; migrarlas requiere adaptadores específicos futuros. `GET /api/v1/datos` no forma parte del OpenAPI v2.1.0. El proxy Vite conserva `changeOrigin:false` y credenciales `same-origin`; el servidor continúa validando Origin y autorización. Las referencias visuales locales de `app/src/design-system/references/` permanecen ignoradas en Git.
+
 - La API v2.1 ofrece creación, listado acotado y detalle de proyectos, edición de nombre con versión, transferencia Head y suplencias. Los DTO nuevos no sustituyen todavía el bootstrap visual anterior.
 - Complejidad, aprobaciones y compras se preservan en `app/src/pages/`; sus módulos backend, junto con riesgos, facturación y cierre, quedan fuera de este corte; las rutas obsoletas fueron retiradas.
 - No hay registro público ni login demo. Las cuentas se crean por bootstrap restringido o invitación controlada, con uno de los cuatro roles y comprobaciones por objeto en servidor.

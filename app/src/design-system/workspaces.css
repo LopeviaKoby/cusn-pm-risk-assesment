@@ -1,0 +1,19 @@
+.workspace-experience { min-height:100dvh; background:var(--background); color:var(--foreground); }
+.workspace-header { min-height:88px; padding:var(--space-6) var(--space-10); display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:var(--space-4); border-bottom:1px solid var(--divider); }
+.workspace-header a,.workspace-header>div { display:flex; align-items:center; gap:var(--space-4); }
+.workspace-header>div { flex-wrap:wrap; min-width:0; max-width:100%; }
+.workspace-header>div>span { max-width:100%; }
+.workspace-experience .button { white-space:normal; }
+.workspace-header img { width:112px; height:auto; } .workspace-header span { overflow-wrap:anywhere; }
+.workspace-onboarding { width:min(100% - 32px, 480px); margin:clamp(48px,12vh,160px) auto; display:grid; gap:var(--space-6); }
+.workspace-onboarding h1 { font-size:var(--type-h3-size); line-height:var(--type-h3-line); }
+.workspace-onboarding form { display:grid; gap:var(--space-3); } .workspace-onboarding .atom-input { width:100%; }
+.workspace-onboarding form>div { display:flex; flex-wrap:wrap; gap:var(--space-3); margin-top:var(--space-4); }
+.workspace-options { display:grid; gap:var(--space-3); } .workspace-options button { justify-content:space-between; text-align:left; white-space:normal; }
+.workspace-options span { min-width:0; overflow-wrap:anywhere; } .workspace-options small { display:block; }
+.workspace-frame { display:grid; grid-template-columns:236px minmax(0,1fr); min-height:calc(100dvh - 88px); }
+.workspace-frame aside { padding:var(--space-6); border-right:1px solid var(--divider); background:var(--surface); overflow-wrap:anywhere; }
+.workspace-frame nav { display:grid; gap:var(--space-4); margin-top:var(--space-8); } .workspace-frame nav a { display:flex; align-items:center; gap:var(--space-2); }
+.workspace-home { padding:var(--space-10); display:flex; flex-direction:column; gap:var(--space-4); min-width:0; overflow-wrap:anywhere; }
+.workspace-home section { margin:var(--space-10) auto; max-width:520px; text-align:center; display:grid; justify-items:center; gap:var(--space-4); }
+@media(max-width:700px) { .workspace-header { padding:var(--space-4); } .workspace-frame { grid-template-columns:minmax(0,1fr); } .workspace-frame aside { border-right:0; border-bottom:1px solid var(--divider); } .workspace-frame nav { display:flex; flex-wrap:wrap; } .workspace-home { padding:var(--space-6); } }
