@@ -1,14 +1,14 @@
 /* PMO TIVIT–Almaviva · fuente única tipográfica. Fuente normativa de valores: DESIGN_TOKENS.md v1.0 (2026-11-05).
  * Define @font-face locales + primitivas tipográficas (--font-*, --type-*). Sin colores/temas/layout.
- * Google Sans variable: app/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf
+ * Google Sans variable: app/src/assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.woff2
  *   ejes reales fvar: wght 400–700, opsz 17–18, GRAD -50–200. Rango declarado: 400 700 (cubre 500/600/700 de la norma).
- * Manrope variable: app/src/assets/fonts/manrope/Manrope-VariableFont_wght.ttf
+ * Manrope variable: app/src/assets/fonts/manrope/Manrope-VariableFont_wght.woff2
  *   eje real fvar: wght 200–800. Rango declarado: 200 800 (cubre 400/500/600 de la norma).
  * Ambas conservan OFL 1.1 en su carpeta (OFL.txt). Sin italics (no hay archivo real), sin CDN, rutas relativas a este archivo.
  */
 @font-face {
   font-family: "Google Sans";
-  src: url("../assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf") format("truetype");
+  src: url("../assets/fonts/google-sans/GoogleSans-VariableFont_GRAD,opsz,wght.woff2") format("woff2");
   font-style: normal;
   font-weight: 400 700;
   font-display: swap;
@@ -16,7 +16,7 @@
 
 @font-face {
   font-family: "Manrope";
-  src: url("../assets/fonts/manrope/Manrope-VariableFont_wght.ttf") format("truetype");
+  src: url("../assets/fonts/manrope/Manrope-VariableFont_wght.woff2") format("woff2");
   font-style: normal;
   font-weight: 200 800;
   font-display: swap;
