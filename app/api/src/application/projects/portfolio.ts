@@ -1,7 +1,7 @@
 import { sql } from "../../db";
 import { activeActor, assertPermission, hasGrant, hasPermission } from "../../authorization";
 import { ApiError } from "../../errors";
-import { PROJECT_STATES, type ProjectState } from "../../domain";
+import { type ProjectState } from "../../domain";
 
 const escapeLike = (value: string) => value.replace(/[\\%_]/g, "\\$&");
 
@@ -166,6 +166,7 @@ export async function queryPortfolio(
     workspaceSlug: string;
     clienteId: string;
     clienteNombre: string;
+    estadoCliente: "NUEVO" | "ANTIGUO" | null;
     paisId: string;
     paisCodigo: string;
     paisNombre: string;
@@ -177,6 +178,7 @@ export async function queryPortfolio(
     titularNombre: string;
     fechaRecepcionP1p2: Date | string | null;
     fechaInicio: Date | string | null;
+    fechaInicioReal: Date | string | null;
     fechaTerminoBaseline: Date | string | null;
     fechaTerminoActual: Date | string | null;
     updatedAt: Date;
@@ -184,13 +186,13 @@ export async function queryPortfolio(
     SELECT p.id::text,p.tvt,p.tvt_normalizado AS "tvtNormalizado",p.nombre,
       p.estado_actual AS estado,p.activo,p.version::text,
       w.id::text AS "workspaceId",w.nombre AS "workspaceNombre",w.slug AS "workspaceSlug",
-      c.id::text AS "clienteId",c.nombre AS "clienteNombre",
+      c.id::text AS "clienteId",c.nombre AS "clienteNombre",c.estado_cliente AS "estadoCliente",
       pa.id::text AS "paisId",pa.codigo AS "paisCodigo",pa.nombre AS "paisNombre",
       l.id::text AS "lobId",l.nombre AS "lobNombre",
       s.id::text AS "squadId",s.nombre AS "squadNombre",
       u_owner.id::text AS "titularId",u_owner.nombre AS "titularNombre",
       p.fecha_recepcion_p1p2 AS "fechaRecepcionP1p2",
-      p.fecha_inicio AS "fechaInicio",
+      p.fecha_inicio AS "fechaInicio",p.fecha_inicio_real AS "fechaInicioReal",
       p.fecha_termino_baseline AS "fechaTerminoBaseline",
       p.fecha_termino_actual AS "fechaTerminoActual",
       p.updated_at AS "updatedAt"
@@ -239,14 +241,14 @@ export async function queryPortfolio(
     activo: row.activo,
     version: row.version,
     workspace: { id: row.workspaceId, nombre: row.workspaceNombre, slug: row.workspaceSlug },
-    cliente: { id: row.clienteId, nombre: row.clienteNombre },
+    cliente: { id: row.clienteId, nombre: row.clienteNombre, estadoCliente: row.estadoCliente },
     pais: { id: row.paisId, codigo: row.paisCodigo, nombre: row.paisNombre },
     lob: { id: row.lobId, nombre: row.lobNombre },
     squad: row.squadId && row.squadNombre ? { id: row.squadId, nombre: row.squadNombre } : null,
     titular: { usuarioId: row.titularId, nombre: row.titularNombre },
     fechas: {
       recepcionP1p2: formatDate(row.fechaRecepcionP1p2),
-      inicio: formatDate(row.fechaInicio),
+      inicio: formatDate(row.fechaInicio),inicioReal: formatDate(row.fechaInicioReal),
       terminoBaseline: formatDate(row.fechaTerminoBaseline),
       terminoActual: formatDate(row.fechaTerminoActual),
     },
@@ -300,6 +302,7 @@ export async function getProjectPresentation(actorId: string, projectId: string)
     workspaceSlug: string;
     clienteId: string;
     clienteNombre: string;
+    estadoCliente: "NUEVO" | "ANTIGUO" | null;
     clienteSector: string | null;
     paisId: string;
     paisCodigo: string;
@@ -313,6 +316,7 @@ export async function getProjectPresentation(actorId: string, projectId: string)
     titularEmail: string;
     fechaRecepcionP1p2: Date | string | null;
     fechaInicio: Date | string | null;
+    fechaInicioReal: Date | string | null;
     fechaTerminoBaseline: Date | string | null;
     fechaTerminoActual: Date | string | null;
     referenciaSap: string | null;
@@ -325,13 +329,13 @@ export async function getProjectPresentation(actorId: string, projectId: string)
       p.descripcion,p.situacion_inicial AS "situacionInicial",
       p.estado_actual AS estado,p.activo,p.version::text,
       w.id::text AS "workspaceId",w.nombre AS "workspaceNombre",w.slug AS "workspaceSlug",
-      c.id::text AS "clienteId",c.nombre AS "clienteNombre",c.sector AS "clienteSector",
+      c.id::text AS "clienteId",c.nombre AS "clienteNombre",c.estado_cliente AS "estadoCliente",c.sector AS "clienteSector",
       pa.id::text AS "paisId",pa.codigo AS "paisCodigo",pa.nombre AS "paisNombre",
       l.id::text AS "lobId",l.nombre AS "lobNombre",
       s.id::text AS "squadId",s.nombre AS "squadNombre",
       u_owner.id::text AS "titularId",u_owner.nombre AS "titularNombre",u_owner.email AS "titularEmail",
       p.fecha_recepcion_p1p2 AS "fechaRecepcionP1p2",
-      p.fecha_inicio AS "fechaInicio",
+      p.fecha_inicio AS "fechaInicio",p.fecha_inicio_real AS "fechaInicioReal",
       p.fecha_termino_baseline AS "fechaTerminoBaseline",
       p.fecha_termino_actual AS "fechaTerminoActual",
       p.referencia_sap AS "referenciaSap",
@@ -386,6 +390,7 @@ export async function getProjectPresentation(actorId: string, projectId: string)
     GROUP BY d.id,u.id,u.nombre,d.inicio,d.fin
     ORDER BY d.id DESC LIMIT 1`;
 
+  const [commercial]=await sql<{tcvTipo:'DEFINIDO'|'ILIMITADO';tcvValor:string|null;unidadCodigo:string|null}>`SELECT tcv_tipo AS "tcvTipo",tcv_valor::text AS "tcvValor",unidad_codigo AS "unidadCodigo" FROM pmo_cusn.condicion_comercial WHERE proyecto_id=${projectId}`;
   const puedeEditarFicha = await hasPermission(actorId, "proyectos.editar", projectId);
   const esTitular = actor.role === "PM" && row.titularId === actorId;
   const esGobiernoTitular = actor.role === "ADMIN" || esTitular;
@@ -407,7 +412,7 @@ export async function getProjectPresentation(actorId: string, projectId: string)
       situacionInicial: row.situacionInicial,
       activo: row.activo,
       workspace: { id: row.workspaceId, nombre: row.workspaceNombre, slug: row.workspaceSlug },
-      cliente: { id: row.clienteId, nombre: row.clienteNombre, sector: row.clienteSector },
+      cliente: { id: row.clienteId, nombre: row.clienteNombre, estadoCliente: row.estadoCliente, sector: row.clienteSector },
       pais: { id: row.paisId, codigo: row.paisCodigo, nombre: row.paisNombre },
       lob: { id: row.lobId, nombre: row.lobNombre },
       squad: row.squadId && row.squadNombre ? { id: row.squadId, nombre: row.squadNombre } : null,
@@ -447,16 +452,17 @@ export async function getProjectPresentation(actorId: string, projectId: string)
       createdAt: row.createdAt.toISOString(),
       updatedAt: row.updatedAt.toISOString(),
     },
+    condicionComercial: actor.kind==='EXTERNO'?null:commercial??null,
     planificacion: {
       fechaRecepcionP1p2: formatDate(row.fechaRecepcionP1p2),
-      fechaInicio: formatDate(row.fechaInicio),
+      fechaInicio: formatDate(row.fechaInicio),fechaInicioReal: formatDate(row.fechaInicioReal),
       fechaTerminoBaseline,
       fechaTerminoActual: formatDate(row.fechaTerminoActual),
       baselineCongelada: fechaTerminoBaseline !== null,
     },
     accionesDisponibles: {
       puedeEditarFicha,
-      puedeFijarBaseline: puedeEditarFicha && fechaTerminoBaseline === null,
+      puedeFijarBaseline: false,
       puedeTransferir: actor.role === "ADMIN",
       puedeGestionarParticipantes: esGobiernoTitular,
       puedeDesignarSuplencia: esGobiernoTitular,
@@ -590,45 +596,5 @@ export async function getProjectAssignments(actorId: string, projectId: string) 
       permisos: s.permisos,
     })),
     permisosDelegables: delegablePermissions,
-  };
-}
-
-export async function getSelectionCatalogs(
-  actorId: string,
-  query: { q?: string; lobId?: string; limit?: string } = {},
-) {
-  const actor = await activeActor(actorId);
-  if (!actor || !(await hasGrant(actorId, "proyectos.consultar")) || actor.kind === "EXTERNO") {
-    throw new ApiError(403, "FORBIDDEN", "Acceso no autorizado a catálogos internos.");
-  }
-  const limit = Number(query.limit ?? 100);
-  const lobId = query.lobId ?? null;
-  const search = query.q?.trim();
-  const pattern = search ? `%${escapeLike(search)}%` : null;
-
-  const [paises, lobs, serviciosLob, squads, clientes] = await Promise.all([
-    sql<{ id: string; codigo: string; nombre: string }>`
-      SELECT id::text,codigo,nombre FROM pmo_cusn.pais WHERE activo ORDER BY nombre,id LIMIT 100`,
-    sql<{ id: string; nombre: string }>`
-      SELECT id::text,nombre FROM pmo_cusn.lob WHERE activo ORDER BY nombre,id LIMIT 100`,
-    sql<{ id: string; lobId: string; nombre: string }>`
-      SELECT id::text,lob_id::text AS "lobId",nombre FROM pmo_cusn.servicio_lob
-      WHERE activo AND (${lobId}::bigint IS NULL OR lob_id=${lobId})
-      ORDER BY nombre,id LIMIT 100`,
-    sql<{ id: string; nombre: string }>`
-      SELECT id::text,nombre FROM pmo_cusn.squad WHERE activo ORDER BY nombre,id LIMIT 100`,
-    sql<{ id: string; nombre: string; sector: string | null }>`
-      SELECT id::text,nombre,sector FROM pmo_cusn.cliente
-      WHERE activo AND (${pattern}::text IS NULL OR nombre ILIKE ${pattern} ESCAPE '\\')
-      ORDER BY nombre,id LIMIT ${limit}`,
-  ]);
-
-  return {
-    paises,
-    lobs,
-    serviciosLob,
-    squads,
-    clientes,
-    estadosProyecto: [...PROJECT_STATES],
   };
 }

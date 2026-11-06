@@ -60,7 +60,7 @@ export interface ClienteRow {
   nombre: string;
   sector: string | null;
   descripcion: string | null;
-  estado_cliente: string | null;
+  estado_cliente: "NUEVO" | "ANTIGUO" | null;
   activo: boolean;
   created_at: Date;
   updated_at: Date;
@@ -203,6 +203,34 @@ export interface DocumentoRow {
 }
 export type DocumentoInsert = Pick<DocumentoRow, "drive_file_id" | "nombre" | "mime_type"> & Partial<Pick<DocumentoRow, "tipo_documento_id" | "drive_file_id" | "nombre" | "mime_type" | "drive_version" | "drive_modified_at" | "ultimo_sync_at" | "estado_registro" | "created_by" | "created_at">>;
 
+export interface DriveCarpetaRow {
+  proyecto_id: BigintId;
+  clave_nodo: string;
+  drive_id: string;
+  parent_drive_id: string;
+  ruta: string;
+  checked_at: Date;
+  error_codigo: string | null;
+}
+export type DriveCarpetaInsert = Pick<DriveCarpetaRow, "proyecto_id" | "clave_nodo" | "drive_id" | "parent_drive_id" | "ruta"> & Partial<Pick<DriveCarpetaRow, "proyecto_id" | "clave_nodo" | "drive_id" | "parent_drive_id" | "ruta" | "checked_at" | "error_codigo">>;
+
+export interface DriveProvisionamientoRow {
+  proyecto_id: BigintId;
+  estado: "PENDIENTE" | "EN_PROCESO" | "COMPLETADO" | "ERROR";
+  remote_key: string;
+  root_parent_id: string;
+  root_name: string;
+  tree_version: string;
+  intentos: number;
+  claim_token: string | null;
+  lease_until: Date | null;
+  next_attempt_at: Date | null;
+  error_codigo: string | null;
+  created_at: Date;
+  updated_at: Date;
+}
+export type DriveProvisionamientoInsert = Pick<DriveProvisionamientoRow, "proyecto_id" | "root_parent_id" | "root_name" | "tree_version"> & Partial<Pick<DriveProvisionamientoRow, "proyecto_id" | "estado" | "remote_key" | "root_parent_id" | "root_name" | "tree_version" | "intentos" | "claim_token" | "lease_until" | "next_attempt_at" | "error_codigo" | "created_at" | "updated_at">>;
+
 export interface EtapaCompraRow {
   id: BigintId;
   compra_id: BigintId;
@@ -275,8 +303,10 @@ export interface HitoFacturacionRow {
   origen: string | null;
   origen_ref: string | null;
   updated_at: Date;
+  clave_registro: string | null;
+  version: BigintId;
 }
-export type HitoFacturacionInsert = Pick<HitoFacturacionRow, "proyecto_id" | "periodo"> & Partial<Pick<HitoFacturacionRow, "proyecto_id" | "periodo" | "tipo_hito" | "tipo_cuota" | "unidad_codigo" | "showprice" | "planificado" | "real_reportado" | "estado" | "comentario" | "origen" | "origen_ref" | "updated_at">>;
+export type HitoFacturacionInsert = Pick<HitoFacturacionRow, "proyecto_id" | "periodo"> & Partial<Pick<HitoFacturacionRow, "proyecto_id" | "periodo" | "tipo_hito" | "tipo_cuota" | "unidad_codigo" | "showprice" | "planificado" | "real_reportado" | "estado" | "comentario" | "origen" | "origen_ref" | "updated_at" | "clave_registro" | "version">>;
 
 export interface InvitacionWorkspaceRow {
   id: BigintId;
@@ -420,8 +450,9 @@ export interface ProyectoRow {
   activo: boolean;
   created_at: Date;
   updated_at: Date;
+  fecha_inicio_real: Date | null;
 }
-export type ProyectoInsert = Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "cliente_id" | "pais_id" | "lob_id" | "nombre"> & Partial<Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "version" | "cliente_id" | "pais_id" | "lob_id" | "squad_id" | "nombre" | "descripcion" | "situacion_inicial" | "estado_actual" | "fecha_recepcion_p1p2" | "fecha_inicio" | "fecha_termino_baseline" | "fecha_termino_actual" | "drive_folder_id" | "referencia_sap" | "referencia_ceco" | "referencia_pep" | "activo" | "created_at" | "updated_at">>;
+export type ProyectoInsert = Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "cliente_id" | "pais_id" | "lob_id" | "nombre"> & Partial<Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "version" | "cliente_id" | "pais_id" | "lob_id" | "squad_id" | "nombre" | "descripcion" | "situacion_inicial" | "estado_actual" | "fecha_recepcion_p1p2" | "fecha_inicio" | "fecha_termino_baseline" | "fecha_termino_actual" | "drive_folder_id" | "referencia_sap" | "referencia_ceco" | "referencia_pep" | "activo" | "created_at" | "updated_at" | "fecha_inicio_real">>;
 
 export interface ProyectoContactoRow {
   proyecto_id: BigintId;
@@ -912,6 +943,12 @@ export const databaseConstraints = [
     "name": "cambio_ambito_pkey",
     "kind": "p",
     "definition": "PRIMARY KEY (control_cambio_id, ambito_id)"
+  },
+  {
+    "table_name": "cliente",
+    "name": "ck_cliente_clasificacion",
+    "kind": "c",
+    "definition": "CHECK (((estado_cliente IS NULL) OR (estado_cliente = ANY (ARRAY['NUEVO'::text, 'ANTIGUO'::text])))) NOT VALID"
   },
   {
     "table_name": "cliente",
@@ -1760,6 +1797,156 @@ export const databaseConstraints = [
     "definition": "FOREIGN KEY (tipo_documento_id) REFERENCES pmo_cusn.tipo_documento(id) ON DELETE RESTRICT"
   },
   {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_checked_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL checked_at"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_clave_nodo_not_null",
+    "kind": "n",
+    "definition": "NOT NULL clave_nodo"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_drive_id_key",
+    "kind": "u",
+    "definition": "UNIQUE (drive_id)"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_drive_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL drive_id"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_parent_drive_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL parent_drive_id"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (proyecto_id, clave_nodo)"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_proyecto_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (proyecto_id) REFERENCES pmo_cusn.drive_provisionamiento(proyecto_id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_proyecto_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL proyecto_id"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_ruta_not_null",
+    "kind": "n",
+    "definition": "NOT NULL ruta"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_check",
+    "kind": "c",
+    "definition": "CHECK (((estado = 'EN_PROCESO'::text) = ((claim_token IS NOT NULL) AND (lease_until IS NOT NULL))))"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_created_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL created_at"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_estado_check",
+    "kind": "c",
+    "definition": "CHECK ((estado = ANY (ARRAY['PENDIENTE'::text, 'EN_PROCESO'::text, 'COMPLETADO'::text, 'ERROR'::text])))"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_estado_not_null",
+    "kind": "n",
+    "definition": "NOT NULL estado"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_intentos_check",
+    "kind": "c",
+    "definition": "CHECK ((intentos >= 0))"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_intentos_not_null",
+    "kind": "n",
+    "definition": "NOT NULL intentos"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (proyecto_id)"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_proyecto_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (proyecto_id) REFERENCES pmo_cusn.proyecto(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_proyecto_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL proyecto_id"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_remote_key_key",
+    "kind": "u",
+    "definition": "UNIQUE (remote_key)"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_remote_key_not_null",
+    "kind": "n",
+    "definition": "NOT NULL remote_key"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_root_name_check",
+    "kind": "c",
+    "definition": "CHECK ((btrim(root_name) <> ''::text))"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_root_name_not_null",
+    "kind": "n",
+    "definition": "NOT NULL root_name"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_root_parent_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL root_parent_id"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_tree_version_not_null",
+    "kind": "n",
+    "definition": "NOT NULL tree_version"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_updated_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL updated_at"
+  },
+  {
     "table_name": "etapa_compra",
     "name": "etapa_compra_compra_id_fkey",
     "kind": "f",
@@ -2106,6 +2293,18 @@ export const databaseConstraints = [
     "name": "hito_facturacion_updated_at_not_null",
     "kind": "n",
     "definition": "NOT NULL updated_at"
+  },
+  {
+    "table_name": "hito_facturacion",
+    "name": "hito_facturacion_version_check",
+    "kind": "c",
+    "definition": "CHECK ((version > 0))"
+  },
+  {
+    "table_name": "hito_facturacion",
+    "name": "hito_facturacion_version_not_null",
+    "kind": "n",
+    "definition": "NOT NULL version"
   },
   {
     "table_name": "invitacion_workspace",
@@ -2922,6 +3121,12 @@ export const databaseConstraints = [
     "name": "proyecto_workspace_id_not_null",
     "kind": "n",
     "definition": "NOT NULL workspace_id"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "tr_arranque_evento",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
   },
   {
     "table_name": "proyecto",
@@ -4293,6 +4498,31 @@ export const databaseIndexes = [
     "definition": "CREATE INDEX ix_documento_tipo ON pmo_cusn.documento USING btree (tipo_documento_id)"
   },
   {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_drive_id_key",
+    "definition": "CREATE UNIQUE INDEX drive_carpeta_drive_id_key ON pmo_cusn.drive_carpeta USING btree (drive_id)"
+  },
+  {
+    "table_name": "drive_carpeta",
+    "name": "drive_carpeta_pkey",
+    "definition": "CREATE UNIQUE INDEX drive_carpeta_pkey ON pmo_cusn.drive_carpeta USING btree (proyecto_id, clave_nodo)"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_pkey",
+    "definition": "CREATE UNIQUE INDEX drive_provisionamiento_pkey ON pmo_cusn.drive_provisionamiento USING btree (proyecto_id)"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "drive_provisionamiento_remote_key_key",
+    "definition": "CREATE UNIQUE INDEX drive_provisionamiento_remote_key_key ON pmo_cusn.drive_provisionamiento USING btree (remote_key)"
+  },
+  {
+    "table_name": "drive_provisionamiento",
+    "name": "ix_drive_trabajos",
+    "definition": "CREATE INDEX ix_drive_trabajos ON pmo_cusn.drive_provisionamiento USING btree (estado, next_attempt_at)"
+  },
+  {
     "table_name": "etapa_compra",
     "name": "etapa_compra_pkey",
     "definition": "CREATE UNIQUE INDEX etapa_compra_pkey ON pmo_cusn.etapa_compra USING btree (id)"
@@ -4351,6 +4581,16 @@ export const databaseIndexes = [
     "table_name": "hito_facturacion",
     "name": "ix_hito_facturacion_unidad",
     "definition": "CREATE INDEX ix_hito_facturacion_unidad ON pmo_cusn.hito_facturacion USING btree (unidad_codigo)"
+  },
+  {
+    "table_name": "hito_facturacion",
+    "name": "ix_hito_proyecto_periodo",
+    "definition": "CREATE INDEX ix_hito_proyecto_periodo ON pmo_cusn.hito_facturacion USING btree (proyecto_id, periodo, id)"
+  },
+  {
+    "table_name": "hito_facturacion",
+    "name": "ux_hito_clave_registro",
+    "definition": "CREATE UNIQUE INDEX ux_hito_clave_registro ON pmo_cusn.hito_facturacion USING btree (proyecto_id, clave_registro)"
   },
   {
     "table_name": "invitacion_workspace",

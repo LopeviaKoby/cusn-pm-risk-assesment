@@ -1,3 +1,7 @@
+import {driveStatus} from '../../application/drive/status';
+import {driveStatusOutput} from './contracts';
+import {queryBilling,queryIndicators,writeBilling} from '../../application/billing';
+import {billingContracts} from './contracts';
 import {Hono, type Context} from 'hono';
 import {z} from 'zod';
 import {ApiError,respond,respondError} from '../../errors';
@@ -18,6 +22,7 @@ import {
 import {acceptWorkspaceInvitation,inviteToWorkspace,revokeInvitation} from '../../application/workspaces/invitation';
 import {changeCorporateRole,deactivateUser,revokeCorporateRole} from '../../application/users/manage';
 import {issueRecovery,resetPassword} from '../../application/users/recovery';
+import {startExecution} from '../../application/projects/start';
 import {createProject} from '../../application/projects/create';
 import {editProjectName} from '../../application/projects/edit';
 import {transferProject} from '../../application/projects/transfer';
@@ -27,13 +32,18 @@ import {
   queryPortfolio,
   getProjectPresentation,
   getProjectAssignments,
-  getSelectionCatalogs,
 } from '../../application/projects/portfolio';
 import {id,inputs,outputs,errorSchema} from './contracts';
+import {searchClients,createClient,listCountries,listLobs} from '../../application/clients';
 
 type RouteContext={actor:string;request:Request;param:(name:string)=>string;query:Record<string,string>};
 type Options={auth?:'none'|'optional'|'required';status?:number;query?:z.ZodType;policy:string};
 const grants:Record<string,string>={
+  'GET /api/v1/proyectos/:id/drive/carpetas':'proyectos.consultar',
+  'GET /api/v1/proyectos/:id/facturacion':'proyectos.consultar',
+  'GET /api/v1/proyectos/:id/facturacion/indicadores':'proyectos.consultar',
+  'POST /api/v1/proyectos/:id/facturacion/hitos':'facturacion.reportar',
+  'PATCH /api/v1/proyectos/:id/facturacion/hitos/:hitoId':'facturacion.reportar',
   'GET /api/v1/workspaces':'workspaces.consultar','POST /api/v1/workspaces':'workspaces.crear',
   'GET /api/v1/workspaces/:id':'workspaces.consultar',
   'PATCH /api/v1/workspaces/:id':'workspaces.configurar',
@@ -47,9 +57,10 @@ const grants:Record<string,string>={
   'GET /api/v1/workspaces/:id/proyectos':'proyectos.consultar',
   'POST /api/v1/usuarios/:id/rol':'usuarios.administrar','DELETE /api/v1/usuarios/:id/rol':'usuarios.administrar',
   'POST /api/v1/usuarios/:id/desactivacion':'usuarios.administrar','POST /api/v1/usuarios/:id/recuperacion':'usuarios.administrar',
-  'GET /api/v1/catalogos':'proyectos.consultar',
+  'GET /api/v1/clientes':'proyectos.consultar','POST /api/v1/clientes':'clientes.crear',
+  'GET /api/v1/paises':'proyectos.consultar','GET /api/v1/lobs':'proyectos.consultar',
   'GET /api/v1/portafolio':'proyectos.consultar',
-  'POST /api/v1/proyectos':'proyectos.crear','GET /api/v1/proyectos':'proyectos.consultar',
+  'POST /api/v1/proyectos/:id/inicio':'proyectos.editar','POST /api/v1/proyectos':'proyectos.crear','GET /api/v1/proyectos':'proyectos.consultar',
   'GET /api/v1/proyectos/:id':'proyectos.consultar','PATCH /api/v1/proyectos/:id':'proyectos.editar',
   'GET /api/v1/proyectos/:id/asignaciones':'proyectos.consultar',
   'POST /api/v1/proyectos/:id/transferencia':'proyectos.transferir',
@@ -67,7 +78,7 @@ export function createBusinessApi(){
       const actor=await sessionFrom(c.req.raw);
       await sql`INSERT INTO pmo_cusn.auditoria_seguridad(actor_id,operacion,recurso_tipo,resultado,detalle)
         VALUES (${actor?.userId??null},'http.denegado','solicitud','DENEGADO',
-          ${JSON.stringify({method:c.req.method,path:new URL(c.req.url).pathname,code:error.code,requestId:c.get('requestId')})}::jsonb)`;
+          ${{method:c.req.method,path:new URL(c.req.url).pathname,code:error.code,requestId:c.get('requestId')}}::jsonb)`;
     }
     return respondError(error,c.get('requestId'));
   });
@@ -151,9 +162,12 @@ export function createBusinessApi(){
   route('POST','/api/v1/usuarios/:id/desactivacion',null,outputs.inactive,{policy:'Solo Head, sin autodesactivación; invalida sesiones.'},async ctx=>deactivateUser(ctx.actor,ctx.param('id')));
   route('POST','/api/v1/usuarios/:id/recuperacion',null,outputs.recovery,{status:201,policy:'Solo Head tras verificación administrativa. Token en entrega controlada, no notificación simulada.'},async ctx=>issueRecovery(ctx.actor,ctx.param('id')));
   route('POST','/api/v1/credenciales/restablecer',inputs.reset,outputs.reset,{auth:'none',policy:'Token de recuperación hash, plazo 30 minutos y uso único; revoca sesiones.'},async(_,v)=>resetPassword(v.token,v.password));
-  route('GET','/api/v1/catalogos',null,outputs.catalogs,{query:inputs.catalogsQuery,policy:'Catálogos maestros activos (países, LOB, servicios LOB, squads, clientes y estados de proyecto) para actores internos.'},async ctx=>getSelectionCatalogs(ctx.actor,ctx.query));
+  route('GET','/api/v1/clientes',null,outputs.clients,{query:inputs.clientsQuery,policy:'ADMIN/PM internos activos con consulta de proyectos. Clientes activos; q literal parcial sin distinción de mayúsculas; orden id ASC; cursor after, limit 1–100 (defecto 50). Total del filtro completo, nextCursor solo si hasMore.'},async ctx=>searchClients(ctx.actor,ctx.query));
+  route('POST','/api/v1/clientes',inputs.client,outputs.client,{status:201,policy:'Propuesta G1 del propietario para desarrollo: ADMIN/PM internos activos y permiso independiente clientes.crear. Producción requiere ratificación. Nombres repetidos permitidos; inserción y auditoría atómicas.'},async(ctx,v)=>createClient(ctx.actor,v.nombre,v.estadoCliente));
+  route('GET','/api/v1/paises',null,outputs.countries,{policy:'Lectura G1 de países activos preestablecidos para actores internos con proyectos.consultar. Lista completa, sin truncamiento; sin administración.'},async ctx=>listCountries(ctx.actor));
+  route('GET','/api/v1/lobs',null,outputs.lobs,{policy:'Lectura G1 de LOB activas preestablecidas para actores internos con proyectos.consultar. Lista completa, sin truncamiento; sin administración.'},async ctx=>listLobs(ctx.actor));
   route('GET','/api/v1/portafolio',null,outputs.portfolio,{query:inputs.portfolioQuery,policy:'Portafolio denso con visibilidad por perfil (Head/PM/Visualizador global; Especialista/Visualizador asignado/Externo solo asignados), búsqueda, filtros, ordenamiento, paginación y resumen por estado.'},async ctx=>queryPortfolio(ctx.actor,ctx.query));
-  route('POST','/api/v1/proyectos',inputs.project,outputs.project,{status:201,policy:'Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global; atributos base y primera línea base opcionales.'},async(ctx,v)=>createProject(ctx.actor,v));
+  route('POST','/api/v1/proyectos',inputs.project,outputs.projectDetail,{status:201,policy:'Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global; atributos base y primera línea base opcionales.'},async(ctx,v)=>{const created=await createProject(ctx.actor,v);return getProjectPresentation(ctx.actor,created.id)});
   route('GET','/api/v1/proyectos',null,outputs.projects,{query:inputs.list,policy:'Head/PM global; Especialista asignado; Visualizador interno global/asignado; externo solo asignado. Cursor after y limit 1–100.'},async ctx=>{
     const actor=await activeActor(ctx.actor);
     if(!actor||!await hasGrant(ctx.actor,'proyectos.consultar'))throw new ApiError(403,'FORBIDDEN','Acceso no autorizado.');
@@ -162,8 +176,14 @@ export function createBusinessApi(){
     return global?sql`SELECT id::text,tvt,nombre,workspace_id::text AS "workspaceId",version::text,estado_actual AS estado FROM pmo_cusn.proyecto WHERE activo AND id>${after}::bigint ORDER BY id LIMIT ${limit}`:
       sql`SELECT p.id::text,p.tvt,p.nombre,p.workspace_id::text AS "workspaceId",p.version::text,p.estado_actual AS estado FROM pmo_cusn.proyecto p WHERE p.activo AND p.id>${after}::bigint AND EXISTS(SELECT 1 FROM pmo_cusn.participacion_proyecto pp WHERE pp.proyecto_id=p.id AND pp.usuario_id=${ctx.actor} AND pp.fecha_inicio<=now() AND (pp.fecha_fin IS NULL OR pp.fecha_fin>now())) ORDER BY p.id LIMIT ${limit}`;
   });
+  route('GET','/api/v1/proyectos/:id/drive/carpetas',null,driveStatusOutput,{policy:'Referencias documentales internas: Head o titular/suplente con consulta y edición contextual. Sin contenido ni garantía de ACL del usuario; NO_SOLICITADO es ausencia de intención durable. No concede permisos Drive.'},async ctx=>driveStatus(ctx.actor,ctx.param('id')));
+  route('GET','/api/v1/proyectos/:id/facturacion',null,billingContracts.summary,{query:billingContracts.query,policy:'Finanzas internas del proyecto: consulta y facturacion.reportar contextual (Head/titular/suplente). Ventana hasta 60 meses; defecto año UTC actual; hitos cursor ID, totales ventana completa; máximo 10000 filas, exceso 422. Real reportado no conciliado ERP.'},async ctx=>queryBilling(ctx.actor,ctx.param('id'),ctx.query));
+  route('GET','/api/v1/proyectos/:id/facturacion/indicadores',null,billingContracts.indicators,{query:billingContracts.cutoff,policy:'CPI interno por moneda, corte mensual inclusivo requerido. Sin exigibles null; base cero pendiente de política. Mismo alcance financiero interno.'},async ctx=>queryIndicators(ctx.actor,ctx.param('id'),ctx.query.corte!));
+  route('POST','/api/v1/proyectos/:id/facturacion/hitos',billingContracts.create,billingContracts.line,{status:201,policy:'Hito MANUAL, titular/suplente con facturacion.reportar o Head. claveRegistro UUID única por proyecto: reintento idéntico retorna mismo hito; contenido distinto 409. No modifica contrato.'},async(ctx,v)=>writeBilling(ctx.actor,ctx.param('id'),v));
+  route('PATCH','/api/v1/proyectos/:id/facturacion/hitos/:hitoId',billingContracts.edit,billingContracts.line,{policy:'Reemplaza campos editables del hito MANUAL del proyecto; version y claveRegistro requeridas. Clave/proyecto/origen inmutables; conflicto versión 409.'},async(ctx,v)=>writeBilling(ctx.actor,ctx.param('id'),v,ctx.param('hitoId'),v.version));
   route('GET','/api/v1/proyectos/:id',null,outputs.projectDetail,{policy:'Ficha de presentación del proyecto con identidad, gobierno, planificación, permisos contextuales y confidencialidad para externos; 403 no revela existencia.'},async ctx=>getProjectPresentation(ctx.actor,ctx.param('id')));
   route('GET','/api/v1/proyectos/:id/asignaciones',null,outputs.projectAssignments,{policy:'Asignaciones del proyecto separando rol corporativo, membresía de workspace, titular PM, participaciones y suplencias vigentes.'},async ctx=>getProjectAssignments(ctx.actor,ctx.param('id')));
+  route('POST','/api/v1/proyectos/:id/inicio',inputs.start,outputs.project,{policy:'Head o PM titular/suplente con proyectos.editar; version requerida; arranque unico Requiere P1P2 a En ejecución, fecha civil America/Santiago sellada por servidor; repeticion 409.'},async(ctx,v)=>startExecution(ctx.actor,ctx.param('id'),v.version));
   route('PATCH','/api/v1/proyectos/:id',inputs.projectEdit,outputs.project,{policy:'Head o titular/suplente vigente con permiso; edita atributos base y fija primera línea base inmutable; lock y versión, 409 al conflicto.'},async(ctx,v)=>editProjectName(ctx.actor,ctx.param('id'),v.version,v));
   route('POST','/api/v1/proyectos/:id/transferencia',inputs.transfer,outputs.transferred,{policy:'Solo Head; transferencia o reasignación, continuidad de titular y versión.'},async(ctx,v)=>transferProject(ctx.actor,ctx.param('id'),v));
   route('POST','/api/v1/proyectos/:id/participantes',inputs.participant,outputs.participant,{status:201,policy:'Head o titular; Especialista/observador sin edición implícita; membresía activa.'},async(ctx,v)=>addParticipant(ctx.actor,ctx.param('id'),v.userId,v.funcion));

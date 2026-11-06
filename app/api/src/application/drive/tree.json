@@ -1,0 +1,422 @@
+{
+  "version": "pmo-docx-5b0a4779d5d9",
+  "sourceSha256": "5b0a4779d5d9cd5d1e8226eb58a42f5b954563e8c1b6d052d9811b694d3c6d9c",
+  "rootNaming": "NOMBRE CLIENTE – NOMBRE PROYECTO",
+  "nodes": [
+    {
+      "key": "01",
+      "parent": "ROOT",
+      "name": "INICIO"
+    },
+    {
+      "key": "01.01",
+      "parent": "01",
+      "name": "P1-P2"
+    },
+    {
+      "key": "01.01.01",
+      "parent": "01.01",
+      "name": "Pedido Cliente"
+    },
+    {
+      "key": "01.01.02",
+      "parent": "01.01",
+      "name": "Propuesta Técnica Comercial"
+    },
+    {
+      "key": "01.01.03",
+      "parent": "01.01",
+      "name": "Contrato"
+    },
+    {
+      "key": "01.01.04",
+      "parent": "01.01",
+      "name": "Showpricing"
+    },
+    {
+      "key": "01.01.05",
+      "parent": "01.01",
+      "name": "Preguntas y Respuestas"
+    },
+    {
+      "key": "01.02",
+      "parent": "01",
+      "name": "Acta Constitución"
+    },
+    {
+      "key": "01.03",
+      "parent": "01",
+      "name": "Kick Off"
+    },
+    {
+      "key": "02",
+      "parent": "ROOT",
+      "name": "PLANIFICACIÓN"
+    },
+    {
+      "key": "02.01",
+      "parent": "02",
+      "name": "Revisión de alcances"
+    },
+    {
+      "key": "02.02",
+      "parent": "02",
+      "name": "Planes de Proyecto"
+    },
+    {
+      "key": "02.02.01",
+      "parent": "02.02",
+      "name": "Pan de Gestión de Adquisiciones"
+    },
+    {
+      "key": "02.02.02",
+      "parent": "02.02",
+      "name": "Matriz RASCA y de responsabilidades"
+    },
+    {
+      "key": "02.02.03",
+      "parent": "02.02",
+      "name": "Plan de Comunicaciones"
+    },
+    {
+      "key": "02.02.04",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Cronograma Gantt"
+    },
+    {
+      "key": "02.02.05",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Alcance"
+    },
+    {
+      "key": "02.02.05.01",
+      "parent": "02.02.05",
+      "name": "EDT"
+    },
+    {
+      "key": "02.02.06",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Calidad"
+    },
+    {
+      "key": "02.02.07",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Recursos"
+    },
+    {
+      "key": "02.02.07.01",
+      "parent": "02.02.07",
+      "name": "ODT"
+    },
+    {
+      "key": "02.02.07.02",
+      "parent": "02.02.07",
+      "name": "Contrataciones"
+    },
+    {
+      "key": "02.02.08",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Interesados"
+    },
+    {
+      "key": "02.02.09",
+      "parent": "02.02",
+      "name": "Plan de Gestión de Costo"
+    },
+    {
+      "key": "02.02.10",
+      "parent": "02.02",
+      "name": "Plan de Gestión Integrado"
+    },
+    {
+      "key": "02.03",
+      "parent": "02",
+      "name": "SOW"
+    },
+    {
+      "key": "02.04",
+      "parent": "02",
+      "name": "Levantamiento"
+    },
+    {
+      "key": "02.04.01",
+      "parent": "02.04",
+      "name": "Due Diligence"
+    },
+    {
+      "key": "02.04.02",
+      "parent": "02.04",
+      "name": "GAP Análisis"
+    },
+    {
+      "key": "02.04.03",
+      "parent": "02.04",
+      "name": "Línea Base"
+    },
+    {
+      "key": "03",
+      "parent": "ROOT",
+      "name": "Ejecución"
+    },
+    {
+      "key": "03.01",
+      "parent": "03",
+      "name": "Governance"
+    },
+    {
+      "key": "03.01.01",
+      "parent": "03.01",
+      "name": "Implementación de Procesos de Gobierno"
+    },
+    {
+      "key": "03.01.01.01",
+      "parent": "03.01.01",
+      "name": "Requisitos Previos Toma de Control"
+    },
+    {
+      "key": "03.01.01.02",
+      "parent": "03.01.01",
+      "name": "Gestión de Incidentes y Requerimientos"
+    },
+    {
+      "key": "03.01.01.03",
+      "parent": "03.01.01",
+      "name": "Gestióon de Crisis"
+    },
+    {
+      "key": "03.01.01.04",
+      "parent": "03.01.01",
+      "name": "Gestión de Cambios"
+    },
+    {
+      "key": "03.01.01.05",
+      "parent": "03.01.01",
+      "name": "Gestión de Problemas"
+    },
+    {
+      "key": "03.01.01.06",
+      "parent": "03.01.01",
+      "name": "Gestión SLA"
+    },
+    {
+      "key": "03.01.01.07",
+      "parent": "03.01.01",
+      "name": "Gestión de Conocimiento"
+    },
+    {
+      "key": "03.01.02",
+      "parent": "03.01",
+      "name": "Implementación de Gobierno y Herramientas ITSM"
+    },
+    {
+      "key": "03.01.02.01",
+      "parent": "03.01.02",
+      "name": "Cargda de CMDB"
+    },
+    {
+      "key": "03.01.02.02",
+      "parent": "03.01.02",
+      "name": "Carga de Catalogo de Servicio"
+    },
+    {
+      "key": "03.01.02.03",
+      "parent": "03.01.02",
+      "name": "Carga de SLA"
+    },
+    {
+      "key": "03.01.02.04",
+      "parent": "03.01.02",
+      "name": "Carga de Matriz de Responsables"
+    },
+    {
+      "key": "03.01.02.05",
+      "parent": "03.01.02",
+      "name": "Cargda de localidades"
+    },
+    {
+      "key": "03.01.02.06",
+      "parent": "03.01.02",
+      "name": "Carga de matriz de escalamiento Proveedores"
+    },
+    {
+      "key": "03.01.03",
+      "parent": "03.01",
+      "name": "Informes de Servicio"
+    },
+    {
+      "key": "03.01.04",
+      "parent": "03.01",
+      "name": "Due Diligence"
+    },
+    {
+      "key": "03.01.04.01",
+      "parent": "03.01.04",
+      "name": "WORKPLACE"
+    },
+    {
+      "key": "03.01.04.02",
+      "parent": "03.01.04",
+      "name": "INFRAESTRUCTURA"
+    },
+    {
+      "key": "03.01.04.03",
+      "parent": "03.01.04",
+      "name": "DATACENTER"
+    },
+    {
+      "key": "03.01.04.04",
+      "parent": "03.01.04",
+      "name": "SERVICIO DE NEGOCIO"
+    },
+    {
+      "key": "03.01.04.05",
+      "parent": "03.01.04",
+      "name": "TELECOMUNICACIONES"
+    },
+    {
+      "key": "03.01.04.06",
+      "parent": "03.01.04",
+      "name": "PROCESOS"
+    },
+    {
+      "key": "03.01.04.07",
+      "parent": "03.01.04",
+      "name": "NUBE PUBLICA"
+    },
+    {
+      "key": "03.01.04.08",
+      "parent": "03.01.04",
+      "name": "CIBERSEGURIDAD"
+    },
+    {
+      "key": "03.01.04.09",
+      "parent": "03.01.04",
+      "name": "MIDDLEWARE"
+    },
+    {
+      "key": "03.01.04.10",
+      "parent": "03.01.04",
+      "name": "Levantamiento Proceso DRP"
+    },
+    {
+      "key": "03.01.04.11",
+      "parent": "03.01.04",
+      "name": "Levantamiento Procesos"
+    },
+    {
+      "key": "03.01.04.12",
+      "parent": "03.01.04",
+      "name": "Levantamiento Usuarios Privilegios Admin"
+    },
+    {
+      "key": "03.01.04.13",
+      "parent": "03.01.04",
+      "name": "Levantamiento Matriz Terceros Contrato Soporte"
+    },
+    {
+      "key": "03.01.04.14",
+      "parent": "03.01.04",
+      "name": "Licencias Cyberark"
+    },
+    {
+      "key": "03.01.05",
+      "parent": "03.01",
+      "name": "GAP Análisis"
+    },
+    {
+      "key": "03.01.06",
+      "parent": "03.01",
+      "name": "Ejecución Actividades Técnicas"
+    },
+    {
+      "key": "03.01.07",
+      "parent": "03.01",
+      "name": "Requerimientos"
+    },
+    {
+      "key": "03.01.08",
+      "parent": "03.01",
+      "name": "RFC"
+    },
+    {
+      "key": "04",
+      "parent": "ROOT",
+      "name": "Monitoreo y Control"
+    },
+    {
+      "key": "04.01",
+      "parent": "04",
+      "name": "Presentaciones"
+    },
+    {
+      "key": "04.01.01",
+      "parent": "04.01",
+      "name": "Seguimiento Semanal"
+    },
+    {
+      "key": "04.01.02",
+      "parent": "04.01",
+      "name": "Steering Committee"
+    },
+    {
+      "key": "04.02",
+      "parent": "04",
+      "name": "Minutas"
+    },
+    {
+      "key": "04.02.01",
+      "parent": "04.02",
+      "name": "Cliente"
+    },
+    {
+      "key": "04.02.02",
+      "parent": "04.02",
+      "name": "Interna"
+    },
+    {
+      "key": "04.03",
+      "parent": "04",
+      "name": "Control de Cambio"
+    },
+    {
+      "key": "04.04",
+      "parent": "04",
+      "name": "Seguimiento de Compromisos"
+    },
+    {
+      "key": "04.05",
+      "parent": "04",
+      "name": "Seguimiento de Riesgos"
+    },
+    {
+      "key": "04.06",
+      "parent": "04",
+      "name": "Documentación"
+    },
+    {
+      "key": "05",
+      "parent": "ROOT",
+      "name": "Cierre"
+    },
+    {
+      "key": "05.01",
+      "parent": "05",
+      "name": "Acta de Recepción Servicios o Parcial"
+    },
+    {
+      "key": "05.02",
+      "parent": "05",
+      "name": "Acta de Cierre Proyecto"
+    },
+    {
+      "key": "05.03",
+      "parent": "05",
+      "name": "Acta de Recepción Operaciones"
+    },
+    {
+      "key": "05.04",
+      "parent": "05",
+      "name": "Lecciones Aprendidas"
+    }
+  ]
+}

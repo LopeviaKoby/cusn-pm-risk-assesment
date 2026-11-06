@@ -26,8 +26,8 @@ try{
   assert.equal(row.tvt_normalizado,'PRECISION-TEST');assert.ok(row.created_at instanceof Date);
   const [money]=await orm.insert(condicion_comercial).values({proyecto_id:BigInt(large),tcv_tipo:'DEFINIDO',tcv_valor:'900719925474099.1234',unidad_codigo:'USD'}).returning();
   assert.equal(money?.tcv_valor,'900719925474099.1234');
-  await orm.update(condicion_comercial).set({tcv_tipo:'ILIMITADO',tcv_valor:null,unidad_codigo:null}).where(eq(condicion_comercial.proyecto_id,BigInt(large)));
+  await assert.rejects(()=>orm.update(condicion_comercial).set({tcv_tipo:'ILIMITADO',tcv_valor:null,unidad_codigo:null}).where(eq(condicion_comercial.proyecto_id,BigInt(large))));
   const [empty]=await orm.select().from(condicion_comercial).where(eq(condicion_comercial.proyecto_id,BigInt(large)));
-  assert.equal(empty?.tcv_valor,null);
+  assert.equal(empty?.tcv_valor,'900719925474099.1234');
   console.log('PASS Drizzle lectura/escritura: bigint > MAX_SAFE_INTEGER, numeric exacto, NULL, date, UTC y columna generada.');
 }finally{await fixture.close();await closeDatabase();}

@@ -1,6 +1,6 @@
 {
   "schema": "pmo_cusn",
-  "catalogSha256": "ffeeb9c707e73c91b840cb68c099f79679aca6639ae0138911d96bbbd646ca50",
+  "catalogSha256": "51931dc9f7790e9a9e51e51209dbd7a220437b7346a27a4e754901b614d3115e",
   "source": "pmo_cusn_esquema_logico_v2_1_0.txt (baseline de desarrollo)",
   "legacyMigrations": [
     {
@@ -53,7 +53,32 @@
     {
       "file": "012_g1_baseline_guard.sql",
       "mode": "schema",
-      "sha256": "238222263df86f8ecd961e70fa147ccd307b82ae855e5ef597d92480cc0e4e38"
+      "sha256": "238222263df86f8ecd961e70fa147ccd307b82ae855e5ef597d92480cc0e4e38",
+      "catalogSha256": "ffeeb9c707e73c91b840cb68c099f79679aca6639ae0138911d96bbbd646ca50"
+    },
+    {
+      "file": "013_clientes_crear.sql",
+      "mode": "schema",
+      "sha256": "7f5e655a43571e0a9195f1e127d28597f4f65397a83ea2d0c3f9fd54b6a9c456",
+      "catalogSha256": "c6fd5248dcc92b144d471209fe2d27c1776acb052f5d1ed26f972ba5a7fdebde"
+    },
+    {
+      "file": "014_flujo11_arranque.sql",
+      "mode": "schema",
+      "sha256": "eeef8cf82dc0cfcde35bd5d2f30442f3b6f28257870606d14cda99766cbd0f26",
+      "catalogSha256": "5f0e9de98c74cc067dc4a65d8757d3a2f446adb80267d962d59fad068ced3b04"
+    },
+    {
+      "file": "015_facturacion_manual.sql",
+      "mode": "schema",
+      "sha256": "043383d4db332801b5916050c43eace53e02c8f1bc1910a945136074bcc2f3ab",
+      "catalogSha256": "36b0b3451651b16a43dc92d181d36c85e7d260acbcea0149c4553ff9a7130886"
+    },
+    {
+      "file": "016_drive_provisionamiento.sql",
+      "mode": "schema",
+      "sha256": "b2bbe3bbf337c012c74db6647bdf461518c19ff75eed13a2c3494c191ef941e8",
+      "catalogSha256": "51931dc9f7790e9a9e51e51209dbd7a220437b7346a27a4e754901b614d3115e"
     }
   ],
   "sourceSha256": "3d7346235175374a175670e9d8b1ce07b67b554ae63eba84958c7767bad98678"

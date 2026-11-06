@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import {strict as assert} from 'node:assert';
 import {SQL} from 'bun';
 import {z} from 'zod';
@@ -25,7 +26,7 @@ const {app,handleRequest}=await import('../src/index');
 const {sql,closeDatabase}=await import('../src/db');
 const {hasPermission}=await import('../src/authorization');
 const send=(method:string,path:string,cookie?:string,body?:unknown)=>handleRequest(new Request(`http://127.0.0.1:43001/api/v1/${path}`,{
-  method,headers:{origin:'http://127.0.0.1:4173',...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{})},body:body===undefined?undefined:JSON.stringify(body)}));
+  method,headers:{origin:'http://127.0.0.1:4173',...(cookie?{cookie}:{}),...(body!==undefined?{'content-type':'application/json'}:{})},body:body===undefined?undefined:JSON.stringify(registrationFixture(method,path,body))}));
 async function data<T>(response:Response,status=200):Promise<T>{
   const json=await response.json();assert.equal(response.status,status,JSON.stringify(json));
   assert.ok(!/password_hash|token_hash|session_version|recovery_expires|locked_until/.test(JSON.stringify(json)),'No secretos ni campos internos');

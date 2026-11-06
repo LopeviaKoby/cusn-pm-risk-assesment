@@ -7,10 +7,15 @@ import {assertCatalog} from './catalog';
 export const migrationDirectory = resolve(import.meta.dirname, "../migrations");
 export const baseFile = "011_pmo_cusn_v210.sql";
 
-export async function migrate(sql: SQL): Promise<void> {
+export async function migrate(sql: SQL, through?: string): Promise<void> {
   const manifest = JSON.parse(readFileSync(resolve(migrationDirectory, "manifest.json"), "utf8")) as {
-    schema: string; migrations: { file: string; sha256: string }[];
+    schema: string; catalogSha256: string; migrations: { file: string; sha256: string; catalogSha256?:string }[];
   };
+  const boundary=through?manifest.migrations.findIndex(item=>item.file===through):manifest.migrations.length-1;
+  if(boundary<0)throw new Error('Límite de migración desconocido.');
+  const migrations=manifest.migrations.slice(0,boundary+1);
+  const expected=through?migrations.at(-1)!.catalogSha256:manifest.catalogSha256;
+  if(!expected)throw new Error('Falta huella versionada del límite de migración.');
   if (manifest.schema !== "pmo_cusn") throw new Error("Esquema de migración no permitido.");
   await sql.begin(async tx => {
     const [engine]=await tx<{version:string}>`SELECT current_setting('server_version_num') AS version`;
@@ -21,7 +26,7 @@ export async function migrate(sql: SQL): Promise<void> {
       version text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now()
     )`;
     if (manifest.migrations[0]?.file !== baseFile) throw new Error("El baseline inicial debe ser 011_pmo_cusn_v210.sql.");
-    for (const item of manifest.migrations) {
+    for (const item of migrations) {
       if (!/^01[1-9]_[a-z0-9_]+\.sql$/.test(item.file)) throw new Error("Archivo de migración no autorizado.");
       const content = readFileSync(resolve(migrationDirectory, item.file), "utf8");
       const hash = createHash("sha256").update(content).digest("hex");
@@ -44,7 +49,7 @@ export async function migrate(sql: SQL): Promise<void> {
       await tx`INSERT INTO pmo_cusn_meta.migracion(version,sha256) VALUES (${item.file},${hash})`;
       console.log(`+ ${item.file} aplicada`);
     }
-    await assertCatalog(tx);
+    await assertCatalog(tx,expected);
   });
 }
 

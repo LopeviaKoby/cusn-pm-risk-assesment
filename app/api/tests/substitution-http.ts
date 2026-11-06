@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import { strict as assert } from "node:assert";
 import { SQL } from "bun";
 if(Bun.env.NODE_ENV!=="test"||!Bun.env.TEST_DATABASE_URL?.includes("pmo_test_v210_"))throw new Error("Solo base aislada.");
@@ -15,7 +16,7 @@ const {handleRequest}=await import("../src/index");
 const {closeDatabase,sql}=await import("../src/db");
 const {hasPermission}=await import("../src/authorization");
 const send=(method:string,path:string,cookie?:string,body?:unknown)=>handleRequest(new Request(`http://127.0.0.1:43001/api/v1/${path}`,{method,
-  headers:{origin:"http://127.0.0.1:4173",...(cookie?{cookie}:{}),...(body?{"content-type":"application/json"}:{})},body:body?JSON.stringify(body):undefined}));
+  headers:{origin:"http://127.0.0.1:4173",...(cookie?{cookie}:{}),...(body?{"content-type":"application/json"}:{})},body:body?JSON.stringify(registrationFixture(method,path,body)):undefined}));
 async function cookie(email:string){const r=await send("POST","sesion",undefined,{identifier:email,password});assert.equal(r.status,200);return r.headers.getSetCookie().find(v=>v.startsWith("pmo_access="))!.split(";")[0]!;}
 try{
   const head=await cookie("head@example.invalid"),owner=await cookie(project.ownerEmail),sub=await cookie("pm-workspace@example.invalid");

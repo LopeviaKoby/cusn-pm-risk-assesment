@@ -6,11 +6,11 @@ const MAX_BIGINT = 9223372036854775807n;
 export const id = z
   .string()
   .regex(/^[1-9][0-9]{0,18}$/)
-  .refine(v => BigInt(v) <= MAX_BIGINT, "Identificador fuera de rango BIGINT.");
+  .refine(v => /^[1-9][0-9]{0,18}$/.test(v) && BigInt(v) <= MAX_BIGINT, "Identificador fuera de rango BIGINT.");
 export const cursor = z
   .string()
   .regex(/^(0|[1-9][0-9]{0,18})$/)
-  .refine(v => BigInt(v) <= MAX_BIGINT, "Cursor fuera de rango BIGINT.");
+  .refine(v => /^(0|[1-9][0-9]{0,18})$/.test(v) && BigInt(v) <= MAX_BIGINT, "Cursor fuera de rango BIGINT.");
 export const role = z.enum(["ADMIN", "PM", "ESPECIALISTA", "VISUALIZADOR"]);
 export const projectState = z.enum(PROJECT_STATES);
 const name = z.string().trim().min(1).max(200);
@@ -20,6 +20,21 @@ const searchQuery = z.string().trim().min(1).max(120).optional();
 const civilDateString = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const shortRef = z.string().trim().max(120).nullable().optional();
 const longText = z.string().trim().max(4000).nullable().optional();
+
+const month=z.string().regex(/^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$/);
+const amount=z.string().regex(/^(0|[1-9][0-9]{0,15})(\.[0-9]{1,4})?$/);
+const billingFields={claveRegistro:z.uuid(),periodo:month,unidadCodigo:z.string().regex(/^[A-Z]{2,3}$/),tipoHito:z.enum(['Proyecto','Operación']),tipoCuota:z.enum(['SetUp','Recurrente']),showprice:amount,planificado:amount,realReportado:amount,comentario:z.string().trim().max(2000).nullable()};
+const line=z.strictObject({id,periodo:month,unidadCodigo:z.string().nullable(),tipoHito:z.string().nullable(),tipoCuota:z.string().nullable(),showprice:z.string().nullable(),planificado:z.string().nullable(),realReportado:z.string().nullable(),comentario:z.string().nullable(),origen:z.string().nullable(),claveRegistro:z.string().nullable(),version:id});
+const totals={unidadCodigo:z.string().nullable(),showprice:z.string().nullable(),planificado:z.string().nullable(),realReportado:z.string().nullable()};
+export const billingContracts={
+ create:z.strictObject(billingFields),edit:z.strictObject({...billingFields,version:id}),
+ query:z.strictObject({desde:month.optional(),hasta:month.optional(),limit:limitString,after:cursor.optional()}),cutoff:z.strictObject({corte:month}),
+ line,
+ summary:z.strictObject({proyectoId:id,contrato:z.strictObject({tcvTipo:z.enum(['DEFINIDO','ILIMITADO']),tcvValor:z.string().nullable(),unidadCodigo:z.string().nullable()}).nullable(),ventana:z.strictObject({desde:month,hasta:month}),hitos:z.array(line),paginacion:z.strictObject({limit:z.number(),total:z.number(),hasMore:z.boolean(),nextCursor:id.nullable()}),porMes:z.array(z.strictObject({periodo:month,...totals})),totales:z.array(z.strictObject(totals)),estado:z.enum(['CON_HITOS','SIN_HITOS']),notaReal:z.literal('REPORTADO_POR_GESTOR_NO_CONCILIADO_ERP')}),
+ indicators:z.strictObject({proyectoId:id,corte:month,estado:z.enum(['CON_HITOS_EXIGIBLES','SIN_HITOS_EXIGIBLES']),porMoneda:z.array(z.strictObject({unidadCodigo:z.string().nullable(),valor:z.string().nullable(),estado:z.enum(['CALCULADO','SIN_HITOS_EXIGIBLES','DATOS_INCOMPLETOS','BASE_CERO_PENDIENTE_POLITICA'])}))}),
+};
+
+export const driveStatusOutput=z.strictObject({proyectoId:id,estado:z.enum(['NO_SOLICITADO','PENDIENTE','EN_PROCESO','COMPLETADO','ERROR']),intentos:z.number().int().nonnegative(),errorCodigo:z.string().nullable(),updatedAt:z.iso.datetime().nullable(),carpetas:z.array(z.strictObject({clave:z.string(),driveId:z.string(),parentDriveId:z.string(),ruta:z.string(),checkedAt:z.iso.datetime(),errorCodigo:z.string().nullable(),webViewLink:z.url()})),nota:z.literal('REFERENCIAS_NO_VERIFICAN_CONTENIDO_NI_ACL_DEL_USUARIO')});
 
 export const inputs = {
   login: z.strictObject({ identifier: z.string().min(1).max(254), password: z.string().min(1).max(1024) }),
@@ -43,11 +58,12 @@ export const inputs = {
     q: searchQuery,
     limit: limitString,
   }),
-  catalogsQuery: z.strictObject({
+  clientsQuery: z.strictObject({
     q: searchQuery,
-    lobId: id.optional(),
     limit: limitString,
+    after: cursor.optional(),
   }),
+  client: z.strictObject({ nombre: name, estadoCliente: z.enum(["NUEVO", "ANTIGUO"]) }),
   enable: z.strictObject({ habilitado: z.boolean() }),
   invitation: z.strictObject({ email: z.email().max(254), rol: z.enum(["PM", "ESPECIALISTA", "VISUALIZADOR"]) }),
   accept: z.strictObject({
@@ -57,6 +73,8 @@ export const inputs = {
   role: z.strictObject({ rol: role, alcance: z.enum(["GLOBAL", "ASIGNADOS"]) }),
   reset: z.strictObject({ token: z.string().regex(/^[A-Za-z0-9_-]{43}$/), password: z.string().min(14).max(1024) }),
   project: z.strictObject({
+    condicionComercial: z.strictObject({tcvTipo:z.enum(['DEFINIDO','ILIMITADO']),tcvValor:z.string().regex(/^[0-9]{1,16}(\.[0-9]{1,4})?$/).nullable(),unidadCodigo:z.string().regex(/^[A-Z]{3}$/).nullable()}).refine(v=>v.tcvTipo==='ILIMITADO'?v.tcvValor===null:v.tcvValor!==null&&v.unidadCodigo!==null),
+    especialistaIds: z.array(id).max(100).refine(v=>new Set(v).size===v.length).optional(),
     workspaceId: id,
     tvt: z.string().trim().min(1).max(80),
     nombre: name,
@@ -68,12 +86,13 @@ export const inputs = {
     descripcion: longText,
     situacionInicial: longText,
     fechaRecepcionP1p2: civilDateString.nullable().optional(),
-    fechaInicio: civilDateString.nullable().optional(),
-    fechaTerminoBaseline: civilDateString.nullable().optional(),
+    fechaInicio: civilDateString,
+    fechaTerminoBaseline: civilDateString,
     referenciaSap: shortRef,
     referenciaCeco: shortRef,
     referenciaPep: shortRef,
   }),
+  start: z.strictObject({version:id}),
   projectEdit: z.strictObject({
     version: id,
     nombre: name.optional(),
@@ -218,13 +237,13 @@ export const outputs = {
       }),
     ),
   }),
-  catalogs: z.strictObject({
-    paises: z.array(z.strictObject({ id, codigo: z.string(), nombre: z.string() })),
-    lobs: z.array(z.strictObject({ id, nombre: z.string() })),
-    serviciosLob: z.array(z.strictObject({ id, lobId: id, nombre: z.string() })),
-    squads: z.array(z.strictObject({ id, nombre: z.string() })),
-    clientes: z.array(z.strictObject({ id, nombre: z.string(), sector: z.string().nullable() })),
-    estadosProyecto: z.array(projectState),
+  countries: z.array(z.strictObject({ id, codigo: z.string(), nombre: z.string() })),
+  lobs: z.array(z.strictObject({ id, nombre: z.string() })),
+  client: z.strictObject({ id, nombre: z.string(), sector: z.string().nullable(), estadoCliente: z.enum(["NUEVO", "ANTIGUO"]).nullable() }),
+  clients: z.strictObject({
+    items: z.array(z.strictObject({ id, nombre: z.string(), sector: z.string().nullable(), estadoCliente: z.enum(["NUEVO", "ANTIGUO"]).nullable() })),
+    paginacion: z.strictObject({ limit: z.number().int().positive(),total: z.number().int().nonnegative(),
+      hasMore: z.boolean(),nextCursor: id.nullable() }),
   }),
   project,
   projects: z.array(project.extend({ estado: z.string() })),
@@ -239,7 +258,7 @@ export const outputs = {
       situacionInicial: z.string().nullable(),
       activo: z.boolean(),
       workspace: z.strictObject({ id, nombre: z.string(), slug: z.string() }),
-      cliente: z.strictObject({ id, nombre: z.string(), sector: z.string().nullable() }),
+      cliente: z.strictObject({ id, nombre: z.string(), sector: z.string().nullable(), estadoCliente: z.enum(["NUEVO", "ANTIGUO"]).nullable() }),
       pais: z.strictObject({ id, codigo: z.string(), nombre: z.string() }),
       lob: z.strictObject({ id, nombre: z.string() }),
       squad: z.strictObject({ id, nombre: z.string() }).nullable(),
@@ -281,9 +300,10 @@ export const outputs = {
       createdAt: z.iso.datetime(),
       updatedAt: z.iso.datetime(),
     }),
+    condicionComercial: z.strictObject({tcvTipo:z.enum(['DEFINIDO','ILIMITADO']),tcvValor:z.string().nullable(),unidadCodigo:z.string().nullable()}).nullable(),
     planificacion: z.strictObject({
       fechaRecepcionP1p2: civilDateString.nullable(),
-      fechaInicio: civilDateString.nullable(),
+      fechaInicio: civilDateString.nullable(),fechaInicioReal: civilDateString.nullable(),
       fechaTerminoBaseline: civilDateString.nullable(),
       fechaTerminoActual: civilDateString.nullable(),
       baselineCongelada: z.boolean(),
@@ -363,14 +383,14 @@ export const outputs = {
         activo: z.boolean(),
         version: id,
         workspace: z.strictObject({ id, nombre: z.string(), slug: z.string() }),
-        cliente: z.strictObject({ id, nombre: z.string() }),
+        cliente: z.strictObject({ id, nombre: z.string(), estadoCliente: z.enum(["NUEVO", "ANTIGUO"]).nullable() }),
         pais: z.strictObject({ id, codigo: z.string(), nombre: z.string() }),
         lob: z.strictObject({ id, nombre: z.string() }),
         squad: z.strictObject({ id, nombre: z.string() }).nullable(),
         titular: z.strictObject({ usuarioId: id, nombre: z.string() }),
         fechas: z.strictObject({
           recepcionP1p2: civilDateString.nullable(),
-          inicio: civilDateString.nullable(),
+          inicio: civilDateString.nullable(),inicioReal: civilDateString.nullable(),
           terminoBaseline: civilDateString.nullable(),
           terminoActual: civilDateString.nullable(),
         }),

@@ -169,6 +169,30 @@ export const documento=pmo.table("documento",{
   created_by:bigint("created_by",{mode:'bigint'}),
   created_at:timestamp("created_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
 });
+export const drive_carpeta=pmo.table("drive_carpeta",{
+  proyecto_id:bigint("proyecto_id",{mode:'bigint'}).notNull(),
+  clave_nodo:text("clave_nodo").notNull(),
+  drive_id:text("drive_id").notNull(),
+  parent_drive_id:text("parent_drive_id").notNull(),
+  ruta:text("ruta").notNull(),
+  checked_at:timestamp("checked_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
+  error_codigo:text("error_codigo"),
+});
+export const drive_provisionamiento=pmo.table("drive_provisionamiento",{
+  proyecto_id:bigint("proyecto_id",{mode:'bigint'}).notNull().primaryKey(),
+  estado:text("estado").default(sql.raw("'PENDIENTE'::text")).notNull(),
+  remote_key:text("remote_key").default(sql.raw("gen_random_uuid()")).notNull(),
+  root_parent_id:text("root_parent_id").notNull(),
+  root_name:text("root_name").notNull(),
+  tree_version:text("tree_version").notNull(),
+  intentos:integer("intentos").default(sql.raw("0")).notNull(),
+  claim_token:text("claim_token"),
+  lease_until:timestamp("lease_until",{withTimezone:true,mode:'date'}),
+  next_attempt_at:timestamp("next_attempt_at",{withTimezone:true,mode:'date'}),
+  error_codigo:text("error_codigo"),
+  created_at:timestamp("created_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
+  updated_at:timestamp("updated_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
+});
 export const etapa_compra=pmo.table("etapa_compra",{
   id:bigint("id",{mode:'bigint'}).generatedAlwaysAsIdentity().notNull().primaryKey(),
   compra_id:bigint("compra_id",{mode:'bigint'}).notNull(),
@@ -233,6 +257,8 @@ export const hito_facturacion=pmo.table("hito_facturacion",{
   origen:text("origen"),
   origen_ref:text("origen_ref"),
   updated_at:timestamp("updated_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
+  clave_registro:text("clave_registro"),
+  version:bigint("version",{mode:'bigint'}).default(sql.raw("1")).notNull(),
 });
 export const invitacion_workspace=pmo.table("invitacion_workspace",{
   id:bigint("id",{mode:'bigint'}).generatedAlwaysAsIdentity().notNull().primaryKey(),
@@ -354,6 +380,7 @@ export const proyecto=pmo.table("proyecto",{
   activo:boolean("activo").default(sql.raw("true")).notNull(),
   created_at:timestamp("created_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
   updated_at:timestamp("updated_at",{withTimezone:true,mode:'date'}).default(sql.raw("now()")).notNull(),
+  fecha_inicio_real:date("fecha_inicio_real",{mode:'string'}),
 });
 export const proyecto_contacto=pmo.table("proyecto_contacto",{
   proyecto_id:bigint("proyecto_id",{mode:'bigint'}).notNull(),

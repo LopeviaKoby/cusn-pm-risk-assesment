@@ -6,15 +6,15 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
   const [engine]=await db<{version:string}>`SELECT current_setting('server_version_num') AS version`;
   if(engine?.version!=="180006")throw new Error("Se requiere PostgreSQL 18.6.");
   const contract=readFileSync(resolve(import.meta.dirname,"../migrations/011_pmo_cusn_v210.sql"),"utf8");
-  const expected=[...contract.matchAll(/^CREATE TABLE (\w+)/gm)].map(m=>m[1]!);
+  const expected=[...contract.matchAll(/^CREATE TABLE (\w+)/gm)].map(m=>m[1]!).concat(['drive_carpeta','drive_provisionamiento']);
   const tables=await db<{table_name:string}>`SELECT table_name FROM information_schema.tables WHERE table_schema='pmo_cusn' AND table_type='BASE TABLE' ORDER BY table_name`;
-  if(expected.length!==53||JSON.stringify(tables.map(r=>r.table_name))!==JSON.stringify([...expected].sort()))throw new Error("Las 53 tablas no coinciden con el DDL.");
+  if(expected.length!==55||JSON.stringify(tables.map(r=>r.table_name))!==JSON.stringify([...expected].sort()))throw new Error("Las 55 tablas no coinciden con el DDL.");
   const [objects]=await db<{functions:string;triggers:string;partial:string;invalid:string}>`SELECT
     (SELECT count(*)::text FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='pmo_cusn' AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.objid=p.oid AND d.deptype='e')) functions,
     (SELECT count(*)::text FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pmo_cusn' AND NOT t.tgisinternal) triggers,
     (SELECT count(*)::text FROM pg_index i JOIN pg_class c ON c.oid=i.indrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pmo_cusn' AND i.indpred IS NOT NULL) partial,
     (SELECT count(*)::text FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname='pmo_cusn' AND NOT c.convalidated) invalid`;
-  if(objects?.functions!=="10"||objects.triggers!=="14"||objects.partial!=="9"||objects.invalid!=="0")throw new Error(`Objetos/restricciones distintos: ${JSON.stringify(objects)}`);
+  if(objects?.functions!=="15"||objects.triggers!=="19"||objects.partial!=="9"||objects.invalid!=="1")throw new Error(`Objetos/restricciones distintos: ${JSON.stringify(objects)}`);
   const units=await db<{codigo:string}>`SELECT codigo FROM pmo_cusn.unidad_monetaria ORDER BY codigo`;
   if(units.map(r=>r.codigo).join(',')!=="ARS,BRL,CLP,COP,MXN,PAB,PEN,UF,USD")throw new Error("Unidades distintas del contrato.");
   const [roles]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn.rol`;
@@ -22,9 +22,13 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
   const roleCodes=await db<{codigo:string}>`SELECT codigo FROM pmo_cusn.rol ORDER BY codigo`;
   if(roleCodes.map(r=>r.codigo).join(',')!=="ADMIN,ESPECIALISTA,PM,VISUALIZADOR")throw new Error("Catálogo de roles distinto.");
   const [grants]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn.rol_permiso`;
-  if(grants?.n!=="68")throw new Error("La matriz de permisos v2.1.0 no coincide con el baseline.");
+  if(grants?.n!=="70")throw new Error("La matriz de permisos v2.1.0 + G1 clientes no coincide.");
   const [references]=await db<{permissions:string;scopes:string}>`SELECT (SELECT count(*)::text FROM pmo_cusn.permiso) permissions,(SELECT count(*)::text FROM pmo_cusn.ambito_cambio) scopes`;
-  if(references?.permissions!=="38"||references.scopes!=="6")throw new Error("Catálogos de permisos o ámbitos distintos del contrato.");
+  if(references?.permissions!=="39"||references.scopes!=="6")throw new Error("Catálogos de permisos o ámbitos distintos del contrato.");
+  const clientGrants=await db<{codigo:string;delegable:boolean}>`SELECT r.codigo,p.delegable FROM pmo_cusn.permiso p
+    JOIN pmo_cusn.rol_permiso rp ON rp.permiso_id=p.id JOIN pmo_cusn.rol r ON r.id=rp.rol_id
+    WHERE p.codigo='clientes.crear' ORDER BY r.codigo`;
+  if(clientGrants.map(r=>r.codigo).join(',')!=='ADMIN,PM'||clientGrants.some(r=>r.delegable))throw new Error('Concesiones clientes.crear divergentes.');
   const foreignKeys=await db<{child:string;parent:string;keys:string[];refs:string[]}>`
     SELECT c.conrelid::regclass::text child,c.confrelid::regclass::text parent,
       ARRAY(SELECT a.attname FROM unnest(c.conkey) WITH ORDINALITY k(attnum,ord) JOIN pg_attribute a ON a.attrelid=c.conrelid AND a.attnum=k.attnum ORDER BY k.ord) keys,
@@ -35,9 +39,18 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
     const [row]=await db.unsafe<{n:string}[]>(`SELECT count(*)::text n FROM ${fk.child} c LEFT JOIN ${fk.parent} p ON ${fk.keys.map((k,i)=>`c.${quote(k)}=p.${quote(fk.refs[i]!)}`).join(' AND ')} WHERE ${fk.keys.map(k=>`c.${quote(k)} IS NOT NULL`).join(' AND ')} AND p.${quote(fk.refs[0]!)} IS NULL`);
     if(row?.n!=="0")throw new Error(`FK huérfana en ${fk.child}`);
   }
-  const [migration]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn_meta.migracion WHERE version IN ('011_pmo_cusn_v210.sql','012_g1_baseline_guard.sql')`;
-  if(migration?.n!=="2")throw new Error("Migraciones v2.1.0 (011 y 012) no registradas.");
+  const [migration]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn_meta.migracion WHERE version IN ('011_pmo_cusn_v210.sql','012_g1_baseline_guard.sql','013_clientes_crear.sql','014_flujo11_arranque.sql','015_facturacion_manual.sql','016_drive_provisionamiento.sql')`;
+  if(migration?.n!=="6")throw new Error("Migraciones v2.1.0 (011–016) no registradas.");
   if(runtime){
+    const driveGrants=await db<{table_name:string;can_insert:boolean;can_update:boolean;can_delete:boolean}>`SELECT table_name,has_table_privilege(current_user,'pmo_cusn.'||table_name,'INSERT') can_insert,has_table_privilege(current_user,'pmo_cusn.'||table_name,'UPDATE') can_update,has_table_privilege(current_user,'pmo_cusn.'||table_name,'DELETE') can_delete FROM (VALUES ('drive_provisionamiento'),('drive_carpeta')) t(table_name)`;
+    if(driveGrants.some(r=>!r.can_insert||!r.can_update||r.can_delete))throw new Error('Drive requiere INSERT/UPDATE sin DELETE.');
+    const [billing]=await db<{insert:boolean;update:boolean;delete:boolean}>`SELECT has_table_privilege(current_user,'pmo_cusn.hito_facturacion','INSERT') insert,has_table_privilege(current_user,'pmo_cusn.hito_facturacion','UPDATE') update,has_table_privilege(current_user,'pmo_cusn.hito_facturacion','DELETE') delete`;
+    if(!billing?.insert||!billing.update||billing.delete)throw new Error('Privilegios de facturacion deben ser INSERT/UPDATE sin DELETE.');
+    const [clients]=await db<{insert:boolean;update:boolean;delete:boolean}>`SELECT
+      has_table_privilege(current_user,'pmo_cusn.cliente','INSERT') insert,
+      has_table_privilege(current_user,'pmo_cusn.cliente','UPDATE') update,
+      has_table_privilege(current_user,'pmo_cusn.cliente','DELETE') delete`;
+    if(!clients?.insert||clients.update||clients.delete)throw new Error('Cliente requiere INSERT exclusivo, sin UPDATE/DELETE.');
     const [privileges]=await db<{elevated:boolean;ddl:boolean;read:boolean;insert:boolean;update:boolean;delete:boolean;event_update:boolean;matrix_write:boolean}>`SELECT
       (r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication OR r.rolbypassrls) elevated,
       has_schema_privilege(current_user,'pmo_cusn','CREATE') ddl,
@@ -50,7 +63,7 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
     if(!privileges||privileges.elevated||privileges.ddl||!privileges.read||!privileges.insert||!privileges.update||privileges.delete||privileges.event_update||privileges.matrix_write)throw new Error(`Privilegios runtime no válidos: ${JSON.stringify(privileges)}`);
     console.log("PASS runtime sin DDL ni privilegios elevados; DML de proyecto, eventos y matriz funcional protegidos.");
   }
-  console.log(`PASS 53 tablas, ${objects.functions} funciones, ${objects.triggers} triggers, ${objects.partial} índices parciales, ${foreignKeys.length} FKs sin huérfanos, 9 unidades, 4 roles y migraciones v2.1.0 (011–012).`);
+  console.log(`PASS 55 tablas, ${objects.functions} funciones, ${objects.triggers} triggers, ${objects.partial} índices parciales, ${foreignKeys.length} FKs sin huérfanos, 9 unidades, 4 roles, 39 permisos, 70 concesiones y migraciones 011–016.`);
 }
 if(import.meta.main){
   if(!Bun.env.DATABASE_URL)throw new Error("Falta DATABASE_URL.");

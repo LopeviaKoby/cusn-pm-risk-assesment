@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import { strict as assert } from "node:assert";
 import { SQL } from "bun";
 
@@ -38,15 +39,13 @@ const viewerAssigned = await createActor("VISUALIZADOR", "ASIGNADOS", "INTERNO")
 const external = await createActor("VISUALIZADOR", "ASIGNADOS", "EXTERNO");
 
 const [clientA] = await fixture<{ id: string }>`
-  INSERT INTO pmo_cusn.cliente(nombre,sector) VALUES (${`Cliente Alfa ${mark}`},'Banca') RETURNING id::text`;
+  INSERT INTO pmo_cusn.cliente(estado_cliente,nombre,sector) VALUES ('ANTIGUO',${`Cliente Alfa ${mark}`},'Banca') RETURNING id::text`;
 const [clientB] = await fixture<{ id: string }>`
-  INSERT INTO pmo_cusn.cliente(nombre,sector) VALUES (${`Cliente Beta ${mark}`},'Retail') RETURNING id::text`;
+  INSERT INTO pmo_cusn.cliente(estado_cliente,nombre,sector) VALUES ('ANTIGUO',${`Cliente Beta ${mark}`},'Retail') RETURNING id::text`;
 const [country] = await fixture<{ id: string }>`
   INSERT INTO pmo_cusn.pais(codigo,nombre) VALUES (${`G${mark.slice(0, 2).toUpperCase()}`},${`País G1 ${mark}`}) RETURNING id::text`;
 const [lob] = await fixture<{ id: string }>`
   INSERT INTO pmo_cusn.lob(nombre) VALUES (${`LOB G1 ${mark}`}) RETURNING id::text`;
-const [serviceLob] = await fixture<{ id: string }>`
-  INSERT INTO pmo_cusn.servicio_lob(lob_id,nombre) VALUES (${lob!.id},${`Servicio G1 ${mark}`}) RETURNING id::text`;
 const [squad] = await fixture<{ id: string }>`
   INSERT INTO pmo_cusn.squad(nombre) VALUES (${`Squad G1 ${mark}`}) RETURNING id::text`;
 
@@ -62,7 +61,7 @@ const send = (method: string, path: string, cookie?: string, body?: unknown) =>
         ...(cookie ? { cookie } : {}),
         ...(body !== undefined ? { "content-type": "application/json" } : {}),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(registrationFixture(method,path,body)),
     }),
   );
 
@@ -92,22 +91,15 @@ try {
     actor.cookie = r.headers.getSetCookie().find(v => v.startsWith("pmo_access="))!.split(";")[0]!;
   }
 
-  // G1.6: Catálogos de selección
-  const catalogs = await expectData<{
-    paises: { id: string }[];
-    lobs: { id: string }[];
-    serviciosLob: { id: string; lobId: string }[];
-    squads: { id: string }[];
-    clientes: { id: string; nombre: string }[];
-    estadosProyecto: string[];
-  }>(await send("GET", `catalogos?lobId=${lob!.id}&q=Alfa%20${mark}`, pmCreator.cookie));
-  assert.ok(catalogs.paises.some(p => p.id === country!.id));
-  assert.ok(catalogs.lobs.some(l => l.id === lob!.id));
-  assert.ok(catalogs.serviciosLob.some(s => s.id === serviceLob!.id && s.lobId === lob!.id));
-  assert.ok(catalogs.squads.some(s => s.id === squad!.id));
-  assert.ok(catalogs.clientes.some(c => c.id === clientA!.id));
-  assert.equal(catalogs.estadosProyecto.length, 7);
-  assert.equal((await send("GET", "catalogos", external.cookie)).status, 403);
+  // G1.6: Recursos independientes de selección; el agregado retirado devuelve 404.
+  const paises=await expectData<{id:string}[]>(await send('GET','paises',pmCreator.cookie));
+  const lobs=await expectData<{id:string}[]>(await send('GET','lobs',pmCreator.cookie));
+  const clientes=await expectData<{items:{id:string}[]}>(await send('GET',`clientes?q=Alfa%20${mark}`,pmCreator.cookie));
+  assert.ok(paises.some(p=>p.id===country!.id));
+  assert.ok(lobs.some(l=>l.id===lob!.id));
+  assert.ok(clientes.items.some(c=>c.id===clientA!.id));
+  for(const resource of ['paises','lobs','clientes'])assert.equal((await send('GET',resource,external.cookie)).status,403);
+  for(const path of ['catalogos','catalogos/clientes'])assert.equal((await send('GET',path,pmCreator.cookie)).status,404);
 
   // G1.1: Creación de workspace, detalle, miembros e invitaciones sin token
   const ws = await expectData<{ id: string; slug: string; version: string }>(
@@ -229,24 +221,9 @@ try {
     201,
   );
 
-  // Fijar baseline por primera vez en p2 mediante PATCH -> 200; intentar modificarla después -> 409
-  const p2Patched = await expectData<{ id: string; version: string }>(
-    await send("PATCH", `proyectos/${p2.id}`, pmCreator.cookie, {
-      version: p2.version,
-      fechaInicio: "2026-11-01",
-      fechaTerminoBaseline: "2027-01-15",
-      descripcion: "Baseline fijada en edición inicial",
-    }),
-  );
-  assert.equal(
-    (
-      await send("PATCH", `proyectos/${p2.id}`, pmCreator.cookie, {
-        version: p2Patched.version,
-        fechaTerminoBaseline: "2027-02-28",
-      })
-    ).status,
-    409,
-  );
+  // Planificacion completa se fija en alta y PATCH ya no puede alterarla.
+  assert.equal((await send('PATCH',`proyectos/${p2.id}`,pmCreator.cookie,{version:p2.version,fechaInicio:'2026-11-01'})).status,422);
+  assert.equal((await send('PATCH',`proyectos/${p2.id}`,pmCreator.cookie,{version:p2.version,fechaTerminoBaseline:'2027-02-28'})).status,422);
 
   // Incorporar participantes a p1 (specialist y external)
   await expectData(
