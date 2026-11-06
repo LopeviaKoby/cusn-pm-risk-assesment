@@ -25,6 +25,8 @@ pnpm run test
 pnpm run test:domain
 pnpm run build
 pnpm run test:e2e
+pnpm run storybook
+pnpm run build-storybook
 ```
 
 `test:db` instala y comprueba las seis migraciones activas en una base desechable nueva. Exige `NODE_ENV=test` y `TEST_DATABASE_URL` apuntando a `pmo_test` o `pmo_test_*`; nunca se ejecuta contra la base compartida. Tras migrar esa base, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales. `db:models` regenera ese archivo desde la misma base aislada. Los DTO REST en `app/src/data/contracts.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
@@ -39,6 +41,8 @@ pnpm run test:e2e
 - `NULL` en evaluación de riesgos o importes significa ausencia de registro y se presenta como “Sin dato” o “Sin evaluación”; cero se conserva como importe registrado. El tipo amenaza/oportunidad tampoco se infiere cuando el esquema no lo aporta.
 
 El diseño visual y Atomic Design se documentan en [`app/src/design-system/DESIGN.md`](app/src/design-system/DESIGN.md) y [`AGENTS.md`](AGENTS.md). `specs/migracion-apps-script-a-bun.md` conserva decisiones históricas previas a esta estructura; esta página y el código vigente describen el estado ejecutable.
+
+Storybook es un laboratorio local sin API ni datos reales. El canvas importa `app/src/design-system/app.css` y conmuta las clases reales `.light`/`.dark`; conserva las cuatro foundations y presenta exclusivamente 16 átomos. `app/src/stories/atoms/Catalog.stories.tsx` documenta Button, IconButton, TextInput, Checkbox, RadioButton, Switch, Badge, Avatar, TextLink, BreadcrumbItem, TabItem, Spinner, Skeleton, Tooltip, Icon y Divider. `Button` y `Badge` conservan su implementación canónica en `primitives.tsx`; los demás viven en `catalog.tsx`. `tests/atoms-catalog.test.tsx` cubre los contratos funcionales y `scripts/verify-atoms-browser.mjs` comprueba el build servido en Chrome. Las fuentes WOFF2 se regeneran desde los TTF con `py -3 scripts/convert-fonts.py` (FontTools 4.60.1 y Brotli 1.1.0); los OFL permanecen junto a los originales.
 
 ## Foundry (solo `dev-tvt-foundry`)
 
