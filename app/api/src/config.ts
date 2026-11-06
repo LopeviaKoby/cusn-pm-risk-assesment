@@ -29,16 +29,19 @@ const origins = (Bun.env.APP_ORIGINS ?? Bun.env.APP_ORIGIN ?? "http://127.0.0.1:
   .filter(Boolean);
 
 if (origins.length === 0) throw new Error("APP_ORIGINS no puede quedar vacío.");
+const cookieSecure = boolean("COOKIE_SECURE", true);
+if (!cookieSecure && origins.some(origin => !/^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/.test(origin))) {
+  throw new Error("COOKIE_SECURE=false solo se permite con orígenes HTTP locales.");
+}
 
 export const config = {
   databaseUrl: required("DATABASE_URL"),
   hostname: Bun.env.API_HOST?.trim() || "127.0.0.1",
   port: integer("API_PORT", 3001, 1, 65535),
-  user: Bun.env.GPL_USER ?? "pmo@gpl.example.test",
-  passwordHash: atob(required("GPL_PASSWORD_HASH_B64")),
+  jwtSigningKey: required("JWT_SIGNING_KEY"),
   origins,
-  asOfDate: Bun.env.GPL_AS_OF_DATE ?? "2028-10-22",
-  sessionMinutes: integer("GPL_SESSION_MINUTES", 60, 1, 1440),
-  cookieSecure: boolean("COOKIE_SECURE", false),
+  sessionMinutes: integer("ACCESS_TOKEN_MINUTES", 5, 1, 15),
+  refreshDays: integer("REFRESH_TOKEN_DAYS", 14, 1, 30),
+  cookieSecure,
   dbPoolMax: integer("DB_POOL_MAX", 8, 1, 50),
 };

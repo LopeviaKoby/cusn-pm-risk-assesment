@@ -65,13 +65,13 @@ jobs:
       postgres:
         image: postgres:18.6@sha256:979bccfde35445db618c65107d27d08c6c21339d8dc3ad4c830c6633947be0e4
         env:
-          POSTGRES_DB: pmo_test_ci
+          POSTGRES_DB: pmo_test_v210_ci
           POSTGRES_USER: pmo_owner
           POSTGRES_PASSWORD: ci-only-pmo-test
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U pmo_owner -d pmo_test_ci"
+          --health-cmd "pg_isready -U pmo_owner -d pmo_test_v210_ci"
           --health-interval 5s --health-timeout 5s --health-retries 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -88,6 +88,7 @@ jobs:
         shell: bash
         run: |
           docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun test app/api/tests/unit
-          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app -e NODE_ENV=test -e TEST_DATABASE_URL=postgres://pmo_owner:ci-only-pmo-test@127.0.0.1:5432/pmo_test_ci oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun run app/api/tests/db-smoke.ts
-          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app -e MIGRATOR_DATABASE_URL=postgres://pmo_owner:ci-only-pmo-test@127.0.0.1:5432/pmo_test_ci oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun run app/api/scripts/generate-models.ts --check
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun build app/api/src/index.ts --target=bun --outdir=build/api
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app -e NODE_ENV=test -e TEST_DATABASE_URL=postgres://pmo_owner:ci-only-pmo-test@127.0.0.1:5432/pmo_test_v210_ci -e TEST_API_DATABASE_URL=postgres://pmo_ci_runtime:ci-only-runtime-test@127.0.0.1:5432/pmo_test_v210_ci oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun run app/api/tests/v210-suite.ts
+          docker run --rm --network host -v "$GITHUB_WORKSPACE:/app" -w /app -e MIGRATOR_DATABASE_URL=postgres://pmo_owner:ci-only-pmo-test@127.0.0.1:5432/pmo_test_v210_ci oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a bun run app/api/scripts/generate-models.ts --check
       - run: docker build -f app/api/Dockerfile -t pmo-api-ci .

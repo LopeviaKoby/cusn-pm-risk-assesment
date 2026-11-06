@@ -1,4 +1,4 @@
-// Generado por db:models desde el catálogo PostgreSQL del DDL v2.0.0. No editar a mano.
+// Generado por db:models desde el catálogo PostgreSQL del DDL v2.1.0. No editar a mano.
 // bigint y numeric se reciben como string; date/timestamptz como Date en Bun SQL.
 export type BigintId = string;
 export type Decimal = string;
@@ -27,13 +27,27 @@ export interface AsignacionRolRow {
   id: BigintId;
   usuario_id: BigintId;
   rol_id: BigintId;
-  alcance: "GLOBAL" | "PAIS" | "PROYECTO";
-  pais_id: BigintId | null;
-  proyecto_id: BigintId | null;
-  activo: boolean;
+  alcance_lectura: "GLOBAL" | "ASIGNADOS";
+  asignado_por_id: BigintId | null;
   created_at: Date;
+  revocado_at: Date | null;
 }
-export type AsignacionRolInsert = Pick<AsignacionRolRow, "usuario_id" | "rol_id" | "alcance"> & Partial<Pick<AsignacionRolRow, "usuario_id" | "rol_id" | "alcance" | "pais_id" | "proyecto_id" | "activo" | "created_at">>;
+export type AsignacionRolInsert = Pick<AsignacionRolRow, "usuario_id" | "rol_id" | "alcance_lectura"> & Partial<Pick<AsignacionRolRow, "usuario_id" | "rol_id" | "alcance_lectura" | "asignado_por_id" | "created_at" | "revocado_at">>;
+
+export interface AuditoriaSeguridadRow {
+  id: BigintId;
+  actor_id: BigintId | null;
+  delegacion_id: BigintId | null;
+  workspace_id: BigintId | null;
+  proyecto_id: BigintId | null;
+  operacion: string;
+  recurso_tipo: string;
+  recurso_id: string | null;
+  resultado: "PERMITIDO" | "DENEGADO" | "ERROR";
+  detalle: Json;
+  fecha_evento: Date;
+}
+export type AuditoriaSeguridadInsert = Pick<AuditoriaSeguridadRow, "operacion" | "recurso_tipo" | "resultado"> & Partial<Pick<AuditoriaSeguridadRow, "actor_id" | "delegacion_id" | "workspace_id" | "proyecto_id" | "operacion" | "recurso_tipo" | "recurso_id" | "resultado" | "detalle" | "fecha_evento">>;
 
 export interface CambioAmbitoRow {
   control_cambio_id: BigintId;
@@ -69,12 +83,8 @@ export interface CompraRow {
   meses_recurrentes: number | null;
   observaciones: string | null;
   created_at: Date;
-  presupuesto: Decimal | null;
-  fecha_recepcion_esperada: Date | null;
-  fecha_recepcion_real: Date | null;
-  readonly ahorro: Decimal | null;
 }
-export type CompraInsert = Pick<CompraRow, "proyecto_id" | "proveedor_id"> & Partial<Pick<CompraRow, "proyecto_id" | "proveedor_id" | "gestor_compra_id" | "concepto" | "descripcion" | "tipo_gasto" | "unidad_codigo" | "fecha_solicitud" | "monto_adjudicado" | "valor_setup" | "valor_recurrente" | "meses_recurrentes" | "observaciones" | "created_at" | "presupuesto" | "fecha_recepcion_esperada" | "fecha_recepcion_real">>;
+export type CompraInsert = Pick<CompraRow, "proyecto_id" | "proveedor_id"> & Partial<Pick<CompraRow, "proyecto_id" | "proveedor_id" | "gestor_compra_id" | "concepto" | "descripcion" | "tipo_gasto" | "unidad_codigo" | "fecha_solicitud" | "monto_adjudicado" | "valor_setup" | "valor_recurrente" | "meses_recurrentes" | "observaciones" | "created_at">>;
 
 export interface CompromisoRow {
   id: BigintId;
@@ -132,10 +142,8 @@ export interface ControlCambioRow {
   tipo_impacto: "COSTO_TIVIT" | "BENEFICIO" | null;
   unidad_codigo: string | null;
   created_at: Date;
-  aprobador_economico_id: BigintId | null;
-  fecha_aprobacion_economica: Date | null;
 }
-export type ControlCambioInsert = Pick<ControlCambioRow, "proyecto_id" | "secuencia" | "folio" | "fecha_elaboracion" | "descripcion" | "urgencia"> & Partial<Pick<ControlCambioRow, "proyecto_id" | "secuencia" | "folio" | "fecha_elaboracion" | "descripcion" | "justificacion" | "urgencia" | "estado_firma" | "estado_aprobacion" | "responsabilidad" | "responsable_cliente_id" | "responsable_interno_id" | "account_responsable_id" | "impacto_monetario" | "tipo_impacto" | "unidad_codigo" | "created_at" | "aprobador_economico_id" | "fecha_aprobacion_economica">>;
+export type ControlCambioInsert = Pick<ControlCambioRow, "proyecto_id" | "secuencia" | "folio" | "fecha_elaboracion" | "descripcion" | "urgencia"> & Partial<Pick<ControlCambioRow, "proyecto_id" | "secuencia" | "folio" | "fecha_elaboracion" | "descripcion" | "justificacion" | "urgencia" | "estado_firma" | "estado_aprobacion" | "responsabilidad" | "responsable_cliente_id" | "responsable_interno_id" | "account_responsable_id" | "impacto_monetario" | "tipo_impacto" | "unidad_codigo" | "created_at">>;
 
 export interface ControlCambioDocumentoRow {
   control_cambio_id: BigintId;
@@ -158,19 +166,21 @@ export type ControlRiesgoInsert = Pick<ControlRiesgoRow, "nombre" | "descripcion
 
 export interface DelegacionAccesoRow {
   id: BigintId;
+  tipo: string;
   delegante_id: BigintId;
   delegado_id: BigintId;
   autorizado_por_id: BigintId | null;
-  alcance: "GLOBAL" | "PAIS" | "PROYECTO";
-  pais_id: BigintId | null;
-  proyecto_id: BigintId | null;
+  alcance: string;
+  proyecto_id: BigintId;
   inicio: Date;
   fin: Date;
   motivo: string;
   estado: "PENDIENTE" | "ACTIVA" | "REVOCADA" | "RECHAZADA";
+  revocado_at: Date | null;
+  revocado_por_id: BigintId | null;
   created_at: Date;
 }
-export type DelegacionAccesoInsert = Pick<DelegacionAccesoRow, "delegante_id" | "delegado_id" | "alcance" | "inicio" | "fin" | "motivo"> & Partial<Pick<DelegacionAccesoRow, "delegante_id" | "delegado_id" | "autorizado_por_id" | "alcance" | "pais_id" | "proyecto_id" | "inicio" | "fin" | "motivo" | "estado" | "created_at">>;
+export type DelegacionAccesoInsert = Pick<DelegacionAccesoRow, "delegante_id" | "delegado_id" | "proyecto_id" | "inicio" | "fin" | "motivo"> & Partial<Pick<DelegacionAccesoRow, "tipo" | "delegante_id" | "delegado_id" | "autorizado_por_id" | "alcance" | "proyecto_id" | "inicio" | "fin" | "motivo" | "estado" | "revocado_at" | "revocado_por_id" | "created_at">>;
 
 export interface DelegacionPermisoRow {
   delegacion_id: BigintId;
@@ -262,15 +272,26 @@ export interface HitoFacturacionRow {
   real_reportado: Decimal | null;
   estado: string | null;
   comentario: string | null;
-  origen: string;
+  origen: string | null;
   origen_ref: string | null;
   updated_at: Date;
-  margen_porcentaje: Decimal | null;
-  origen_legacy: string | null;
-  control_cambio_id: BigintId | null;
-  tipo_impacto_cc: "MANUAL" | "CAMBIO" | "BENEFICIO" | "COSTO_TIVIT" | null;
 }
-export type HitoFacturacionInsert = Pick<HitoFacturacionRow, "proyecto_id" | "periodo"> & Partial<Pick<HitoFacturacionRow, "proyecto_id" | "periodo" | "tipo_hito" | "tipo_cuota" | "unidad_codigo" | "showprice" | "planificado" | "real_reportado" | "estado" | "comentario" | "origen" | "origen_ref" | "updated_at" | "margen_porcentaje" | "origen_legacy" | "control_cambio_id" | "tipo_impacto_cc">>;
+export type HitoFacturacionInsert = Pick<HitoFacturacionRow, "proyecto_id" | "periodo"> & Partial<Pick<HitoFacturacionRow, "proyecto_id" | "periodo" | "tipo_hito" | "tipo_cuota" | "unidad_codigo" | "showprice" | "planificado" | "real_reportado" | "estado" | "comentario" | "origen" | "origen_ref" | "updated_at">>;
+
+export interface InvitacionWorkspaceRow {
+  id: BigintId;
+  workspace_id: BigintId;
+  email_destinatario: string;
+  invitado_por_id: BigintId;
+  rol_solicitado_id: BigintId | null;
+  puede_crear_proyectos: boolean;
+  token_hash: string;
+  estado: "PENDIENTE" | "ACEPTADA" | "REVOCADA" | "EXPIRADA";
+  expires_at: Date;
+  accepted_at: Date | null;
+  created_at: Date;
+}
+export type InvitacionWorkspaceInsert = Pick<InvitacionWorkspaceRow, "workspace_id" | "email_destinatario" | "invitado_por_id" | "token_hash" | "expires_at"> & Partial<Pick<InvitacionWorkspaceRow, "workspace_id" | "email_destinatario" | "invitado_por_id" | "rol_solicitado_id" | "puede_crear_proyectos" | "token_hash" | "estado" | "expires_at" | "accepted_at" | "created_at">>;
 
 export interface ItemChecklistDocumentoRow {
   item_checklist_id: BigintId;
@@ -326,6 +347,18 @@ export interface LobRow {
 }
 export type LobInsert = Pick<LobRow, "nombre"> & Partial<Pick<LobRow, "nombre" | "activo">>;
 
+export interface MembresiaWorkspaceRow {
+  id: BigintId;
+  workspace_id: BigintId;
+  usuario_id: BigintId;
+  puede_crear_proyectos: boolean;
+  estado: "ACTIVA" | "SUSPENDIDA" | "RETIRADA";
+  incorporado_por_id: BigintId | null;
+  created_at: Date;
+  updated_at: Date;
+}
+export type MembresiaWorkspaceInsert = Pick<MembresiaWorkspaceRow, "workspace_id" | "usuario_id"> & Partial<Pick<MembresiaWorkspaceRow, "workspace_id" | "usuario_id" | "puede_crear_proyectos" | "estado" | "incorporado_por_id" | "created_at" | "updated_at">>;
+
 export interface PaisRow {
   id: BigintId;
   codigo: string;
@@ -338,8 +371,8 @@ export interface ParticipacionProyectoRow {
   id: BigintId;
   proyecto_id: BigintId;
   usuario_id: BigintId;
-  funcion: string;
-  fecha_inicio: Date | null;
+  funcion: "PM_TITULAR" | "ESPECIALISTA" | "OBSERVADOR" | "LIDER_TECNICO" | "TAM" | "SDM";
+  fecha_inicio: Date;
   fecha_fin: Date | null;
 }
 export type ParticipacionProyectoInsert = Pick<ParticipacionProyectoRow, "proyecto_id" | "usuario_id" | "funcion"> & Partial<Pick<ParticipacionProyectoRow, "proyecto_id" | "usuario_id" | "funcion" | "fecha_inicio" | "fecha_fin">>;
@@ -364,6 +397,10 @@ export type ProveedorInsert = Pick<ProveedorRow, "nombre"> & Partial<Pick<Provee
 export interface ProyectoRow {
   id: BigintId;
   tvt: string;
+  readonly tvt_normalizado: string | null;
+  workspace_id: BigintId;
+  creado_por_id: BigintId;
+  version: BigintId;
   cliente_id: BigintId;
   pais_id: BigintId;
   lob_id: BigintId;
@@ -383,10 +420,8 @@ export interface ProyectoRow {
   activo: boolean;
   created_at: Date;
   updated_at: Date;
-  fecha_cierre_real: Date | null;
-  periodo_cierre_mes: string | null;
 }
-export type ProyectoInsert = Pick<ProyectoRow, "tvt" | "cliente_id" | "pais_id" | "lob_id" | "nombre"> & Partial<Pick<ProyectoRow, "tvt" | "cliente_id" | "pais_id" | "lob_id" | "squad_id" | "nombre" | "descripcion" | "situacion_inicial" | "estado_actual" | "fecha_recepcion_p1p2" | "fecha_inicio" | "fecha_termino_baseline" | "fecha_termino_actual" | "drive_folder_id" | "referencia_sap" | "referencia_ceco" | "referencia_pep" | "activo" | "created_at" | "updated_at" | "fecha_cierre_real" | "periodo_cierre_mes">>;
+export type ProyectoInsert = Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "cliente_id" | "pais_id" | "lob_id" | "nombre"> & Partial<Pick<ProyectoRow, "tvt" | "workspace_id" | "creado_por_id" | "version" | "cliente_id" | "pais_id" | "lob_id" | "squad_id" | "nombre" | "descripcion" | "situacion_inicial" | "estado_actual" | "fecha_recepcion_p1p2" | "fecha_inicio" | "fecha_termino_baseline" | "fecha_termino_actual" | "drive_folder_id" | "referencia_sap" | "referencia_ceco" | "referencia_pep" | "activo" | "created_at" | "updated_at">>;
 
 export interface ProyectoContactoRow {
   proyecto_id: BigintId;
@@ -447,7 +482,7 @@ export type RiesgoGlobalInsert = Pick<RiesgoGlobalRow, "nombre"> & Partial<Pick<
 
 export interface RiesgoProyectoRow {
   id: BigintId;
-  proyecto_id: BigintId | null;
+  proyecto_id: BigintId;
   riesgo_global_id: BigintId | null;
   responsable_id: BigintId | null;
   nombre: string;
@@ -459,13 +494,12 @@ export interface RiesgoProyectoRow {
   plan_contingencia: string | null;
   created_at: Date;
   updated_at: Date;
-  es_transversal: boolean;
 }
-export type RiesgoProyectoInsert = Pick<RiesgoProyectoRow, "nombre"> & Partial<Pick<RiesgoProyectoRow, "proyecto_id" | "riesgo_global_id" | "responsable_id" | "nombre" | "descripcion" | "categoria" | "estado" | "estrategia" | "plan_mitigacion" | "plan_contingencia" | "created_at" | "updated_at" | "es_transversal">>;
+export type RiesgoProyectoInsert = Pick<RiesgoProyectoRow, "proyecto_id" | "nombre"> & Partial<Pick<RiesgoProyectoRow, "proyecto_id" | "riesgo_global_id" | "responsable_id" | "nombre" | "descripcion" | "categoria" | "estado" | "estrategia" | "plan_mitigacion" | "plan_contingencia" | "created_at" | "updated_at">>;
 
 export interface RolRow {
   id: BigintId;
-  codigo: "ADMIN" | "COORDINADOR" | "PM" | "ESPECIALISTA" | "VISUALIZADOR";
+  codigo: "ADMIN" | "PM" | "ESPECIALISTA" | "VISUALIZADOR";
   nombre: string;
   activo: boolean;
 }
@@ -488,7 +522,6 @@ export interface SeguimientoProyectoRow {
   proximos_pasos: string | null;
   observaciones: string | null;
   created_at: Date;
-  readonly spi: Decimal | null;
 }
 export type SeguimientoProyectoInsert = Pick<SeguimientoProyectoRow, "proyecto_id" | "fecha_registro" | "avance_planificado" | "avance_real"> & Partial<Pick<SeguimientoProyectoRow, "proyecto_id" | "registrado_por" | "fecha_registro" | "avance_planificado" | "avance_real" | "actividades" | "proximos_pasos" | "observaciones" | "created_at">>;
 
@@ -559,14 +592,23 @@ export type UnidadMonetariaInsert = Pick<UnidadMonetariaRow, "codigo" | "clase">
 
 export interface UsuarioRow {
   id: BigintId;
-  google_sub: string | null;
   email: string;
   nombre: string;
+  password_hash: string | null;
+  refresh_token_hash: string | null;
+  refresh_expires_at: Date | null;
+  recovery_token_hash: string | null;
+  recovery_expires_at: Date | null;
+  failed_login_count: number;
+  locked_until: Date | null;
+  session_version: BigintId;
+  tipo_usuario: "INTERNO" | "EXTERNO";
+  contacto_cliente_id: BigintId | null;
   activo: boolean;
   created_at: Date;
   updated_at: Date;
 }
-export type UsuarioInsert = Pick<UsuarioRow, "email" | "nombre"> & Partial<Pick<UsuarioRow, "google_sub" | "email" | "nombre" | "activo" | "created_at" | "updated_at">>;
+export type UsuarioInsert = Pick<UsuarioRow, "email" | "nombre"> & Partial<Pick<UsuarioRow, "email" | "nombre" | "password_hash" | "refresh_token_hash" | "refresh_expires_at" | "recovery_token_hash" | "recovery_expires_at" | "failed_login_count" | "locked_until" | "session_version" | "tipo_usuario" | "contacto_cliente_id" | "activo" | "created_at" | "updated_at">>;
 
 export interface ValidacionCierreRow {
   id: BigintId;
@@ -581,6 +623,18 @@ export interface ValidacionCierreRow {
   observaciones: string | null;
 }
 export type ValidacionCierreInsert = Pick<ValidacionCierreRow, "proyecto_id" | "resultado"> & Partial<Pick<ValidacionCierreRow, "proyecto_id" | "validador_id" | "fecha_validacion" | "checklist_ok" | "documentos_ok" | "riesgos_ok" | "lecciones_ok" | "resultado" | "observaciones">>;
+
+export interface WorkspaceRow {
+  id: BigintId;
+  nombre: string;
+  slug: string;
+  creado_por_id: BigintId;
+  estado: "ACTIVO" | "ARCHIVADO";
+  version: BigintId;
+  created_at: Date;
+  updated_at: Date;
+}
+export type WorkspaceInsert = Pick<WorkspaceRow, "nombre" | "slug" | "creado_por_id"> & Partial<Pick<WorkspaceRow, "nombre" | "slug" | "creado_por_id" | "estado" | "version" | "created_at" | "updated_at">>;
 
 export const databaseConstraints = [
   {
@@ -675,21 +729,21 @@ export const databaseConstraints = [
   },
   {
     "table_name": "asignacion_rol",
-    "name": "asignacion_rol_activo_not_null",
-    "kind": "n",
-    "definition": "NOT NULL activo"
-  },
-  {
-    "table_name": "asignacion_rol",
-    "name": "asignacion_rol_alcance_check",
+    "name": "asignacion_rol_alcance_lectura_check",
     "kind": "c",
-    "definition": "CHECK ((alcance = ANY (ARRAY['GLOBAL'::text, 'PAIS'::text, 'PROYECTO'::text])))"
+    "definition": "CHECK ((alcance_lectura = ANY (ARRAY['GLOBAL'::text, 'ASIGNADOS'::text])))"
   },
   {
     "table_name": "asignacion_rol",
-    "name": "asignacion_rol_alcance_not_null",
+    "name": "asignacion_rol_alcance_lectura_not_null",
     "kind": "n",
-    "definition": "NOT NULL alcance"
+    "definition": "NOT NULL alcance_lectura"
+  },
+  {
+    "table_name": "asignacion_rol",
+    "name": "asignacion_rol_asignado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (asignado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
   },
   {
     "table_name": "asignacion_rol",
@@ -705,21 +759,9 @@ export const databaseConstraints = [
   },
   {
     "table_name": "asignacion_rol",
-    "name": "asignacion_rol_pais_id_fkey",
-    "kind": "f",
-    "definition": "FOREIGN KEY (pais_id) REFERENCES pmo_cusn.pais(id) ON DELETE RESTRICT"
-  },
-  {
-    "table_name": "asignacion_rol",
     "name": "asignacion_rol_pkey",
     "kind": "p",
     "definition": "PRIMARY KEY (id)"
-  },
-  {
-    "table_name": "asignacion_rol",
-    "name": "asignacion_rol_proyecto_id_fkey",
-    "kind": "f",
-    "definition": "FOREIGN KEY (proyecto_id) REFERENCES pmo_cusn.proyecto(id) ON DELETE RESTRICT"
   },
   {
     "table_name": "asignacion_rol",
@@ -747,9 +789,99 @@ export const databaseConstraints = [
   },
   {
     "table_name": "asignacion_rol",
-    "name": "ck_asignacion_rol_alcance",
+    "name": "ck_asignacion_revocacion",
     "kind": "c",
-    "definition": "CHECK ((((alcance = 'GLOBAL'::text) AND (pais_id IS NULL) AND (proyecto_id IS NULL)) OR ((alcance = 'PAIS'::text) AND (pais_id IS NOT NULL) AND (proyecto_id IS NULL)) OR ((alcance = 'PROYECTO'::text) AND (pais_id IS NULL) AND (proyecto_id IS NOT NULL))))"
+    "definition": "CHECK (((revocado_at IS NULL) OR (revocado_at >= created_at)))"
+  },
+  {
+    "table_name": "asignacion_rol",
+    "name": "ctr_pm_titular_rol",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_actor_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (actor_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_delegacion_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (delegacion_id) REFERENCES pmo_cusn.delegacion_acceso(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_detalle_not_null",
+    "kind": "n",
+    "definition": "NOT NULL detalle"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_fecha_evento_not_null",
+    "kind": "n",
+    "definition": "NOT NULL fecha_evento"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL id"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_operacion_check",
+    "kind": "c",
+    "definition": "CHECK ((btrim(operacion) <> ''::text))"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_operacion_not_null",
+    "kind": "n",
+    "definition": "NOT NULL operacion"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (id)"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_proyecto_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (proyecto_id) REFERENCES pmo_cusn.proyecto(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_recurso_tipo_check",
+    "kind": "c",
+    "definition": "CHECK ((btrim(recurso_tipo) <> ''::text))"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_recurso_tipo_not_null",
+    "kind": "n",
+    "definition": "NOT NULL recurso_tipo"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_resultado_check",
+    "kind": "c",
+    "definition": "CHECK ((resultado = ANY (ARRAY['PERMITIDO'::text, 'DENEGADO'::text, 'ERROR'::text])))"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_resultado_not_null",
+    "kind": "n",
+    "definition": "NOT NULL resultado"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_workspace_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (workspace_id) REFERENCES pmo_cusn.workspace(id) ON DELETE RESTRICT"
   },
   {
     "table_name": "cambio_ambito",
@@ -1101,12 +1233,6 @@ export const databaseConstraints = [
   },
   {
     "table_name": "control_cambio",
-    "name": "ck_cc_aprobacion_economica",
-    "kind": "c",
-    "definition": "CHECK (((estado_aprobacion IS DISTINCT FROM 'APROBADO'::text) OR ((aprobador_economico_id IS NOT NULL) AND (fecha_aprobacion_economica IS NOT NULL))))"
-  },
-  {
-    "table_name": "control_cambio",
     "name": "ck_cc_moneda",
     "kind": "c",
     "definition": "CHECK (((impacto_monetario IS NULL) OR (unidad_codigo IS NOT NULL)))"
@@ -1122,12 +1248,6 @@ export const databaseConstraints = [
     "name": "control_cambio_account_responsable_id_fkey",
     "kind": "f",
     "definition": "FOREIGN KEY (account_responsable_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
-  },
-  {
-    "table_name": "control_cambio",
-    "name": "control_cambio_aprobador_economico_id_fkey",
-    "kind": "f",
-    "definition": "FOREIGN KEY (aprobador_economico_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
   },
   {
     "table_name": "control_cambio",
@@ -1377,15 +1497,15 @@ export const databaseConstraints = [
   },
   {
     "table_name": "delegacion_acceso",
-    "name": "ck_delegacion_alcance",
-    "kind": "c",
-    "definition": "CHECK ((((alcance = 'GLOBAL'::text) AND (pais_id IS NULL) AND (proyecto_id IS NULL)) OR ((alcance = 'PAIS'::text) AND (pais_id IS NOT NULL) AND (proyecto_id IS NULL)) OR ((alcance = 'PROYECTO'::text) AND (pais_id IS NULL) AND (proyecto_id IS NOT NULL))))"
-  },
-  {
-    "table_name": "delegacion_acceso",
     "name": "ck_delegacion_distintos",
     "kind": "c",
     "definition": "CHECK ((delegante_id <> delegado_id))"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "ck_delegacion_revocacion",
+    "kind": "c",
+    "definition": "CHECK ((((estado = 'REVOCADA'::text) AND (revocado_at IS NOT NULL) AND (revocado_por_id IS NOT NULL)) OR ((estado <> 'REVOCADA'::text) AND (revocado_at IS NULL) AND (revocado_por_id IS NULL))))"
   },
   {
     "table_name": "delegacion_acceso",
@@ -1397,7 +1517,7 @@ export const databaseConstraints = [
     "table_name": "delegacion_acceso",
     "name": "delegacion_acceso_alcance_check",
     "kind": "c",
-    "definition": "CHECK ((alcance = ANY (ARRAY['GLOBAL'::text, 'PAIS'::text, 'PROYECTO'::text])))"
+    "definition": "CHECK ((alcance = 'PROYECTO'::text))"
   },
   {
     "table_name": "delegacion_acceso",
@@ -1485,12 +1605,6 @@ export const databaseConstraints = [
   },
   {
     "table_name": "delegacion_acceso",
-    "name": "delegacion_acceso_pais_id_fkey",
-    "kind": "f",
-    "definition": "FOREIGN KEY (pais_id) REFERENCES pmo_cusn.pais(id) ON DELETE RESTRICT"
-  },
-  {
-    "table_name": "delegacion_acceso",
     "name": "delegacion_acceso_pkey",
     "kind": "p",
     "definition": "PRIMARY KEY (id)"
@@ -1500,6 +1614,36 @@ export const databaseConstraints = [
     "name": "delegacion_acceso_proyecto_id_fkey",
     "kind": "f",
     "definition": "FOREIGN KEY (proyecto_id) REFERENCES pmo_cusn.proyecto(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "delegacion_acceso_proyecto_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL proyecto_id"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "delegacion_acceso_revocado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (revocado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "delegacion_acceso_tipo_check",
+    "kind": "c",
+    "definition": "CHECK ((tipo = 'SUPLENCIA_PM'::text))"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "delegacion_acceso_tipo_not_null",
+    "kind": "n",
+    "definition": "NOT NULL tipo"
+  },
+  {
+    "table_name": "delegacion_acceso",
+    "name": "ex_suplencia_pm_no_superpuesta",
+    "kind": "x",
+    "definition": "EXCLUDE USING gist (proyecto_id WITH =, tstzrange(inicio, fin, '[)'::text) WITH &&) WHERE (((tipo = 'SUPLENCIA_PM'::text) AND (estado = ANY (ARRAY['PENDIENTE'::text, 'ACTIVA'::text]))))"
   },
   {
     "table_name": "delegacion_permiso",
@@ -1923,33 +2067,9 @@ export const databaseConstraints = [
   },
   {
     "table_name": "hito_facturacion",
-    "name": "ck_hito_margen_rango",
-    "kind": "c",
-    "definition": "CHECK (((margen_porcentaje >= (0)::numeric) AND (margen_porcentaje <= (100)::numeric)))"
-  },
-  {
-    "table_name": "hito_facturacion",
-    "name": "ck_hito_origen_valido",
-    "kind": "c",
-    "definition": "CHECK ((((origen = 'MANUAL'::text) AND (control_cambio_id IS NULL) AND (tipo_impacto_cc IS NULL)) OR ((origen = 'CAMBIO'::text) AND (control_cambio_id IS NOT NULL) AND (tipo_impacto_cc = ANY (ARRAY['BENEFICIO'::text, 'COSTO_TIVIT'::text])))))"
-  },
-  {
-    "table_name": "hito_facturacion",
-    "name": "fk_hito_cc_mismo_proyecto",
-    "kind": "f",
-    "definition": "FOREIGN KEY (control_cambio_id, proyecto_id) REFERENCES pmo_cusn.control_cambio(id, proyecto_id) ON DELETE RESTRICT"
-  },
-  {
-    "table_name": "hito_facturacion",
     "name": "hito_facturacion_id_not_null",
     "kind": "n",
     "definition": "NOT NULL id"
-  },
-  {
-    "table_name": "hito_facturacion",
-    "name": "hito_facturacion_origen_not_null",
-    "kind": "n",
-    "definition": "NOT NULL origen"
   },
   {
     "table_name": "hito_facturacion",
@@ -1986,6 +2106,120 @@ export const databaseConstraints = [
     "name": "hito_facturacion_updated_at_not_null",
     "kind": "n",
     "definition": "NOT NULL updated_at"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "ck_invitacion_workspace_estado",
+    "kind": "c",
+    "definition": "CHECK ((((estado = 'ACEPTADA'::text) AND (accepted_at IS NOT NULL)) OR ((estado <> 'ACEPTADA'::text) AND (accepted_at IS NULL))))"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "ck_invitacion_workspace_tiempo",
+    "kind": "c",
+    "definition": "CHECK ((expires_at > created_at))"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_created_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL created_at"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_email_destinatario_check",
+    "kind": "c",
+    "definition": "CHECK ((POSITION(('@'::text) IN (email_destinatario)) > 1))"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_email_destinatario_not_null",
+    "kind": "n",
+    "definition": "NOT NULL email_destinatario"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_estado_check",
+    "kind": "c",
+    "definition": "CHECK ((estado = ANY (ARRAY['PENDIENTE'::text, 'ACEPTADA'::text, 'REVOCADA'::text, 'EXPIRADA'::text])))"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_estado_not_null",
+    "kind": "n",
+    "definition": "NOT NULL estado"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_expires_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL expires_at"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL id"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_invitado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (invitado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_invitado_por_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL invitado_por_id"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (id)"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_puede_crear_proyectos_not_null",
+    "kind": "n",
+    "definition": "NOT NULL puede_crear_proyectos"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_rol_solicitado_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (rol_solicitado_id) REFERENCES pmo_cusn.rol(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_token_hash_check",
+    "kind": "c",
+    "definition": "CHECK ((btrim(token_hash) <> ''::text))"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_token_hash_key",
+    "kind": "u",
+    "definition": "UNIQUE (token_hash)"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_token_hash_not_null",
+    "kind": "n",
+    "definition": "NOT NULL token_hash"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_workspace_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (workspace_id) REFERENCES pmo_cusn.workspace(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL workspace_id"
   },
   {
     "table_name": "item_checklist_documento",
@@ -2234,6 +2468,90 @@ export const databaseConstraints = [
     "definition": "PRIMARY KEY (id)"
   },
   {
+    "table_name": "membresia_workspace",
+    "name": "ctr_pm_titular_membresia",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_created_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL created_at"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_estado_check",
+    "kind": "c",
+    "definition": "CHECK ((estado = ANY (ARRAY['ACTIVA'::text, 'SUSPENDIDA'::text, 'RETIRADA'::text])))"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_estado_not_null",
+    "kind": "n",
+    "definition": "NOT NULL estado"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL id"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_incorporado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (incorporado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (id)"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_puede_crear_proyectos_not_null",
+    "kind": "n",
+    "definition": "NOT NULL puede_crear_proyectos"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_updated_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL updated_at"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_usuario_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (usuario_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_usuario_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL usuario_id"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_workspace_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (workspace_id) REFERENCES pmo_cusn.workspace(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL workspace_id"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "uq_membresia_workspace_usuario",
+    "kind": "u",
+    "definition": "UNIQUE (workspace_id, usuario_id)"
+  },
+  {
     "table_name": "pais",
     "name": "pais_activo_not_null",
     "kind": "n",
@@ -2279,13 +2597,31 @@ export const databaseConstraints = [
     "table_name": "participacion_proyecto",
     "name": "ck_participacion_fechas",
     "kind": "c",
-    "definition": "CHECK (((fecha_inicio IS NULL) OR (fecha_fin IS NULL) OR (fecha_fin >= fecha_inicio)))"
+    "definition": "CHECK (((fecha_fin IS NULL) OR (fecha_fin > fecha_inicio)))"
+  },
+  {
+    "table_name": "participacion_proyecto",
+    "name": "ctr_pm_titular_participacion",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+  },
+  {
+    "table_name": "participacion_proyecto",
+    "name": "ex_pm_titular_periodos",
+    "kind": "x",
+    "definition": "EXCLUDE USING gist (proyecto_id WITH =, tstzrange(fecha_inicio, fecha_fin, '[)'::text) WITH &&) WHERE ((funcion = 'PM_TITULAR'::text))"
+  },
+  {
+    "table_name": "participacion_proyecto",
+    "name": "participacion_proyecto_fecha_inicio_not_null",
+    "kind": "n",
+    "definition": "NOT NULL fecha_inicio"
   },
   {
     "table_name": "participacion_proyecto",
     "name": "participacion_proyecto_funcion_check",
     "kind": "c",
-    "definition": "CHECK ((btrim(funcion) <> ''::text))"
+    "definition": "CHECK ((funcion = ANY (ARRAY['PM_TITULAR'::text, 'ESPECIALISTA'::text, 'OBSERVADOR'::text, 'LIDER_TECNICO'::text, 'TAM'::text, 'SDM'::text])))"
   },
   {
     "table_name": "participacion_proyecto",
@@ -2427,9 +2763,9 @@ export const databaseConstraints = [
   },
   {
     "table_name": "proyecto",
-    "name": "ck_proyecto_periodo_cierre",
-    "kind": "c",
-    "definition": "CHECK ((((fecha_cierre_real IS NULL) AND (periodo_cierre_mes IS NULL)) OR ((fecha_cierre_real IS NOT NULL) AND ((periodo_cierre_mes)::text = to_char((fecha_cierre_real)::timestamp with time zone, 'YYYY-MM'::text)))))"
+    "name": "ctr_pm_titular_proyecto",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
   },
   {
     "table_name": "proyecto",
@@ -2448,6 +2784,18 @@ export const databaseConstraints = [
     "name": "proyecto_cliente_id_not_null",
     "kind": "n",
     "definition": "NOT NULL cliente_id"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_creado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (creado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_creado_por_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL creado_por_id"
   },
   {
     "table_name": "proyecto",
@@ -2529,9 +2877,9 @@ export const databaseConstraints = [
   },
   {
     "table_name": "proyecto",
-    "name": "proyecto_tvt_key",
+    "name": "proyecto_tvt_normalizado_key",
     "kind": "u",
-    "definition": "UNIQUE (tvt)"
+    "definition": "UNIQUE (tvt_normalizado)"
   },
   {
     "table_name": "proyecto",
@@ -2544,6 +2892,30 @@ export const databaseConstraints = [
     "name": "proyecto_updated_at_not_null",
     "kind": "n",
     "definition": "NOT NULL updated_at"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_version_check",
+    "kind": "c",
+    "definition": "CHECK ((version > 0))"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_version_not_null",
+    "kind": "n",
+    "definition": "NOT NULL version"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_workspace_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (workspace_id) REFERENCES pmo_cusn.workspace(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "proyecto",
+    "name": "proyecto_workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL workspace_id"
   },
   {
     "table_name": "proyecto",
@@ -2841,21 +3213,9 @@ export const databaseConstraints = [
   },
   {
     "table_name": "riesgo_proyecto",
-    "name": "ck_riesgo_transversal_valido",
-    "kind": "c",
-    "definition": "CHECK (((proyecto_id IS NOT NULL) OR (es_transversal AND (riesgo_global_id IS NOT NULL))))"
-  },
-  {
-    "table_name": "riesgo_proyecto",
     "name": "riesgo_proyecto_created_at_not_null",
     "kind": "n",
     "definition": "NOT NULL created_at"
-  },
-  {
-    "table_name": "riesgo_proyecto",
-    "name": "riesgo_proyecto_es_transversal_not_null",
-    "kind": "n",
-    "definition": "NOT NULL es_transversal"
   },
   {
     "table_name": "riesgo_proyecto",
@@ -2907,6 +3267,12 @@ export const databaseConstraints = [
   },
   {
     "table_name": "riesgo_proyecto",
+    "name": "riesgo_proyecto_proyecto_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL proyecto_id"
+  },
+  {
+    "table_name": "riesgo_proyecto",
     "name": "riesgo_proyecto_responsable_id_fkey",
     "kind": "f",
     "definition": "FOREIGN KEY (responsable_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
@@ -2927,7 +3293,7 @@ export const databaseConstraints = [
     "table_name": "rol",
     "name": "ck_rol_codigo",
     "kind": "c",
-    "definition": "CHECK (((codigo)::text = ANY ((ARRAY['ADMIN'::character varying, 'COORDINADOR'::character varying, 'PM'::character varying, 'ESPECIALISTA'::character varying, 'VISUALIZADOR'::character varying])::text[])))"
+    "definition": "CHECK (((codigo)::text = ANY ((ARRAY['ADMIN'::character varying, 'PM'::character varying, 'ESPECIALISTA'::character varying, 'VISUALIZADOR'::character varying])::text[])))"
   },
   {
     "table_name": "rol",
@@ -3435,9 +3801,33 @@ export const databaseConstraints = [
   },
   {
     "table_name": "usuario",
+    "name": "ck_usuario_recovery_par",
+    "kind": "c",
+    "definition": "CHECK (((recovery_token_hash IS NULL) = (recovery_expires_at IS NULL)))"
+  },
+  {
+    "table_name": "usuario",
+    "name": "ck_usuario_refresh_par",
+    "kind": "c",
+    "definition": "CHECK (((refresh_token_hash IS NULL) = (refresh_expires_at IS NULL)))"
+  },
+  {
+    "table_name": "usuario",
+    "name": "ctr_pm_titular_usuario",
+    "kind": "t",
+    "definition": "TRIGGER DEFERRABLE INITIALLY DEFERRED"
+  },
+  {
+    "table_name": "usuario",
     "name": "usuario_activo_not_null",
     "kind": "n",
     "definition": "NOT NULL activo"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_contacto_cliente_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (contacto_cliente_id) REFERENCES pmo_cusn.contacto_cliente(id) ON DELETE RESTRICT"
   },
   {
     "table_name": "usuario",
@@ -3459,9 +3849,15 @@ export const databaseConstraints = [
   },
   {
     "table_name": "usuario",
-    "name": "usuario_google_sub_key",
-    "kind": "u",
-    "definition": "UNIQUE (google_sub)"
+    "name": "usuario_failed_login_count_check",
+    "kind": "c",
+    "definition": "CHECK ((failed_login_count >= 0))"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_failed_login_count_not_null",
+    "kind": "n",
+    "definition": "NOT NULL failed_login_count"
   },
   {
     "table_name": "usuario",
@@ -3486,6 +3882,42 @@ export const databaseConstraints = [
     "name": "usuario_pkey",
     "kind": "p",
     "definition": "PRIMARY KEY (id)"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_recovery_token_hash_key",
+    "kind": "u",
+    "definition": "UNIQUE (recovery_token_hash)"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_refresh_token_hash_key",
+    "kind": "u",
+    "definition": "UNIQUE (refresh_token_hash)"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_session_version_check",
+    "kind": "c",
+    "definition": "CHECK ((session_version > 0))"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_session_version_not_null",
+    "kind": "n",
+    "definition": "NOT NULL session_version"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_tipo_usuario_check",
+    "kind": "c",
+    "definition": "CHECK ((tipo_usuario = ANY (ARRAY['INTERNO'::text, 'EXTERNO'::text])))"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_tipo_usuario_not_null",
+    "kind": "n",
+    "definition": "NOT NULL tipo_usuario"
   },
   {
     "table_name": "usuario",
@@ -3546,6 +3978,96 @@ export const databaseConstraints = [
     "name": "validacion_cierre_validador_id_fkey",
     "kind": "f",
     "definition": "FOREIGN KEY (validador_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_creado_por_id_fkey",
+    "kind": "f",
+    "definition": "FOREIGN KEY (creado_por_id) REFERENCES pmo_cusn.usuario(id) ON DELETE RESTRICT"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_creado_por_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL creado_por_id"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_created_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL created_at"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_estado_check",
+    "kind": "c",
+    "definition": "CHECK ((estado = ANY (ARRAY['ACTIVO'::text, 'ARCHIVADO'::text])))"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_estado_not_null",
+    "kind": "n",
+    "definition": "NOT NULL estado"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_id_not_null",
+    "kind": "n",
+    "definition": "NOT NULL id"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_nombre_check",
+    "kind": "c",
+    "definition": "CHECK ((btrim(nombre) <> ''::text))"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_nombre_not_null",
+    "kind": "n",
+    "definition": "NOT NULL nombre"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_pkey",
+    "kind": "p",
+    "definition": "PRIMARY KEY (id)"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_slug_check",
+    "kind": "c",
+    "definition": "CHECK ((slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'::text))"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_slug_key",
+    "kind": "u",
+    "definition": "UNIQUE (slug)"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_slug_not_null",
+    "kind": "n",
+    "definition": "NOT NULL slug"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_updated_at_not_null",
+    "kind": "n",
+    "definition": "NOT NULL updated_at"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_version_check",
+    "kind": "c",
+    "definition": "CHECK ((version > 0))"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_version_not_null",
+    "kind": "n",
+    "definition": "NOT NULL version"
   }
 ] as const;
 export const databaseIndexes = [
@@ -3586,18 +4108,28 @@ export const databaseIndexes = [
   },
   {
     "table_name": "asignacion_rol",
-    "name": "uq_asig_rol_global",
-    "definition": "CREATE UNIQUE INDEX uq_asig_rol_global ON pmo_cusn.asignacion_rol USING btree (usuario_id, rol_id) WHERE (activo AND (alcance = 'GLOBAL'::text))"
+    "name": "uq_asignacion_rol_corporativo_vigente",
+    "definition": "CREATE UNIQUE INDEX uq_asignacion_rol_corporativo_vigente ON pmo_cusn.asignacion_rol USING btree (usuario_id) WHERE (revocado_at IS NULL)"
   },
   {
-    "table_name": "asignacion_rol",
-    "name": "uq_asig_rol_pais",
-    "definition": "CREATE UNIQUE INDEX uq_asig_rol_pais ON pmo_cusn.asignacion_rol USING btree (usuario_id, rol_id, pais_id) WHERE (activo AND (alcance = 'PAIS'::text))"
+    "table_name": "auditoria_seguridad",
+    "name": "auditoria_seguridad_pkey",
+    "definition": "CREATE UNIQUE INDEX auditoria_seguridad_pkey ON pmo_cusn.auditoria_seguridad USING btree (id)"
   },
   {
-    "table_name": "asignacion_rol",
-    "name": "uq_asig_rol_proyecto",
-    "definition": "CREATE UNIQUE INDEX uq_asig_rol_proyecto ON pmo_cusn.asignacion_rol USING btree (usuario_id, rol_id, proyecto_id) WHERE (activo AND (alcance = 'PROYECTO'::text))"
+    "table_name": "auditoria_seguridad",
+    "name": "ix_auditoria_actor_fecha",
+    "definition": "CREATE INDEX ix_auditoria_actor_fecha ON pmo_cusn.auditoria_seguridad USING btree (actor_id, fecha_evento DESC)"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "ix_auditoria_proyecto_fecha",
+    "definition": "CREATE INDEX ix_auditoria_proyecto_fecha ON pmo_cusn.auditoria_seguridad USING btree (proyecto_id, fecha_evento DESC)"
+  },
+  {
+    "table_name": "auditoria_seguridad",
+    "name": "ix_auditoria_workspace_fecha",
+    "definition": "CREATE INDEX ix_auditoria_workspace_fecha ON pmo_cusn.auditoria_seguridad USING btree (workspace_id, fecha_evento DESC)"
   },
   {
     "table_name": "cambio_ambito",
@@ -3716,6 +4248,11 @@ export const databaseIndexes = [
   },
   {
     "table_name": "delegacion_acceso",
+    "name": "ex_suplencia_pm_no_superpuesta",
+    "definition": "CREATE INDEX ex_suplencia_pm_no_superpuesta ON pmo_cusn.delegacion_acceso USING gist (proyecto_id, tstzrange(inicio, fin, '[)'::text)) WHERE ((tipo = 'SUPLENCIA_PM'::text) AND (estado = ANY (ARRAY['PENDIENTE'::text, 'ACTIVA'::text])))"
+  },
+  {
+    "table_name": "delegacion_acceso",
     "name": "ix_delegacion_delegado_periodo",
     "definition": "CREATE INDEX ix_delegacion_delegado_periodo ON pmo_cusn.delegacion_acceso USING btree (delegado_id, inicio, fin)"
   },
@@ -3810,9 +4347,24 @@ export const databaseIndexes = [
     "definition": "CREATE INDEX ix_hito_facturacion_unidad ON pmo_cusn.hito_facturacion USING btree (unidad_codigo)"
   },
   {
-    "table_name": "hito_facturacion",
-    "name": "uq_hito_aporte_control_cambio",
-    "definition": "CREATE UNIQUE INDEX uq_hito_aporte_control_cambio ON pmo_cusn.hito_facturacion USING btree (control_cambio_id) WHERE (control_cambio_id IS NOT NULL)"
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_pkey",
+    "definition": "CREATE UNIQUE INDEX invitacion_workspace_pkey ON pmo_cusn.invitacion_workspace USING btree (id)"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "invitacion_workspace_token_hash_key",
+    "definition": "CREATE UNIQUE INDEX invitacion_workspace_token_hash_key ON pmo_cusn.invitacion_workspace USING btree (token_hash)"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "ix_invitacion_workspace_estado",
+    "definition": "CREATE INDEX ix_invitacion_workspace_estado ON pmo_cusn.invitacion_workspace USING btree (workspace_id, estado)"
+  },
+  {
+    "table_name": "invitacion_workspace",
+    "name": "uq_invitacion_ws_email_pendiente",
+    "definition": "CREATE UNIQUE INDEX uq_invitacion_ws_email_pendiente ON pmo_cusn.invitacion_workspace USING btree (workspace_id, lower(btrim(email_destinatario))) WHERE (estado = 'PENDIENTE'::text)"
   },
   {
     "table_name": "item_checklist_documento",
@@ -3865,6 +4417,26 @@ export const databaseIndexes = [
     "definition": "CREATE UNIQUE INDEX lob_pkey ON pmo_cusn.lob USING btree (id)"
   },
   {
+    "table_name": "membresia_workspace",
+    "name": "ix_membresia_usuario_estado",
+    "definition": "CREATE INDEX ix_membresia_usuario_estado ON pmo_cusn.membresia_workspace USING btree (usuario_id, estado)"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "ix_membresia_workspace_estado",
+    "definition": "CREATE INDEX ix_membresia_workspace_estado ON pmo_cusn.membresia_workspace USING btree (workspace_id, estado)"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "membresia_workspace_pkey",
+    "definition": "CREATE UNIQUE INDEX membresia_workspace_pkey ON pmo_cusn.membresia_workspace USING btree (id)"
+  },
+  {
+    "table_name": "membresia_workspace",
+    "name": "uq_membresia_workspace_usuario",
+    "definition": "CREATE UNIQUE INDEX uq_membresia_workspace_usuario ON pmo_cusn.membresia_workspace USING btree (workspace_id, usuario_id)"
+  },
+  {
     "table_name": "pais",
     "name": "pais_codigo_key",
     "definition": "CREATE UNIQUE INDEX pais_codigo_key ON pmo_cusn.pais USING btree (codigo)"
@@ -3873,6 +4445,11 @@ export const databaseIndexes = [
     "table_name": "pais",
     "name": "pais_pkey",
     "definition": "CREATE UNIQUE INDEX pais_pkey ON pmo_cusn.pais USING btree (id)"
+  },
+  {
+    "table_name": "participacion_proyecto",
+    "name": "ex_pm_titular_periodos",
+    "definition": "CREATE INDEX ex_pm_titular_periodos ON pmo_cusn.participacion_proyecto USING gist (proyecto_id, tstzrange(fecha_inicio, fecha_fin, '[)'::text)) WHERE (funcion = 'PM_TITULAR'::text)"
   },
   {
     "table_name": "participacion_proyecto",
@@ -3893,6 +4470,11 @@ export const databaseIndexes = [
     "table_name": "participacion_proyecto",
     "name": "uq_participacion_proyecto_funcion_actual",
     "definition": "CREATE UNIQUE INDEX uq_participacion_proyecto_funcion_actual ON pmo_cusn.participacion_proyecto USING btree (proyecto_id, usuario_id, funcion) WHERE (fecha_fin IS NULL)"
+  },
+  {
+    "table_name": "participacion_proyecto",
+    "name": "uq_pm_titular_proyecto_actual",
+    "definition": "CREATE UNIQUE INDEX uq_pm_titular_proyecto_actual ON pmo_cusn.participacion_proyecto USING btree (proyecto_id) WHERE ((funcion = 'PM_TITULAR'::text) AND (fecha_fin IS NULL))"
   },
   {
     "table_name": "permiso",
@@ -3916,6 +4498,11 @@ export const databaseIndexes = [
   },
   {
     "table_name": "proyecto",
+    "name": "ix_proyecto_creador",
+    "definition": "CREATE INDEX ix_proyecto_creador ON pmo_cusn.proyecto USING btree (creado_por_id)"
+  },
+  {
+    "table_name": "proyecto",
     "name": "ix_proyecto_estado",
     "definition": "CREATE INDEX ix_proyecto_estado ON pmo_cusn.proyecto USING btree (estado_actual)"
   },
@@ -3936,6 +4523,11 @@ export const databaseIndexes = [
   },
   {
     "table_name": "proyecto",
+    "name": "ix_proyecto_workspace",
+    "definition": "CREATE INDEX ix_proyecto_workspace ON pmo_cusn.proyecto USING btree (workspace_id)"
+  },
+  {
+    "table_name": "proyecto",
     "name": "proyecto_drive_folder_id_key",
     "definition": "CREATE UNIQUE INDEX proyecto_drive_folder_id_key ON pmo_cusn.proyecto USING btree (drive_folder_id)"
   },
@@ -3946,8 +4538,8 @@ export const databaseIndexes = [
   },
   {
     "table_name": "proyecto",
-    "name": "proyecto_tvt_key",
-    "definition": "CREATE UNIQUE INDEX proyecto_tvt_key ON pmo_cusn.proyecto USING btree (tvt)"
+    "name": "proyecto_tvt_normalizado_key",
+    "definition": "CREATE UNIQUE INDEX proyecto_tvt_normalizado_key ON pmo_cusn.proyecto USING btree (tvt_normalizado)"
   },
   {
     "table_name": "proyecto",
@@ -4166,13 +4758,18 @@ export const databaseIndexes = [
   },
   {
     "table_name": "usuario",
-    "name": "usuario_google_sub_key",
-    "definition": "CREATE UNIQUE INDEX usuario_google_sub_key ON pmo_cusn.usuario USING btree (google_sub)"
+    "name": "usuario_pkey",
+    "definition": "CREATE UNIQUE INDEX usuario_pkey ON pmo_cusn.usuario USING btree (id)"
   },
   {
     "table_name": "usuario",
-    "name": "usuario_pkey",
-    "definition": "CREATE UNIQUE INDEX usuario_pkey ON pmo_cusn.usuario USING btree (id)"
+    "name": "usuario_recovery_token_hash_key",
+    "definition": "CREATE UNIQUE INDEX usuario_recovery_token_hash_key ON pmo_cusn.usuario USING btree (recovery_token_hash)"
+  },
+  {
+    "table_name": "usuario",
+    "name": "usuario_refresh_token_hash_key",
+    "definition": "CREATE UNIQUE INDEX usuario_refresh_token_hash_key ON pmo_cusn.usuario USING btree (refresh_token_hash)"
   },
   {
     "table_name": "validacion_cierre",
@@ -4183,5 +4780,20 @@ export const databaseIndexes = [
     "table_name": "validacion_cierre",
     "name": "validacion_cierre_pkey",
     "definition": "CREATE UNIQUE INDEX validacion_cierre_pkey ON pmo_cusn.validacion_cierre USING btree (id)"
+  },
+  {
+    "table_name": "workspace",
+    "name": "ix_workspace_creador",
+    "definition": "CREATE INDEX ix_workspace_creador ON pmo_cusn.workspace USING btree (creado_por_id)"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_pkey",
+    "definition": "CREATE UNIQUE INDEX workspace_pkey ON pmo_cusn.workspace USING btree (id)"
+  },
+  {
+    "table_name": "workspace",
+    "name": "workspace_slug_key",
+    "definition": "CREATE UNIQUE INDEX workspace_slug_key ON pmo_cusn.workspace USING btree (slug)"
   }
 ] as const;

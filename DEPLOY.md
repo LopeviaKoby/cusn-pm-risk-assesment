@@ -1,139 +1,121 @@
-# Laboratorio conectado: base y aplicación
+# Backend PMO v2.1.0 — ejecución y verificación
 
-El backend usa Bun 1.4.4, Hono, Zod, consultas tipadas Drizzle/Bun SQL y PostgreSQL 18.6. El destino es **`pmo_cusn`**, contrato `app/api/migrations/005_pmo_cusn_v200.sql` (adjunto v2.0.0 íntegro), ampliado por `007`–`010`. `pmo` y los demás esquemas ajenos son de solo lectura para esta migración. El alcance sigue siendo desarrollo con datos sintéticos; no autoriza despliegue productivo ni uso compartido.
+El corte backend comprende acceso propio y gobierno F1–F7. Se verificó localmente con PostgreSQL 18.6, Bun 1.4.4, Hono 4.13.14, Zod 4.6.7, Drizzle 0.45.4, jose 6.2.13, Node 22.23.4 y pnpm 12.12.1. No constituye despliegue productivo ni validación de los dominios aplazados o del frontend.
 
-```text
-Navegador → web (NGINX) → /api → API (Bun) → PostgreSQL / pmo_cusn
-```
+## Arquitectura y contratos
 
-## Variables y arranque
+La API única está en `app/api/`. `src/index.ts` exporta el mismo Hono utilizado por las pruebas conectadas y por `Bun.serve`. No hay un enrutador v2.0 paralelo. Los handlers/repositorios incompatibles, importador/backfill v2.0 y su smoke fueron retirados. Riesgos, compras, complejidad, cierre, Drive, horas y repases no tienen endpoints en este corte; rutas no registradas responden 404.
 
-Copia `deploy/env.example` a `.env` y completa las credenciales sin publicarlas. Node 22.23.4 y pnpm 12.12.1 son obligatorios para las herramientas del frontend; `BUN_BIN` permite seleccionar el ejecutable Bun verificado. La API exige `DATABASE_URL` y `GPL_PASSWORD_HASH_B64`; las operaciones de BD usan `MIGRATOR_DATABASE_URL` como propietario. El hash se genera con `pnpm run auth:hash`; no guardes contraseñas en scripts.
+`infrastructure/http/contracts.ts` define entradas estrictas y DTO separados de entidades. La inscripción de rutas usa esos esquemas para validar solicitudes y respuestas y generar OpenAPI 3.1. El documento se sirve en `GET /api/v1/openapi.json` y está versionado en `specs/openapi-v210.json`. `api:openapi:check` rechaza divergencias. Campos no declarados, incluidos rol/titular/workspace en una edición ordinaria, se rechazan; no hay mass assignment.
 
-| Variable | Uso |
-|---|---|
-| `DATABASE_URL` | Conexión del rol runtime, sin DDL. |
-| `MIGRATOR_DATABASE_URL` | Propietario de los nuevos objetos. |
-| `APP_DB_ROLE`, `APP_DB_PASSWORD` | Bootstrap del rol runtime; contraseña necesaria solo para crear uno nuevo. |
-| `GPL_USER`, `GPL_PASSWORD_HASH_B64` | Login de laboratorio, contraseña verificada por Bun. El email configurado debe corresponder a un usuario activo existente. |
-| `APP_ORIGINS` | Origen exacto de la interfaz; varios separados por coma. |
-| `COOKIE_SECURE` | `true` con HTTPS; `false` exclusivamente para HTTP local. |
-| `API_HOST`, `API_PORT` | Por defecto `127.0.0.1:3001`. |
-| `DB_POOL_MAX`, `GPL_SESSION_MINUTES` | Por defecto 8 conexiones y 60 minutos. |
-| `GPL_AS_OF_DATE` | Corte de presentación; las escrituras se registran con el reloj de PostgreSQL. |
+Éxito: `{data: DTO}`. Error: `{error:{code,message,fields?},requestId}`, sin SQL/stack. Validación 422, JSON inválido 400, autenticación 401, autorización 403, inexistencia 404, versión/unicidad/exclusión 409, token no vigente 410, tamaño 413, Content-Type 415, interno 500 y conexión 503. Detalles sin alcance devuelven 403 antes de revelar existencia; Head obtiene 404 si el recurso no existe. Listado de proyectos admite exclusivamente `after` y `limit` (1–100, defecto 50); workspace está acotado a 100. Identificadores/versiones se transportan como cadenas; el DTO no expone documentos ni metadatos confidenciales.
 
-```sh
-pnpm install --frozen-lockfile
-pnpm run db:migrate
-pnpm run db:bootstrap
-pnpm run db:verify
-pnpm run dev:api
-# En otra terminal:
-pnpm run dev:web:api
-```
+| Persistencia SQL | Proyección Drizzle | Servicio | DTO/operaciones |
+|---|---|---|---|
+| usuario, rol, permiso, asignacion_rol | schema.ts, símbolos homónimos | session.ts; application/users | sesión, asignación, desactivación, recuperación |
+| workspace, membresia_workspace | workspace, membresia_workspace | workspaces/create y manage | workspace, habilitación, estado de membresía |
+| invitacion_workspace | invitacion_workspace | workspaces/invitation | emisión controlada, aceptación y revocación |
+| proyecto, participacion_proyecto | proyecto, participacion_proyecto | projects/create/edit/transfer/participation | proyecto, listado/detalle, transferencia, participante |
+| delegacion_acceso, delegacion_permiso | símbolos homónimos | projects/substitution; authorization.ts | suplencia UTC, revocación |
+| auditoria_seguridad, evento_proyecto | símbolos homónimos | transacciones de aplicación y error handler | sin CRUD público |
 
-Detén ambos procesos al terminar. Para contenedores, `compose.yaml` conserva los servicios `db`, `migrate`, `bootstrap`, `verify`, `api` y `web`, pero no se ejecuta un despliegue como parte de la migración. `DB_MIGRATE_MODE=schema` es el único modo admitido por el runner; las antiguas semillas `002/003` fueron retiradas. Las antiguas semillas 002/003 se retiraron del árbol y el migrador solo ejecuta 005–010.
+`models.ts` contiene las 53 entidades y metadatos completos de FK, checks, exclusiones e índices. `schema.ts` proyecta sus columnas, tipos, nulabilidad, defaults, identidades, PK simples y expresiones generadas para Drizzle. Las FKs compuestas, índices, exclusiones y triggers conservan su autoridad en SQL versionado, no se sustituyen por sincronización ORM. Lectura y edición ordinaria de proyectos ejecutan Drizzle real; servicios con restricciones avanzadas usan Bun SQL transaccional. La suite prueba bigint superior a MAX_SAFE_INTEGER, decimal exacto, NULL, date, timestamptz y columnas generadas.
 
-## Migraciones y preservación
+## Configuración y autenticación
 
-`db:migrate` aplica `005`–`010` bajo un bloqueo transaccional. Registra versión y SHA256 en **`pmo_cusn_meta.migracion`**, sin tocar `pmo_meta`. Una segunda ejecución comprueba checksums y no recrea tablas. Un `pmo_cusn` preexistente sin registro de migración se rechaza. No edites migraciones ya aplicadas.
+Copiar `deploy/env.example` a un archivo local ignorado. `DATABASE_URL` corresponde al runtime; `MIGRATOR_DATABASE_URL` al operador. `JWT_SIGNING_KEY` exige al menos 32 bytes aleatorios y nunca usa prefijo VITE_. `APP_ORIGINS` contiene orígenes exactos. Arquitectura web de mismo origen con proxy /api: no se habilita CORS abierto. Todas las escrituras exigen Origin autorizado y los cuerpos declarados exigen application/json. `COOKIE_SECURE=true` es obligatorio salvo HTTP localhost/127.0.0.1.
 
-El archivo `005` conserva exactamente el adjunto, incluido su `BEGIN/COMMIT`. El runner retira únicamente esas dos sentencias al ejecutarlo porque Bun controla la transacción. `006` fija `search_path = pmo_cusn, pg_catalog` en las cuatro funciones originales. `007` adapta el parche de Dimensión 3: importes `numeric(20,4)`, ahorro con adjudicación cero, cierre, riesgo transversal, procedencia histórica de hitos, CC del mismo proyecto y SPI porcentual con rango suficiente. `008` deja cuatro roles sin asignaciones automáticas y añade garantías de baseline, seguimiento y aporte único. `009` registra aprobador económico y permite aprobar ese aspecto después de consumir el CC para planificación sin alterar sus campos sustantivos. `010` serializa cambios de riesgos/checklist con el cierre y protege la evidencia de proyectos cerrados hasta su reapertura.
+Contraseñas Argon2id de Bun (64 MiB, dos iteraciones), mínimo 14 caracteres en alta/recuperación. Cinco fallos bloquean login 15 minutos; el contador y la decisión se serializan con bloqueo de usuario. También se auditan intentos de credenciales no reconocidas sin almacenar el correo enviado. El control adicional de volumen por red y la retención de auditoría son responsabilidad de la operación antes de exposición pública.
 
-Las diferencias deliberadas frente al bloque SQL literal del informe son: nombres calificados en vez de `SET search_path`; migración versionada sin `IF NOT EXISTS` por columna; `numeric(20,4)` en presupuesto/ahorro frente a `numeric(15,2)`; ahorro calculado también para adjudicación cero; conservación previa de `hito_facturacion.origen` en `origen_legacy` antes de normalizar `Muestra` y el `CAMBIO` sin FK; FK compuesta `(control_cambio_id, proyecto_id)` y unicidad parcial para impedir aportes cruzados o duplicados; `spi numeric(16,4)` frente a `numeric(5,2)` para soportar progreso planificado mínimo válido. No se convirtió ninguna fila histórica en aporte de CC sin equivalencia comprobable.
+Access JWT HS256 de 5 minutos por defecto (máximo 15), con firma, algoritmo, iss, aud, exp, sub, iat, jti y versión de sesión verificados. Se consulta estado/rol vigente en cada solicitud. Refresh opaco de 32 bytes, hash SHA-256, un único refresh activo por cuenta y rotación atómica; vigencia deslizante de 14 días por defecto (máximo 30). Un refresh anterior se rechaza. Cambiar contraseña/rol, revocar rol, desactivar o cerrar sesión invalida los tokens correspondientes. No hay Google OIDC ni autoaprovisionamiento por login.
 
-Hay 49 tablas, 88 FKs, nueve funciones, trece triggers y ocho índices parciales tras el parche. Se precargan nueve unidades (incluida UF, sin EUR), cuatro roles (`ADMIN`, `PM`, `ESPECIALISTA`, `VISUALIZADOR`), 24 permisos y seis ámbitos. **`rol_permiso` queda vacío.** `COORDINADOR` se retira solo si no tiene referencias. El bootstrap concede privilegios SQL sobre el nuevo esquema al runtime, pero no asigna permisos funcionales. El runtime tampoco puede modificar asignaciones, delegaciones ni la matriz de roles.
+Tokens solo en cookies HttpOnly/SameSite=Strict/Secure fuera de local. Access Path=/; refresh Path=/api/v1/sesion. No se devuelven en el DTO de sesión ni se almacenan en localStorage. La sesión devuelve el catálogo de permisos del rol; ese catálogo no sustituye autorización por objeto.
 
-## Copiar sintéticos desde pmo
+## Bootstrap, invitaciones y recuperación
 
-El importador anterior de CSV que truncaba `pmo` fue retirado. El nuevo importador solo lee la fuente y exige un destino vacío; no mezcla una carga previa ni borra registros. Primero ejecuta el preflight:
+El primer Head se crea por `pnpm run auth:bootstrap-head`, exclusivamente con conexión de operador y:
+- BOOTSTRAP_CONFIRM_DATABASE igual al nombre real de BD.
+- BOOTSTRAP_HEAD_EMAIL y BOOTSTRAP_HEAD_PASSWORD (14+ caracteres).
 
-```sh
-pnpm run db:import-sample
-```
+El comando se serializa y falla si ya existe un Head vigente; registra auditoría. No existe endpoint público de bootstrap ni registro/promoción.
 
-Para aplicar en PowerShell:
+Head puede emitir recuperación mediante POST /api/v1/usuarios/:id/recuperacion después de verificar la identidad por el procedimiento administrativo aprobado. La respuesta autenticada contiene el token una vez para entrega controlada; delivery=PENDING indica que no se envió notificación. El destinatario usa POST /api/v1/credenciales/restablecer. Solo se almacena hash, expira en 30 minutos, se consume una vez y revoca sesiones. No se configuró ni se afirma probar correo externo.
 
-```powershell
-$env:NODE_ENV='development'
-pnpm run db:import-sample --apply
-```
+Invitaciones: mismo mecanismo de entrega controlada, siete días, token hash y uso único. Cuenta existente requiere sesión coincidente; una cuenta nueva recibe el rol de la invitación sin poder elegirlo. PM creador/habilitado solo incorpora Especialista/Visualizador o un PM ya existente como observador; no lo promueve ni habilita creación. Solo Head habilita a otro PM. La participación del proyecto se administra separadamente de la membresía.
 
-`app/api/migrations/import_pmo_v200.sql` contiene la matriz ejecutable de transformación. Conserva IDs y reajusta únicamente las identidades de `pmo_cusn`. Los importes se copian mediante SQL `numeric`, sin conversiones de punto flotante. El reporte muestra conteos antes/después y omisiones por ID; se guarda en `pmo_cusn_meta.importacion` y `.tools/pmo-v200-import.json` (local, fuera de Git). Una carga registrada no se repite.
+## Autorización e integridad
 
-| Origen | Destino y criterio |
-|---|---|
-| `catalogo_valor`, atributos de proyecto | `pais`, `lob`, `squad`, `servicio_lob`; servicios solo con pares LOB/servicio observados. Países con equivalencias ISO explícitas. |
-| `cliente`, `proveedor`, `proyecto` | IDs conservados; FK organizativas explícitas y estados con normalización ortográfica comprobada. Baseline anterior al inicio queda nula y se reporta; no se inventa una fecha. |
-| `especialista`, contactos de proyecto | Usuarios solo con email existente; contactos ligados al cliente correspondiente. Nombres sin identidad no crean usuarios. |
-| `proyecto_estado_actual` | `seguimiento_proyecto`, `servicio_operativo`, fechas de proyecto. No se inventan porcentajes o operación donde no aplica. |
-| `facturacion`, TCV | `hito_facturacion.real_reportado` y `condicion_comercial` definida cuando hay valor/moneda. No se interpreta como contabilidad ni TCV ilimitado. |
-| `compra` | `compra` y `etapa_compra`; después de `007`, el backfill separado copia presupuesto y fechas de recepción solo con ID/proyecto coincidentes. `ahorro` se genera en BD. |
-| `riesgo_global`, `riesgo_proyecto` | Entidades distintas; P/I de proyecto pasa a `evaluacion_riesgo`, severidad generada. Controles textuales se vinculan como controles de riesgo. |
-| `solicitud_cambio`, sus ámbitos | `control_cambio`, `cambio_ambito`, normalización de firma/urgencia/impacto. Responsables no verificables no se convierten en FK. |
-| `cambio_planificacion` | Solicitudes sin CC/actores verificables no se copian ni se convierten en excepciones ficticias. |
-| `proyecto_complejidad` | Solo evaluaciones compatibles con fórmula V1 y justificación de override. |
-| `proyecto_evento`, `compromiso` | Eventos conservados con contenido/actor de origen en JSONB; compromiso con alcance de país comprobado. |
-| `documento_proyecto` | URLs sin ID Drive verificable no se convierten en documentos. |
-| Cierres históricos | Estado conservado, validación `SIN_EVIDENCIA_HISTORICA`, nunca APTO inventado. |
-| Horas, repases, refresh | Fuera de alcance; permanecen en `pmo`. |
+ADMIN global. PM consulta portafolio global pero edita solo titularidad o suplencia efectiva; la membresía/habilitación de creación no concede edición ajena. Especialista y Visualizador asignado leen solo participaciones vigentes; Visualizador interno puede tener alcance global explícito; externo solo Visualizador asignado. Ninguna escritura técnica no especificada se concede al Especialista. La política documental pendiente se deniega a los perfiles sin justificación; este corte no expone documentos.
 
-Para completar compras en un laboratorio ya importado, ejecuta `NODE_ENV=development pnpm run db:backfill-business --apply` (en PowerShell, configura `$env:NODE_ENV='development'` antes). El script valida coincidencias y conflictos, reporta conteos antes/después y es repetible. En la muestra actual trasladó 19 presupuestos, 15 fechas esperadas y 11 reales; 0 conflictos, 0 filas modificadas en la segunda ejecución. No había márgenes históricos; tampoco una fecha oficial de cierre verificable. Los 188 hitos `Muestra` y el hito `CAMBIO` sin CC conservaron su `origen` original en `origen_legacy`, con origen operativo `MANUAL`, sin atribución ficticia.
+Las transacciones revalidan actores y objetos. Editar bloquea primero el proyecto y comprueba permiso/versionado; transferir es exclusivo Head, conserva ID/TVT, usa continuidad temporal de titulares, incrementa versión y registra evento/auditoría. Cambiar titular revoca suplencias anteriores. Suplencias solo de PM, Head o titular creador; intervalos explícitos con offset convertidos a UTC [inicio,fin). La API rechaza fechas ingenuas y no interpreta por su cuenta un fin de jornada local. El caller debe enviar el instante con zona ya resuelta; la conversión de calendario local no forma parte de este contrato de instantes.
 
-## Reset exclusivo de desarrollo
+Los triggers diferidos garantizan exactamente un titular interno/activo/PM/miembro al COMMIT. Retirar rol o membresía sin reemplazo revierte. EXCLUDE protege períodos de titularidad y suplencias incluso bajo concurrencia. La auditoría conserva actor real y delegación utilizada. Denegaciones HTTP se insertan después del rollback de aplicación en una transacción independiente. No se registran contraseñas/tokens.
 
-La migración normal nunca resetea. El comando separado solo admite loopback, entorno development, el nombre exacto de BD y `--schema=pmo_cusn`. Comprueba dependencias externas antes de `DROP SCHEMA pmo_cusn CASCADE`; si hay alguna, aborta. Borra únicamente registros de migración/importación propios y vuelve a aplicar la base. No elimina la BD, el volumen, `pmo` ni `pmo_meta`.
+Runtime: SELECT del esquema PMO y lectura del registro de migración; INSERT/UPDATE solo en las nueve tablas mutables del núcleo de acceso/gobierno; INSERT exclusivo para auditoría/eventos. Sin DELETE/TRUNCATE, DDL, propiedad de esquema, atributos elevados, replicación, bypass RLS ni escritura de catálogos rol/permiso/rol_permiso. No hay grants de escritura automática para tablas futuras: toda ampliación requiere revisar bootstrap y pruebas.
 
-```powershell
-$env:NODE_ENV='development'
-$env:PMO_ALLOW_RESET='pmo_cusn'
-$env:PMO_DEV_DATABASE='nombre-exacto-bd-desarrollo'
-pnpm run db:reset:dev
-```
+## Baseline y generación
 
-No uses eliminaciones de volúmenes ni restauraciones con `--clean` en la BD compartida por esquemas.
+Solo 011 está activo; 001–010 permanecen como historia del manifiesto. No hay upgrade/backfill v2.0. Se rechaza un pmo_cusn preexistente sin registro. Migración serializada por advisory lock, PostgreSQL 18.6 verificado, checksum de archivo y huella determinista del catálogo. La segunda aplicación no recrea tablas y detecta drift de columnas, restricciones, funciones, triggers, índices y matriz de roles/permisos.
 
-## Contratos, permisos y límites
+Diferencias con el SQL fuente entregado: campos de autenticación propia en usuario; seeds de permisos aprobados; search_path fijo pmo_cusn,pg_catalog en las nueve funciones; comentarios de permisos coherentes con esos seeds. Las instrucciones de negocio prevalecen sobre el catálogo vacío descrito en versiones anteriores. No se aplicaron transformaciones de datos ni se tocó pmo.
 
-Se conservan `/api/v1/sesion`, `/catalogos`, `/datos`, `/proyectos`, `/riesgos`, `/facturacion`, `/compras`, `/cambios-planificacion`, las rutas de detalle/historial y los PATCH de proyecto/riesgo. Siguen usando `{data}` y errores con código, campos y request ID. No había paginación de servidor; los filtros existentes se conservan. IDs bigint y decimales viajan como texto; la interfaz aplica formato numérico solo para presentación. El DTO agregado añade `usuarioActualId`; los IDs globales se distinguen en el adaptador visual para evitar colisiones con riesgos de proyecto.
+- Fuente original SHA-256: 3d7346235175374a175670e9d8b1ce07b67b554ae63eba84958c7767bad98678.
+- Baseline definitivo SHA-256: 1086974ab85ca82c7919dec353a05394b7d97472fc9571341e19ecabd22cc40d.
+- Huella del catálogo: 6597b0dd053a3383d1396bf2c8255e00bb752f2e6f895266cd3475850f9d5091.
 
-La identidad se vincula después de verificar la contraseña del login configurado. No se confía en un email enviado en un PATCH. Los permisos se verifican en servidor y se acotan a GLOBAL/PAIS/PROYECTO; una delegación debe estar activa, autorizada, vigente y derivar de un permiso delegable que el delegante conserve. No existe herencia de ADMIN ni permisos por omisión. La matriz funcional sigue pendiente: una instalación limpia deniega acceso hasta una asignación revisada. No concedas permisos automáticamente para facilitar una prueba.
+db:models y db:models:check rechazan primero una huella divergente; generan/comparan tanto entidades como Drizzle. No puede aprobarse una base divergente simplemente regenerando archivos.
 
-Un PATCH de estado escribe proyecto y evento append-only en una transacción. El seguimiento anexa registros con ambos porcentajes; `spi` es generado en BD como porcentaje decimal y `spiRatio` continúa en el DTO por compatibilidad. La escala de riesgo es 1–4 y cada revisión anexa evaluación; `Controlado` no implica una transición automática. Los cambios directos de fecha responden `409 PLAN_CHANGE_REQUIRED`. Las solicitudes usan CC firmado disponible o excepción justificada y la resolución aprobada cambia fecha y solicitud en una transacción, sin modificar baseline. La aprobación económica del CC crea un único hito trazable (beneficio positivo, costo TIVIT negativo); exige período explícito cuando existe importe. El cierre exige checklist definido/completo, documentos vigentes requeridos, una lección válida y ausencia de riesgos de proyecto pendientes o en contingencia; `Transferir` vigente cierra con observaciones. Cierre/reapertura estampan o limpian fecha/mes y anexan evento atómicamente. Altas generales de proyectos, SSO, integración Drive y contabilidad siguen fuera de esta entrega.
+## Reproducir aceptación backend
 
-Los DTO de proyecto añaden `spiPercent`, `cpiPercent`, `desviacionDias` y `salud` (plazo, costo, riesgo, calidad); CPI usa `real_reportado` frente al plan acumulado hasta el mes de corte inclusive, dentro de una misma unidad monetaria y proyecto. Denominador cero devuelve `null`. Los DTO de compra añaden ahorro generado, fechas de recepción y lead times de días calendario calculados con fechas de Santiago; una etapa sin referencia formal o sin fecha no produce un lead time ficticio. Estos campos son adicionales al contrato que consume React.
+La instancia usada es PostgreSQL 18.6 loopback 127.0.0.1:55434, cluster local desechable .tools/pmo-v210-pg. Migrador/fixtures: pmo_test_owner. API: pmo_test_runtime_v210. Base final: pmo_test_v210_closed. El testigo pmo.sentinel conserva value=intacto. La suite nunca elimina bases y exige una base nueva pmo_test_v210_* sin pmo_cusn; no reutilizar el nombre final para repetirla.
 
-Rutas de negocio adicionales (cookie y origen existentes, envoltorio `{data}`): `POST /api/v1/proyectos/:id/cierre` con `{}`, `POST /api/v1/proyectos/:id/reapertura` con `{motivo}`, `POST /api/v1/proyectos/:id/cambios-planificacion` con `campo`, `valorPropuesto` y `controlCambioId` o `justificacionExcepcion`, `POST /api/v1/cambios-planificacion/:id/resolucion` con `decision`, `POST /api/v1/controles-cambio/:id/aprobacion-economica` con `periodo` `YYYY-MM`, y `GET/POST /api/v1/riesgos/transversales` más `PATCH /api/v1/riesgos/transversales/:id`. La entidad del DTO de riesgo distingue catálogo global de riesgo transversal evaluable. Los permisos se comprueban en servidor y la matriz sigue pendiente; sin grants explícitos, la API deniega estas operaciones.
+En PowerShell, con PostgreSQL 18.6 local ya escuchando:
 
-## Verificación reproducible
-
-La interfaz consume además `GET /api/v1/controles-cambio`, `GET /api/v1/proyectos/:id/prevalidacion-cierre`, `POST /api/v1/proyectos/:id/complejidad` y `PATCH /api/v1/compras/:id`. La resolución admite `nota`, almacenada atómicamente como evento del proyecto. Complejidad exige `complejidad.evaluar` y, para excepción, `complejidad.override`; compras exige `compras.gestionar`. La prevalidación de cierre exige permiso de cierre y consulta, y no reemplaza la validación transaccional final. Las vistas nuevas usan el diálogo Radix existente con confirmación de descarte. La bandeja consulta cada 15 segundos, al recuperar foco y después de resolver; no utiliza WebSocket.
-
-`db:verify` comprueba las 49 tablas, objetos, unidades, roles, versiones y todas las FKs (cero huérfanos). `db:models` regenera los modelos de las 49 tablas desde el catálogo; `db:models:check` detecta divergencia frente a las migraciones aplicadas, con checks, relaciones, claves e índices; Drizzle tipa las proyecciones usadas por los nuevos casos de uso, sin generar DDL. `test:domain` ejecuta `bun test` para fórmulas y validaciones puras.
-
-`test:db` exige una BD **aislada** cuyo nombre sea `pmo_test` o `pmo_test_*`; no modifica la matriz funcional del laboratorio principal. Prepara PostgreSQL 18.6 desechable y configura:
-
-```powershell
+~~~powershell
+$env:PGHOST='127.0.0.1'
+$env:PGPORT='55434'
+$env:PGUSER='pmo_test_owner'
+createdb.exe pmo_test_v210_otro_sufijo
 $env:NODE_ENV='test'
-$env:TEST_DATABASE_URL='postgres://usuario:clave@127.0.0.1:puerto/pmo_test'
+$env:TEST_DATABASE_URL='postgres://pmo_test_owner@127.0.0.1:55434/pmo_test_v210_otro_sufijo'
+$env:TEST_API_DATABASE_URL='postgres://pmo_test_runtime_v210@127.0.0.1:55434/pmo_test_v210_otro_sufijo'
 pnpm run test:db
-```
+pnpm run typecheck:api
+pnpm run test:domain
+pnpm run build:api
+~~~
 
-La suite instala en limpio, usa fixtures de autorización explícitos y prueba integridad, transacciones con rollback real, delegaciones, inmutabilidad, CC y requests/responses de las rutas existentes. La repetición de la suite requiere una BD de pruebas nueva o el reset protegido de su `pmo_cusn`. Detén y retira el contenedor de pruebas al terminar. Ejecuta además tipos y build frontend/API, cobertura, E2E, distribución, auditoría y firmas según README. El sello Foundry se verifica por separado: las pruebas de aplicación no son certificación del framework.
+Las URLs anteriores aprovechan trust local de la instancia desechable. En un servidor con autenticación deben usarse credenciales locales de prueba en variables, nunca en archivos versionados. Si el rol runtime aún no existe, incluir una contraseña aleatoria de 12+ caracteres en su URL: el bootstrap la crea con atributos restringidos. La suite genera las contraseñas de actores y JWT en memoria.
 
-Después de `test:db`, para repetir el render conectado con esos fixtures: compila `pnpm run build:api` y arranca `node scripts/run-bun.mjs run app/api/tests/serve-fixture.ts` con el mismo `NODE_ENV=test` y `TEST_DATABASE_URL`. Ese servidor escucha en `127.0.0.1:43001`, usa una contraseña exclusiva del fixture y no concede permisos. En otra terminal PowerShell:
+La suite ejecuta instalación limpia/repetición, drift de registro y ALTER TABLE de prueba (restaurados), bootstrap, auth, Hono+BD con runtime separado, concurrencia, contratos, Drizzle, TCP y comprobaciones de modelos/OpenAPI. El proceso TCP se termina en finally; no finaliza procesos ajenos. Resultados por script y códigos de salida quedan en .tools/backend-v210-evidence/results.json (local ignorado).
 
-```powershell
-$env:GPL_API_TEST='1'
-$env:API_PROXY_TARGET='http://127.0.0.1:43001'
-$env:PLAYWRIGHT_CHANNEL='msedge'
-pnpm exec playwright test tests/e2e/api.spec.ts
-```
+| Caso | Cobertura final | Test |
+|---|---|---|
+| T01 | Admin/PM crea; slug y membresía habilitada atómica | workspace-http, projects-http |
+| T02 | Especialista/Visualizador 403 | workspace-http |
+| T03 | PM sin habilitación 403 | projects-http |
+| T04 | Habilitado crea y sigue sin editar proyecto ajeno del mismo workspace | access-contracts |
+| T05 | TVT normalizado concurrente 201/409 y exactamente una fila | access-contracts |
+| T06 | Sin titular/dos titulares rechazados al COMMIT/UNIQUE | schema-invariants |
+| T07 | No PM/no miembro/inactivo; externo rechazado por rutas de titularidad y rol | schema-invariants, access-contracts |
+| T08 | PM global lee; ajeno no edita | substitution-http |
+| T09 | Invitaciones PM limitadas; observador no obtiene creación | governance-http |
+| T10 | PM no asigna ADMIN ni origina PM nuevo | governance-http |
+| T11 | Solo Head transfiere; TVT/ID intactos, versión y titular | transfer-http |
+| T12 | Suplencias concurrentes 201/409 | substitution-http |
+| T13 | Pendiente/revocada/vencida sin edición | substitution-http |
+| T14 | Titular/suplente editan; actor/delegación auditados | substitution-http |
+| T15 | Misma versión concurrente 200/409 | projects-http |
+| T16 | Externo GLOBAL rechazado | governance-http |
+| T17 | Vencida/revocada/reutilizada rechazada; aceptación concurrente 200/410 | governance-http, access-contracts |
+| T18 | Auditoría UPDATE/DELETE bloqueados por trigger y privilegios | schema-invariants, access-contracts |
+| T19 | Revocar rol/retirar membresía del titular revierte | schema-invariants |
+| T20 | pmo intacto tras migración/repetición y pruebas | schema-invariants |
 
-El runner inicia/cierra el preview en 4173. El fixture debe detenerse con Ctrl+C al terminar; no lo uses con el `DATABASE_URL` principal. `API_PROXY_TARGET` configura exclusivamente el proxy Vite/preview (por defecto 3001). El E2E sin API verifica el estado de error del login. Para detener los procesos de la prueba si quedaron en segundo plano y apagar solo el contenedor local `tvt-pmo-db` (sin borrar su volumen), ejecuta desde PowerShell en la raíz del repositorio:
+En la revisión final todos los casos anteriores y los scripts adicionales auth-http/auth-negative/recovery-http/projection/tcp-smoke terminaron con exit 0. TCP final: PID 24676, puerto 49403, proceso terminado al cerrar la prueba. typecheck:api, build:api y 8 pruebas puras de dominio pasaron; las pruebas puras heredadas de dominios aplazados no declaran esos servicios funcionales. pnpm audit --prod: sin vulnerabilidades conocidas; audit signatures: 615 firmas verificadas.
 
-```powershell
-.\scripts\stop-local.ps1
-```
+Fallos corregidos durante el cierre: conteo T05 consultaba TVT sin normalizar; bloqueo FOR SHARE del catálogo rol exigía privilegio indebido y se limitó a usuario/asignación; errores SQL genéricos ya no se presentan como indisponibilidad de conexión; se añadió diagnóstico sanitizado al smoke TCP tras un fallo intermedio no reproducido en la ejecución final.
 
-El script solo termina listeners de 4173/43001 si su línea de comando coincide con Vite preview/fixture; deja cualquier proceso no reconocido intacto. `-KeepDatabase` detiene la interfaz y el fixture, pero deja PostgreSQL encendido. `-WhatIf` muestra las acciones sin ejecutarlas.
+CI mantiene separado el job backend: typecheck, dominio, suite completa con rol runtime, comparación de modelos/OpenAPI, build backend e imagen. No se desactivaron gates frontend preexistentes; no son requisitos del cierre backend local. Consultar el resultado remoto del commit publicado antes de afirmar CI verde. Docker daemon local no estuvo accesible; la imagen local no queda acreditada por las pruebas TCP. CodeGraph no tenía índice, por lo que no condicionó las pruebas.
+
+Referencias contrastadas: [Hono testing](https://hono.dev/docs/guides/testing), [Zod JSON Schema](https://zod.dev/json-schema), [Bun SQL](https://bun.com/docs/runtime/sql), [Drizzle Bun SQL](https://orm.drizzle.team/docs/connect-bun-sql), [PostgreSQL 18 privilegios](https://www.postgresql.org/docs/18/ddl-priv.html), [OWASP contraseñas](https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html). La guía Drizzle pública muestra paquetes RC actuales; se conservó 0.45.4 y su API comprobada con consultas/mutaciones reales, sin cambiar a RC ni Drizzle Kit.

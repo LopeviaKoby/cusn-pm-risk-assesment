@@ -1,6 +1,8 @@
 # PMO TIVIT
 
-Aplicación web para portafolio, proyectos, riesgos y procesos PMO. Este repositorio es un monolito modular: el frontend React/Vite vive en `app/src/` y la única API Bun/Hono en `app/api/`. El navegador usa `app/src/data/client.ts` para todas las peticiones REST de mismo origen; PostgreSQL 18.6 conserva el esquema `pmo_cusn` definido por `app/api/migrations/manifest.json` y las migraciones 005–010. Las migraciones históricas 001 y 004 no se ejecutan por el migrador actual.
+Aplicación web para portafolio, proyectos, riesgos y procesos PMO. Este repositorio es un monolito modular: el frontend React/Vite vive en `app/src/` y la única API Bun/Hono en `app/api/`. El navegador usa `app/src/data/client.ts` para todas las peticiones REST de mismo origen. El manifiesto de migraciones activa el baseline 011 de v2.1.0 sobre una base de desarrollo vacía; las migraciones 001–010 quedan documentadas como historia, sin ejecutarse sobre ese baseline.
+
+El backend v2.1.0 integra autenticación propia y gobierno F1–F7: workspaces, invitaciones/membresía, roles, proyectos/portafolio, transferencia y suplencias con autorización por objeto. La aceptación usa PostgreSQL 18.6 aislado, rol runtime limitado y un proceso Bun atendiendo TCP. Los dominios aplazados no tienen endpoints activos; las pantallas anteriores requieren una etapa independiente. No se aplicó el baseline a una base compartida.
 
 ## Herramientas y arranque
 
@@ -12,7 +14,7 @@ pnpm run dev:api
 pnpm run dev
 ```
 
-La API requiere `DATABASE_URL`, `GPL_PASSWORD_HASH_B64` y las variables documentadas en [`deploy/env.example`](deploy/env.example). Vite conserva `index.html` en la raíz; su entrada es `/app/src/main.tsx`, el alias `@` resuelve a `app/src`, y `/api` se proxifica a `http://127.0.0.1:3001` salvo `API_PROXY_TARGET`. Solo las variables con prefijo `VITE_` pueden entrar al bundle; no coloques secretos allí. El frontend muestra Login si no hay sesión, y muestra un error con opción de reintento si el bootstrap REST falla. No contiene datos de negocio de respaldo.
+La API requiere `DATABASE_URL`, `JWT_SIGNING_KEY` de al menos 32 bytes y las variables documentadas en [`deploy/env.example`](deploy/env.example). Vite conserva `index.html` en la raíz; su entrada es `/app/src/main.tsx`, el alias `@` resuelve a `app/src`, y `/api` se proxifica a `http://127.0.0.1:3001` salvo `API_PROXY_TARGET`. Solo las variables con prefijo `VITE_` pueden entrar al bundle; no coloques secretos allí. El frontend muestra Login si no hay sesión, y muestra un error con opción de reintento si el bootstrap REST falla. No contiene datos de negocio de respaldo.
 
 Para contenedores, configura un `.env` local a partir de `deploy/env.example` y consulta [`DEPLOY.md`](DEPLOY.md). `compose.yaml` levanta una base, aplica migraciones, configura el rol de aplicación, verifica el esquema y arranca API y web. El Dockerfile de la API usa el manifiesto y lockfile raíz para instalar dependencias de producción con `pnpm install --prod --frozen-lockfile`, y luego ejecuta Bun. Ningún archivo de entorno debe entrar a Git o a la imagen.
 
@@ -29,16 +31,18 @@ pnpm run storybook
 pnpm run build-storybook
 ```
 
-`test:db` instala y comprueba las seis migraciones activas en una base desechable nueva. Exige `NODE_ENV=test` y `TEST_DATABASE_URL` apuntando a `pmo_test` o `pmo_test_*`; nunca se ejecuta contra la base compartida. Tras migrar esa base, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales. `db:models` regenera ese archivo desde la misma base aislada. Los DTO REST en `app/src/data/contracts.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
+`test:db` ejecuta la suite v2.1 sobre una base local nueva y desechable; los handlers, importadores y smoke incompatibles v2.0 fueron retirados. En una base desechable `pmo_test_*`, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales después de `db:migrate`; `db:models` regenera ese archivo. Los DTO REST en `app/src/data/contracts.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
+
+`NODE_ENV=test TEST_DATABASE_URL=postgres://.../pmo_test_v210_nueva TEST_API_DATABASE_URL=postgres://runtime:.../pmo_test_v210_nueva pnpm run test:db:v210` ejecuta el baseline, su segunda aplicación, bootstrap Head y pruebas de auth/gobierno sobre una base local nueva. La suite rechaza una base que ya contenga `pmo_cusn` y no elimina bases. Genera sus contraseñas aleatorias en memoria. T01–T20 ampliados, matriz de acceso, DTO/OpenAPI, Drizzle, auth y TCP pasaron en la revisión backend. Los comandos, contratos y límites operativos se documentan en DEPLOY.md.
 
 `pnpm run build:api` deja el bundle de Bun en `build/api/`, fuera de `dist/` y del contexto Docker del frontend.
 
 ## Alcance funcional actual
 
-- Proyectos, riesgos, facturación y portafolio leen datos de la API. Ediciones de proyecto y riesgo usan los recursos existentes y reconsultan el bootstrap después de guardar; los errores del servidor se muestran sin aplicar cambios locales aparentes.
-- Complejidad, aprobaciones y compras permanecen en `app/src/pages/` con las rutas REST existentes. Las consultas y escrituras siguen sujetas a la autorización del servidor.
-- La API todavía no ofrece alta general de proyecto o de riesgo de proyecto, ni persistencia de sugerencias. La interfaz indica que esas capacidades no están disponibles. No se infiere una política de roles de sus nombres; la matriz de permisos y auth se revisarán por separado.
-- `NULL` en evaluación de riesgos o importes significa ausencia de registro y se presenta como “Sin dato” o “Sin evaluación”; cero se conserva como importe registrado. El tipo amenaza/oportunidad tampoco se infiere cuando el esquema no lo aporta.
+- La API v2.1 ofrece creación, listado acotado y detalle de proyectos, edición de nombre con versión, transferencia Head y suplencias. Los DTO nuevos no sustituyen todavía el bootstrap visual anterior.
+- Complejidad, aprobaciones y compras se preservan en `app/src/pages/`; sus módulos backend, junto con riesgos, facturación y cierre, quedan fuera de este corte; las rutas obsoletas fueron retiradas.
+- No hay registro público ni login demo. Las cuentas se crean por bootstrap restringido o invitación controlada, con uno de los cuatro roles y comprobaciones por objeto en servidor.
+- La persistencia distingue `NULL` de cero y mantiene bigint/decimal sin pérdida de precisión. Las pruebas de la proyección verifican tipos y columnas generadas; esto no declara funcionales los dominios aplazados.
 
 El diseño visual y Atomic Design se documentan en [`app/src/design-system/DESIGN.md`](app/src/design-system/DESIGN.md) y [`AGENTS.md`](AGENTS.md). `specs/migracion-apps-script-a-bun.md` conserva decisiones históricas previas a esta estructura; esta página y el código vigente describen el estado ejecutable.
 

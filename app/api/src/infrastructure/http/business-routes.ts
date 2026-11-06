@@ -1,123 +1,154 @@
-import { Hono } from 'hono';
-import { z, ZodError } from 'zod';
-import { ApiError, respond, respondError } from '../../errors';
-import { BusinessRuleError } from '../../domain/shared/errors';
-import { assertOrigin, requireSession } from '../../session';
-import { santiagoDate } from '../../domain/shared/civil-date';
-import { closeProject, reopenProject } from '../../application/projects/closure';
-import { closurePort } from '../database/closure';
-import { changePort } from '../database/changes';
-import { submitPlanRequest, resolvePlanRequest } from '../../application/changes';
-import { approveChangeEconomics } from '../../application/billing/approve-change';
-import { getProject } from '../../repositories/read';
-import { getTransverseRisks } from '../../repositories/read';
-import { createTransverseRisk, updateTransverseRisk } from '../../repositories/writes';
-import { controls, saveComplexity, editPurchase } from '../database/frontend-flows';
+import {Hono, type Context} from 'hono';
+import {z} from 'zod';
+import {ApiError,respond,respondError} from '../../errors';
+import {sql,readiness} from '../../db';
+import {assertOrigin,requireSession,sessionFrom,login,logout,renew,publicSession,sessionCookie,refreshCookie,expiredCookie,expiredRefreshCookie} from '../../session';
+import {activeActor,assertPermission,hasGrant} from '../../authorization';
+import {createWorkspace} from '../../application/workspaces/create';
+import {enableProjectCreation,updateWorkspaceName,changeMembership} from '../../application/workspaces/manage';
+import {acceptWorkspaceInvitation,inviteToWorkspace,revokeInvitation} from '../../application/workspaces/invitation';
+import {changeCorporateRole,deactivateUser,revokeCorporateRole} from '../../application/users/manage';
+import {issueRecovery,resetPassword} from '../../application/users/recovery';
+import {createProject} from '../../application/projects/create';
+import {editProjectName} from '../../application/projects/edit';
+import {transferProject} from '../../application/projects/transfer';
+import {designateSubstitution,revokeSubstitution} from '../../application/projects/substitution';
+import {addParticipant} from '../../application/projects/participation';
+import {id,inputs,outputs,errorSchema} from './contracts';
+import {findProject} from '../../repositories/projects';
 
-const id = z.string().regex(/^\d+$/);
-const date = z.iso.date();
-const planRequest = z.strictObject({
-  campo: z.enum(['FECHA_INICIO', 'FECHA_TERMINO', 'FECHA_OPERACION_INICIO', 'FECHA_OPERACION_TERMINO']),
-  valorPropuesto: date,
-  controlCambioId: id.optional(),
-  justificacionExcepcion: z.string().trim().min(1).max(5000).optional(),
-});
-const resolution = z.strictObject({ decision: z.enum(['APROBADO', 'RECHAZADO']),nota:z.string().trim().min(1).max(5000).optional() });
-const economicApproval = z.strictObject({ periodo: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/).optional() });
-const reopen = z.strictObject({ motivo: z.string().trim().min(1).max(5000) });
-const transverseCreate = z.strictObject({ riesgoGlobalId: id, nombre: z.string().trim().min(1).max(5000),
-  descripcion: z.string().max(5000).nullable().optional(), categoria: z.string().max(5000).nullable().optional(),
-  probabilidad: z.number().int().min(1).max(4).optional(), impacto: z.number().int().min(1).max(4).optional(),
-  estrategia: z.enum(['Mitigar','Aceptar','Transferir','Evitar','Reducir']).optional() });
-const transversePatch = z.strictObject({ nombre: z.string().trim().min(1).max(5000).optional(),
-  estado: z.enum(['Pendiente','Contingencia','Controlado','Mitigado']).optional(),
-  categoria: z.string().max(5000).nullable().optional(), probabilidad: z.number().int().min(1).max(4).optional(),
-  impacto: z.number().int().min(1).max(4).optional(), estrategia: z.enum(['Mitigar','Aceptar','Transferir','Evitar','Reducir']).nullable().optional(),
-  planMitigacion: z.string().max(5000).nullable().optional(), planContingencia: z.string().max(5000).nullable().optional() });
-
-async function body(request: Request): Promise<unknown> {
-  const raw = await request.text();
-  if (raw.length > 8192) throw new ApiError(413, 'BODY_TOO_LARGE', 'El cuerpo de la petición es demasiado grande.');
-  try { return JSON.parse(raw); } catch { throw new ApiError(400, 'INVALID_JSON', 'El cuerpo debe ser JSON válido.'); }
-}
-function parse<T>(schema: z.ZodType<T>, value: unknown): T {
-  try { return schema.parse(value); }
-  catch (error) {
-    if (error instanceof ZodError) throw new ApiError(422, 'INVALID_FIELD', 'Datos de entrada no válidos.', Object.fromEntries(error.issues.map(issue => [issue.path.join('.'), issue.message])));
-    throw error;
+type RouteContext={actor:string;request:Request;param:(name:string)=>string;query:Record<string,string>};
+type Options={auth?:'none'|'optional'|'required';status?:number;query?:z.ZodType;policy:string};
+const grants:Record<string,string>={
+  'GET /api/v1/workspaces':'workspaces.consultar','POST /api/v1/workspaces':'workspaces.crear',
+  'PATCH /api/v1/workspaces/:id':'workspaces.configurar',
+  'POST /api/v1/workspaces/:id/miembros/:userId/habilitacion-creacion':'workspaces.creacion_habilitar',
+  'PATCH /api/v1/workspaces/:id/miembros/:userId':'workspaces.miembros.gestionar',
+  'POST /api/v1/workspaces/:id/invitaciones':'workspaces.miembros.invitar',
+  'POST /api/v1/workspaces/:id/invitaciones/:invitationId/revocacion':'workspaces.miembros.invitar',
+  'POST /api/v1/usuarios/:id/rol':'usuarios.administrar','DELETE /api/v1/usuarios/:id/rol':'usuarios.administrar',
+  'POST /api/v1/usuarios/:id/desactivacion':'usuarios.administrar','POST /api/v1/usuarios/:id/recuperacion':'usuarios.administrar',
+  'POST /api/v1/proyectos':'proyectos.crear','GET /api/v1/proyectos':'proyectos.consultar',
+  'GET /api/v1/proyectos/:id':'proyectos.consultar','PATCH /api/v1/proyectos/:id':'proyectos.editar',
+  'POST /api/v1/proyectos/:id/transferencia':'proyectos.transferir',
+  'POST /api/v1/proyectos/:id/participantes':'proyectos.miembros.gestionar',
+  'POST /api/v1/proyectos/:id/suplencias':'suplencias.designar',
+  'POST /api/v1/proyectos/:id/suplencias/:delegationId/revocacion':'suplencias.revocar',
+};
+export function createBusinessApi(){
+  const app=new Hono<{Variables:{requestId:string}}>();
+  const paths:Record<string,Record<string,unknown>>={};
+  const jsonSchema=(schema:z.ZodType)=>z.toJSONSchema(schema,{target:'draft-2020-12'});
+  app.use('*',async(c,next)=>{c.set('requestId',crypto.randomUUID());await next();});
+  app.onError(async(error,c)=>{
+    if(error instanceof ApiError&&error.status===403){
+      const actor=await sessionFrom(c.req.raw);
+      await sql`INSERT INTO pmo_cusn.auditoria_seguridad(actor_id,operacion,recurso_tipo,resultado,detalle)
+        VALUES (${actor?.userId??null},'http.denegado','solicitud','DENEGADO',
+          ${JSON.stringify({method:c.req.method,path:new URL(c.req.url).pathname,code:error.code,requestId:c.get('requestId')})}::jsonb)`;
+    }
+    return respondError(error,c.get('requestId'));
+  });
+  const parse=<T>(schema:z.ZodType<T>,value:unknown):T=>{
+    const result=schema.safeParse(value);
+    if(!result.success)throw new ApiError(422,'INVALID_FIELD','Datos de entrada no válidos.',
+      Object.fromEntries(result.error.issues.map(issue=>[issue.path.join('.'),issue.message])));
+    return result.data;
+  };
+  function route<T>(method:string,path:string,input:z.ZodType<T>|null,output:z.ZodType,options:Options,
+    handler:(context:RouteContext,input:T,c:Context)=>Promise<unknown>){
+    const specPath=path.replace(/:([A-Za-z]+)/g,'{$1}');
+    const parameters:Array<Record<string,unknown>>=[...path.matchAll(/:([A-Za-z]+)/g)].map(match=>({name:match[1],in:'path',required:true,schema:jsonSchema(id)}));
+    if(!['GET','HEAD'].includes(method))parameters.push({name:'Origin',in:'header',required:true,schema:{type:'string',format:'uri'},description:'Origen exacto autorizado por APP_ORIGINS; defensa CSRF.'});
+    if(options.query)for(const [name,schema] of Object.entries((jsonSchema(options.query) as {properties:Record<string,unknown>}).properties))
+      parameters.push({name,in:'query',required:false,schema});
+    const responses:Record<string,unknown>={};
+    for(const status of [400,401,403,404,409,410,413,415,422,429,500,503])responses[status]={description:'Error controlado; no contiene SQL ni secretos',content:{'application/json':{schema:{$ref:'#/components/schemas/ApiError'}}}};
+    responses[options.status??200]={description:'Éxito',content:{'application/json':{schema:jsonSchema(z.strictObject({data:output}))}}};
+    paths[specPath]??={};
+    paths[specPath]![method.toLowerCase()]={operationId:method.toLowerCase()+specPath.replace(/[^A-Za-z0-9]/g,'_'),
+      description:options.policy,'x-permission':grants[method+' '+path],security:path==='/api/v1/sesion/renovar'?[{refreshCookie:[]}]:options.auth==='optional'?[{},{accessCookie:[]}]:options.auth==='none'?[]:[{accessCookie:[]}],
+      parameters,...(input?{requestBody:{required:true,content:{'application/json':{schema:jsonSchema(input)}}}}:{}),responses};
+    app.on(method,path,async c=>{
+      assertOrigin(c.req.raw);
+      const identity=options.auth==='none'||options.auth==='optional'?null:await requireSession(c.req.raw);
+      const grant=grants[method+' '+path];
+      if(identity&&grant&&!await hasGrant(identity.userId,grant))throw new ApiError(403,'FORBIDDEN','No tienes permiso para esta operación.');
+      for(const parameter of path.matchAll(/:([A-Za-z]+)/g))parse(id,c.req.param(parameter[1]!));
+      const query=Object.fromEntries(new URL(c.req.url).searchParams);
+      if(options.query)parse(options.query,query);
+      else if(Object.keys(query).length)throw new ApiError(422,'INVALID_QUERY','Esta operación no admite filtros.');
+      let value:unknown=undefined;
+      if(input){
+        if(!c.req.header('content-type')?.toLowerCase().startsWith('application/json'))throw new ApiError(415,'JSON_REQUIRED','Se requiere application/json.');
+        const raw=await c.req.text();
+        if(raw.length>8192)throw new ApiError(413,'BODY_TOO_LARGE','El cuerpo es demasiado grande.');
+        try{value=JSON.parse(raw);}catch{throw new ApiError(400,'INVALID_JSON','El cuerpo debe ser JSON válido.');}
+        value=parse(input,value);
+      }else if(!['GET','HEAD'].includes(method)&&await c.req.text())
+        throw new ApiError(422,'UNEXPECTED_BODY','Esta operación no admite cuerpo.');
+      const result=await handler({actor:identity?.userId??'',request:c.req.raw,param:name=>parse(id,c.req.param(name)),query},value as T,c);
+      const checked=output.safeParse(result);
+      if(!checked.success){console.error('Respuesta fuera de contrato',method,path);throw new Error('RESPONSE_CONTRACT');}
+      const response=respond(checked.data,c.get('requestId'),options.status??200);
+      // Hono prepared headers carry the HttpOnly cookies set by auth handlers.
+      const cookies=c.res.headers.getSetCookie();
+      for(const cookie of cookies)response.headers.append('set-cookie',cookie);
+      return response;
+    });
   }
-}
-function context(request: Request, requestId: string): { actor: string; requestId: string } {
-  assertOrigin(request);
-  return { actor: requireSession(request).userId, requestId };
-}
-export function createBusinessApi(legacy: (request: Request) => Promise<Response>) {
-  const app = new Hono<{ Variables: { requestId: string } }>();
-  app.use('*', async (c, next) => { c.set('requestId', crypto.randomUUID()); await next(); });
-  app.onError((error,c) => respondError(error instanceof BusinessRuleError ? new ApiError(422,error.code,error.message) : error, c.get('requestId')));
-  app.post('/api/v1/proyectos/:key/cierre', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    parse(z.strictObject({}), await body(c.req.raw));
-    const result = await closeProject(closurePort, c.req.param('key'), actor, santiagoDate(new Date()));
-    return respond({ ...result, proyecto: await getProject(actor, result.id) }, requestId);
+  const setCookies=(c:Context,s:{accessToken?:string;refreshToken?:string})=>{
+    c.header('set-cookie',sessionCookie(s.accessToken!),{append:true});
+    c.header('set-cookie',refreshCookie(s.refreshToken!),{append:true});
+  };
+  route('GET','/api/v1/salud',null,outputs.health,{auth:'none',policy:'Salud del proceso, sin datos internos.'},async()=>({status:'ok',version:'2.1.0'}));
+  route('GET','/api/v1/listo',null,outputs.ready,{auth:'none',policy:'Disponibilidad de PostgreSQL y migración.'},async()=>{const state=await readiness();return {status:'ready',migration:state.migration};});
+  route('POST','/api/v1/sesion',inputs.login,outputs.session,{auth:'none',policy:'Correo/contraseña. Bloqueo tras cinco fallos; cookies HttpOnly.'},async(_,input,c)=>{
+    const session=await login(input.identifier,input.password);
+    if(!session)throw new ApiError(401,'INVALID_CREDENTIALS','Identificación o contraseña incorrectas.');
+    setCookies(c,session);return publicSession(session);
   });
-  app.post('/api/v1/proyectos/:key/reapertura', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    const input = parse(reopen, await body(c.req.raw));
-    const result = await reopenProject(closurePort, c.req.param('key'), actor, input.motivo);
-    return respond({ ...result, proyecto: await getProject(actor, result.id) }, requestId);
+  route('GET','/api/v1/sesion',null,outputs.session,{policy:'Restauración; usuario activo y rol vigente.'},async ctx=>publicSession(await requireSession(ctx.request)));
+  route('POST','/api/v1/sesion/renovar',null,outputs.session,{auth:'none',policy:'Cookie refresh opaca de uso único; rotación atómica.'},async(ctx,_,c)=>{const s=await renew(ctx.request);setCookies(c,s);return publicSession(s);});
+  route('DELETE','/api/v1/sesion',null,outputs.closed,{auth:'none',policy:'Revoca refresh y versión de acceso, cierre idempotente.'},async(ctx,_,c)=>{await logout(ctx.request);c.header('set-cookie',expiredCookie(),{append:true});c.header('set-cookie',expiredRefreshCookie(),{append:true});return {status:'closed'};});
+  route('POST','/api/v1/workspaces',inputs.workspace,outputs.workspace,{status:201,policy:'ADMIN o PM; PM creador obtiene membresía habilitada atómicamente.'},async(ctx,v)=>createWorkspace(ctx.actor,v.nombre));
+  route('PATCH','/api/v1/workspaces/:id',inputs.workspaceEdit,outputs.workspace,{policy:'Head global; PM creador o habilitado. Slug inmutable; versión optimista.'},async(ctx,v)=>updateWorkspaceName(ctx.actor,ctx.param('id'),v.nombre,v.version));
+  route('POST','/api/v1/workspaces/:id/miembros/:userId/habilitacion-creacion',inputs.enable,outputs.enabled,{policy:'Solo Head; miembro PM interno activo.'},async(ctx,v)=>enableProjectCreation(ctx.actor,ctx.param('id'),ctx.param('userId'),v.habilitado));
+  route('PATCH','/api/v1/workspaces/:id/miembros/:userId',inputs.member,outputs.member,{policy:'Head gestiona membresía; restricción diferida protege al titular.'},async(ctx,v)=>changeMembership(ctx.actor,ctx.param('id'),ctx.param('userId'),v.estado));
+  route('POST','/api/v1/workspaces/:id/invitaciones',inputs.invitation,outputs.invitation,{status:201,policy:'Head o PM creador/habilitado. Token solo en entrega administrativa controlada; PM no promueve.'},async(ctx,v)=>inviteToWorkspace(ctx.actor,ctx.param('id'),v.email,v.rol));
+  route('POST','/api/v1/workspaces/:id/invitaciones/:invitationId/revocacion',null,outputs.revoked,{policy:'Head o invitador todavía autorizado; no borra historia.'},async ctx=>revokeInvitation(ctx.actor,ctx.param('id'),ctx.param('invitationId')));
+  route('POST','/api/v1/invitaciones/aceptar',inputs.accept,outputs.accepted,{auth:'optional',policy:'Token de un solo uso; cuenta existente autenticada coincidente; nueva cuenta sin elección de rol.'},async(ctx,v)=>acceptWorkspaceInvitation(v.token,(await sessionFrom(ctx.request))?.userId??null,v.password));
+  route('POST','/api/v1/usuarios/:id/rol',inputs.role,outputs.assignment,{policy:'Solo Head; sin autopromoción; externo solo VISUALIZADOR ASIGNADOS.'},async(ctx,v)=>changeCorporateRole(ctx.actor,ctx.param('id'),v.rol,v.alcance));
+  route('DELETE','/api/v1/usuarios/:id/rol',null,outputs.roleRevoked,{policy:'Solo Head; revoca rol y sesiones; titular requiere reemplazo previo.'},async ctx=>revokeCorporateRole(ctx.actor,ctx.param('id')));
+  route('POST','/api/v1/usuarios/:id/desactivacion',null,outputs.inactive,{policy:'Solo Head, sin autodesactivación; invalida sesiones.'},async ctx=>deactivateUser(ctx.actor,ctx.param('id')));
+  route('POST','/api/v1/usuarios/:id/recuperacion',null,outputs.recovery,{status:201,policy:'Solo Head tras verificación administrativa. Token en entrega controlada, no notificación simulada.'},async ctx=>issueRecovery(ctx.actor,ctx.param('id')));
+  route('POST','/api/v1/credenciales/restablecer',inputs.reset,outputs.reset,{auth:'none',policy:'Token de recuperación hash, plazo 30 minutos y uso único; revoca sesiones.'},async(_,v)=>resetPassword(v.token,v.password));
+  route('GET','/api/v1/workspaces',null,outputs.workspaces,{policy:'Head global; demás solo membresía activa, máximo 100.'},async ctx=>{
+    const actor=await activeActor(ctx.actor);
+    if(!actor||!await hasGrant(ctx.actor,'workspaces.consultar'))throw new ApiError(403,'FORBIDDEN','Acceso no autorizado.');
+    return actor.role==='ADMIN'?sql`SELECT id::text,nombre,slug,version::text FROM pmo_cusn.workspace WHERE estado='ACTIVO' ORDER BY id LIMIT 100`:
+      sql`SELECT w.id::text,w.nombre,w.slug,w.version::text FROM pmo_cusn.workspace w JOIN pmo_cusn.membresia_workspace m ON m.workspace_id=w.id WHERE m.usuario_id=${ctx.actor} AND m.estado='ACTIVA' AND w.estado='ACTIVO' ORDER BY w.id LIMIT 100`;
   });
-  app.post('/api/v1/proyectos/:key/cambios-planificacion', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    const input = parse(planRequest, await body(c.req.raw));
-    const result = await submitPlanRequest(changePort, { projectKey: c.req.param('key'), field: input.campo, proposed: input.valorPropuesto,
-      controlChangeId: input.controlCambioId, exceptionReason: input.justificacionExcepcion }, actor);
-    return respond(result, requestId, 201);
+  route('POST','/api/v1/proyectos',inputs.project,outputs.project,{status:201,policy:'Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global.'},async(ctx,v)=>createProject(ctx.actor,v));
+  route('GET','/api/v1/proyectos',null,outputs.projects,{query:inputs.list,policy:'Head/PM global; Especialista asignado; Visualizador interno global/asignado; externo solo asignado. Cursor after y limit 1–100.'},async ctx=>{
+    const actor=await activeActor(ctx.actor);
+    if(!actor||!await hasGrant(ctx.actor,'proyectos.consultar'))throw new ApiError(403,'FORBIDDEN','Acceso no autorizado.');
+    const limit=Number(ctx.query.limit??50),after=ctx.query.after??'0';
+    const global=actor.role==='ADMIN'||actor.role==='PM'||(actor.role==='VISUALIZADOR'&&actor.kind==='INTERNO'&&actor.readScope==='GLOBAL');
+    return global?sql`SELECT id::text,tvt,nombre,workspace_id::text AS "workspaceId",version::text,estado_actual AS estado FROM pmo_cusn.proyecto WHERE activo AND id>${after}::bigint ORDER BY id LIMIT ${limit}`:
+      sql`SELECT p.id::text,p.tvt,p.nombre,p.workspace_id::text AS "workspaceId",p.version::text,p.estado_actual AS estado FROM pmo_cusn.proyecto p WHERE p.activo AND p.id>${after}::bigint AND EXISTS(SELECT 1 FROM pmo_cusn.participacion_proyecto pp WHERE pp.proyecto_id=p.id AND pp.usuario_id=${ctx.actor} AND pp.fecha_inicio<=now() AND (pp.fecha_fin IS NULL OR pp.fecha_fin>now())) ORDER BY p.id LIMIT ${limit}`;
   });
-  app.post('/api/v1/cambios-planificacion/:id/resolucion', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    const input=parse(resolution, await body(c.req.raw));
-    const result = await resolvePlanRequest(changePort, parse(id, c.req.param('id')), input.decision, actor,input.nota);
-    return respond(result, requestId);
+  route('GET','/api/v1/proyectos/:id',null,outputs.projectDetail,{policy:'Consulta por objeto; prohibición 403 no revela existencia a perfiles sin alcance.'},async ctx=>{
+    await assertPermission(ctx.actor,'proyectos.consultar',ctx.param('id'));
+    const row=await findProject(ctx.param('id'));
+    if(!row)throw new ApiError(404,'NOT_FOUND','Proyecto no encontrado.');return row;
   });
-  app.post('/api/v1/controles-cambio/:id/aprobacion-economica', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    const input = parse(economicApproval, await body(c.req.raw));
-    const result = await approveChangeEconomics(changePort, parse(id, c.req.param('id')), input.periodo, actor);
-    return respond(result, requestId);
-  });
-  app.get('/api/v1/riesgos/transversales', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    return respond(await getTransverseRisks(actor), requestId);
-  });
-  app.post('/api/v1/riesgos/transversales', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    return respond(await createTransverseRisk(parse(transverseCreate, await body(c.req.raw)), actor), requestId, 201);
-  });
-  app.patch('/api/v1/riesgos/transversales/:id', async c => {
-    const { actor, requestId } = context(c.req.raw,c.get('requestId'));
-    return respond(await updateTransverseRisk(parse(id,c.req.param('id')), parse(transversePatch, await body(c.req.raw)), actor), requestId);
-  });
-  app.get('/api/v1/controles-cambio',async c=>{
-    const {actor,requestId}=context(c.req.raw,c.get('requestId'));
-    return respond(await controls(actor),requestId);
-  });
-  app.get('/api/v1/proyectos/:key/prevalidacion-cierre',async c=>{
-    const {actor,requestId}=context(c.req.raw,c.get('requestId'));
-    return respond(await closurePort.transact(tx=>tx.load(c.req.param('key'),actor,'proyectos.cerrar')),requestId);
-  });
-  app.post('/api/v1/proyectos/:key/complejidad',async c=>{
-    const {actor,requestId}=context(c.req.raw,c.get('requestId'));
-    const factor=z.number().int().min(1).max(5);
-    const input=parse(z.strictObject({riesgo:factor,facturacion:factor,plazo:factor,alcance:factor,override:z.boolean(),motivo:z.string().max(5000)}),await body(c.req.raw));
-    return respond(await saveComplexity(actor,c.req.param('key'),input),requestId);
-  });
-  app.patch('/api/v1/compras/:id',async c=>{
-    const {actor,requestId}=context(c.req.raw,c.get('requestId'));
-    const amount=z.string().regex(/^\d{1,16}(?:\.\d{1,4})?$/).nullable();
-    const input=parse(z.strictObject({presupuesto:amount,montoAdjudicado:amount}),await body(c.req.raw));
-    return respond(await editPurchase(actor,parse(id,c.req.param('id')),input.presupuesto,input.montoAdjudicado),requestId);
-  });
-  app.all('*', c => legacy(c.req.raw));
+  route('PATCH','/api/v1/proyectos/:id',inputs.projectEdit,outputs.project,{policy:'Head o titular/suplente vigente con permiso; lock y versión, 409 al conflicto.'},async(ctx,v)=>editProjectName(ctx.actor,ctx.param('id'),v.version,v.nombre));
+  route('POST','/api/v1/proyectos/:id/transferencia',inputs.transfer,outputs.transferred,{policy:'Solo Head; transferencia o reasignación, continuidad de titular y versión.'},async(ctx,v)=>transferProject(ctx.actor,ctx.param('id'),v));
+  route('POST','/api/v1/proyectos/:id/participantes',inputs.participant,outputs.participant,{status:201,policy:'Head o titular; Especialista/observador sin edición implícita; membresía activa.'},async(ctx,v)=>addParticipant(ctx.actor,ctx.param('id'),v.userId,v.funcion));
+  route('POST','/api/v1/proyectos/:id/suplencias',inputs.substitution,outputs.substitution,{status:201,policy:'Head o PM titular y creador. PM suplente interno activo, UTC [inicio,fin), sin solapes.'},async(ctx,v)=>designateSubstitution(ctx.actor,ctx.param('id'),v));
+  route('POST','/api/v1/proyectos/:id/suplencias/:delegationId/revocacion',null,outputs.revoked,{policy:'Head o titular creador autorizado; historia conservada.'},async ctx=>revokeSubstitution(ctx.actor,ctx.param('id'),ctx.param('delegationId')));
+  app.get('/api/v1/openapi.json',c=>c.json({openapi:'3.1.0',info:{title:'PMO gobierno y acceso',version:'2.1.0'},components:{schemas:{ApiError:jsonSchema(errorSchema)},securitySchemes:{accessCookie:{type:'apiKey',in:'cookie',name:'pmo_access'},refreshCookie:{type:'apiKey',in:'cookie',name:'pmo_refresh'}}},paths}));
+  app.notFound(c=>respondError(new ApiError(404,'NOT_FOUND','Ruta no encontrada.'),c.get('requestId')));
   return app;
 }

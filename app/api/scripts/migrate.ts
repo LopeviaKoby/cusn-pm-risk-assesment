@@ -2,9 +2,10 @@ import { SQL } from "bun";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import {assertCatalog} from './catalog';
 
 export const migrationDirectory = resolve(import.meta.dirname, "../migrations");
-export const baseFile = "005_pmo_cusn_v200.sql";
+export const baseFile = "011_pmo_cusn_v210.sql";
 
 export async function migrate(sql: SQL): Promise<void> {
   const manifest = JSON.parse(readFileSync(resolve(migrationDirectory, "manifest.json"), "utf8")) as {
@@ -20,7 +21,7 @@ export async function migrate(sql: SQL): Promise<void> {
       version text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now()
     )`;
     for (const item of manifest.migrations) {
-      if (!/^0(?:0[5-9]|10)_[a-z0-9_]+\.sql$/.test(item.file)) throw new Error("Archivo de migración no autorizado.");
+      if (!/^011_pmo_cusn_v210\.sql$/.test(item.file)) throw new Error("Archivo de migración no autorizado.");
       const content = readFileSync(resolve(migrationDirectory, item.file), "utf8");
       const hash = createHash("sha256").update(content).digest("hex");
       if (hash !== item.sha256) throw new Error(`Checksum distinto: ${item.file}`);
@@ -34,12 +35,13 @@ export async function migrate(sql: SQL): Promise<void> {
         const [existing] = await tx<{ name: string | null }>`SELECT to_regnamespace('pmo_cusn')::text AS name`;
         if (existing?.name) throw new Error("pmo_cusn existe sin registro de migración; no se sobrescribe.");
       }
-      // El adjunto se conserva byte por byte; Bun controla la transacción.
+      // La definición versionada incorpora las correcciones documentadas; Bun controla la transacción.
       const statements = content.replace(/^BEGIN;\s*$/m, "").replace(/^COMMIT;\s*$/m, "");
       await tx.unsafe(statements);
       await tx`INSERT INTO pmo_cusn_meta.migracion(version,sha256) VALUES (${item.file},${hash})`;
       console.log(`+ ${item.file} aplicada`);
     }
+    await assertCatalog(tx);
   });
 }
 
