@@ -1,22 +1,22 @@
 # Backend PMO v2.1.0 — ejecución y verificación
 
-El corte backend comprende acceso propio y gobierno F1–F7. Se verificó localmente con PostgreSQL 18.6, Bun 1.4.4, Hono 4.13.14, Zod 4.6.7, Drizzle 0.45.4, jose 6.2.13, Node 22.23.4 y pnpm 12.12.1. No constituye despliegue productivo ni validación de los dominios aplazados o del frontend.
+El corte backend comprende acceso propio, gobierno F1–F7 y la entrega vertical **G1** (workspaces, asignaciones, alta/edición base, portafolio denso y ficha de presentación del proyecto). Se verificó localmente con PostgreSQL 18.6, Bun 1.4.4, Hono 4.13.14, Zod 4.6.7, Drizzle 0.45.4, jose 6.2.13, Node 22.23.4 y pnpm 12.12.1. No constituye despliegue productivo ni validación de los dominios posteriores (`P1–P6`) o del frontend.
 
 ## Arquitectura y contratos
 
-La API única está en `app/api/`. `src/index.ts` exporta el mismo Hono utilizado por las pruebas conectadas y por `Bun.serve`. No hay un enrutador v2.0 paralelo. Los handlers/repositorios incompatibles, importador/backfill v2.0 y su smoke fueron retirados. Riesgos, compras, complejidad, cierre, Drive, horas y repases no tienen endpoints en este corte; rutas no registradas responden 404.
+La API única está en `app/api/`. `src/index.ts` exporta el mismo Hono utilizado por las pruebas conectadas y por `Bun.serve`. No hay un enrutador v2.0 paralelo. Los handlers/repositorios incompatibles, importador/backfill v2.0 y su smoke fueron retirados. Complejidad (`P1`), riesgos (`P2`), controles de cambio/solicitudes de plazo (`P3`), seguimiento/facturación/SPI-CPI (`P4`), compras (`P5`) y cierre/documentos (`P6`), así como Drive, horas y repases, no tienen endpoints en este corte; rutas no registradas responden 404 y la ficha/portafolio exponen sus bloques futuros como `null` / `PENDIENTE_*` sin simular valores ni ceros de relleno.
 
-`infrastructure/http/contracts.ts` define entradas estrictas y DTO separados de entidades. La inscripción de rutas usa esos esquemas para validar solicitudes y respuestas y generar OpenAPI 3.1. El documento se sirve en `GET /api/v1/openapi.json` y está versionado en `specs/openapi-v210.json`. `api:openapi:check` rechaza divergencias. Campos no declarados, incluidos rol/titular/workspace en una edición ordinaria, se rechazan; no hay mass assignment.
+`infrastructure/http/contracts.ts` define entradas estrictas y DTO separados de entidades. La inscripción de rutas usa esos esquemas para validar solicitudes y respuestas y generar OpenAPI 3.1. El documento se sirve en `GET /api/v1/openapi.json` y está versionado en `specs/openapi-v210.json`. `api:openapi:check` rechaza divergencias. Campos no declarados, incluidos rol/titular/workspace/estado/fechaTerminoActual en una edición ordinaria, se rechazan; no hay mass assignment.
 
-Éxito: `{data: DTO}`. Error: `{error:{code,message,fields?},requestId}`, sin SQL/stack. Validación 422, JSON inválido 400, autenticación 401, autorización 403, inexistencia 404, versión/unicidad/exclusión 409, token no vigente 410, tamaño 413, Content-Type 415, interno 500 y conexión 503. Detalles sin alcance devuelven 403 antes de revelar existencia; Head obtiene 404 si el recurso no existe. Listado de proyectos admite exclusivamente `after` y `limit` (1–100, defecto 50); workspace está acotado a 100. Identificadores/versiones se transportan como cadenas; el DTO no expone documentos ni metadatos confidenciales.
+Éxito: `{data: DTO}`. Error: `{error:{code,message,fields?},requestId}`, sin SQL/stack. Validación 422, JSON inválido 400, autenticación 401, autorización 403, inexistencia 404, versión/unicidad/exclusión/baseline inmutable 409, token no vigente 410, tamaño 413, Content-Type 415, interno 500 y conexión 503. Detalles sin alcance devuelven 403 antes de revelar existencia; Head obtiene 404 si el recurso no existe. `GET /api/v1/proyectos` conserva `after` y `limit` (1–100, defecto 50); `GET /api/v1/portafolio` y `GET /api/v1/workspaces/:id/proyectos` proveen búsqueda (`q`), filtros (`workspaceId`, `paisId`, `lobId`, `squadId`, `clienteId`, `pmTitularId`, `estado`, `incluirInactivos` exclusivo Head), ordenamiento, paginación y `resumenPorEstado`. Identificadores, cursores y versiones se transportan como cadenas y validan cota superior `BIGINT` (`<= 9223372036854775807`) con `422` en frontera; el DTO oculta referencias internas (`sap/ceco/pep`), correos internos y suplencias a perfiles `EXTERNO`.
 
 | Persistencia SQL | Proyección Drizzle | Servicio | DTO/operaciones |
 |---|---|---|---|
 | usuario, rol, permiso, asignacion_rol | schema.ts, símbolos homónimos | session.ts; application/users | sesión, asignación, desactivación, recuperación |
-| workspace, membresia_workspace | workspace, membresia_workspace | workspaces/create y manage | workspace, habilitación, estado de membresía |
-| invitacion_workspace | invitacion_workspace | workspaces/invitation | emisión controlada, aceptación y revocación |
-| proyecto, participacion_proyecto | proyecto, participacion_proyecto | projects/create/edit/transfer/participation | proyecto, listado/detalle, transferencia, participante |
-| delegacion_acceso, delegacion_permiso | símbolos homónimos | projects/substitution; authorization.ts | suplencia UTC, revocación |
+| workspace, membresia_workspace | workspace, membresia_workspace | workspaces/create y manage | workspace, detalle/permisos/resumen, miembros, elegibles, habilitación, estado de membresía |
+| invitacion_workspace | invitacion_workspace | workspaces/invitation y manage | emisión controlada, listado sin token, aceptación y revocación |
+| proyecto, participacion_proyecto, cliente, pais, lob, servicio_lob, squad | símbolos homónimos | projects/create/edit/transfer/participation/portfolio | alta/edición con baseline inmutable, portafolio denso, ficha de presentación, asignaciones, catálogos, transferencia, participante |
+| delegacion_acceso, delegacion_permiso | símbolos homónimos | projects/substitution; authorization.ts | suplencia UTC (por Head o PM titular vigente, incluido titular reasignado), revocación |
 | auditoria_seguridad, evento_proyecto | símbolos homónimos | transacciones de aplicación y error handler | sin CRUD público |
 
 `models.ts` contiene las 53 entidades y metadatos completos de FK, checks, exclusiones e índices. `schema.ts` proyecta sus columnas, tipos, nulabilidad, defaults, identidades, PK simples y expresiones generadas para Drizzle. Las FKs compuestas, índices, exclusiones y triggers conservan su autoridad en SQL versionado, no se sustituyen por sincronización ORM. Lectura y edición ordinaria de proyectos ejecutan Drizzle real; servicios con restricciones avanzadas usan Bun SQL transaccional. La suite prueba bigint superior a MAX_SAFE_INTEGER, decimal exacto, NULL, date, timestamptz y columnas generadas.
@@ -55,13 +55,14 @@ Runtime: SELECT del esquema PMO y lectura del registro de migración; INSERT/UPD
 
 ## Baseline y generación
 
-Solo 011 está activo; 001–010 permanecen como historia del manifiesto. No hay upgrade/backfill v2.0. Se rechaza un pmo_cusn preexistente sin registro. Migración serializada por advisory lock, PostgreSQL 18.6 verificado, checksum de archivo y huella determinista del catálogo. La segunda aplicación no recrea tablas y detecta drift de columnas, restricciones, funciones, triggers, índices y matriz de roles/permisos.
+Están activas las migraciones `011_pmo_cusn_v210.sql` (baseline inmutable) y `012_g1_baseline_guard.sql` (inmutabilidad de primera línea base de término y coherencia de `fecha_termino_actual`); `001–010` permanecen como historia del manifiesto. No hay upgrade/backfill v2.0. Se rechaza un pmo_cusn preexistente sin registro. Migración serializada por advisory lock, PostgreSQL 18.6 verificado, checksum de archivo y huella determinista del catálogo. La segunda aplicación no recrea tablas y detecta drift de columnas, restricciones, funciones, triggers, índices y matriz de roles/permisos; la suite verifica también el upgrade incremental `011 -> 012`.
 
-Diferencias con el SQL fuente entregado: campos de autenticación propia en usuario; seeds de permisos aprobados; search_path fijo pmo_cusn,pg_catalog en las nueve funciones; comentarios de permisos coherentes con esos seeds. Las instrucciones de negocio prevalecen sobre el catálogo vacío descrito en versiones anteriores. No se aplicaron transformaciones de datos ni se tocó pmo.
+Diferencias con el SQL fuente entregado: campos de autenticación propia en usuario; seeds de permisos aprobados; search_path fijo pmo_cusn,pg_catalog en las diez funciones; comentarios de permisos coherentes con esos seeds. Las instrucciones de negocio prevalecen sobre el catálogo vacío descrito en versiones anteriores. No se aplicaron transformaciones de datos ni se tocó pmo.
 
 - Fuente original SHA-256: 3d7346235175374a175670e9d8b1ce07b67b554ae63eba84958c7767bad98678.
-- Baseline definitivo SHA-256: 1086974ab85ca82c7919dec353a05394b7d97472fc9571341e19ecabd22cc40d.
-- Huella del catálogo: 6597b0dd053a3383d1396bf2c8255e00bb752f2e6f895266cd3475850f9d5091.
+- Baseline 011 SHA-256: 1086974ab85ca82c7919dec353a05394b7d97472fc9571341e19ecabd22cc40d.
+- Migración 012 SHA-256: 238222263df86f8ecd961e70fa147ccd307b82ae855e5ef597d92480cc0e4e38.
+- Huella del catálogo (011–012): ffeeb9c707e73c91b840cb68c099f79679aca6639ae0138911d96bbbd646ca50.
 
 db:models y db:models:check rechazan primero una huella divergente; generan/comparan tanto entidades como Drizzle. No puede aprobarse una base divergente simplemente regenerando archivos.
 
@@ -111,6 +112,7 @@ La suite ejecuta instalación limpia/repetición, drift de registro y ALTER TABL
 | T18 | Auditoría UPDATE/DELETE bloqueados por trigger y privilegios | schema-invariants, access-contracts |
 | T19 | Revocar rol/retirar membresía del titular revierte | schema-invariants |
 | T20 | pmo intacto tras migración/repetición y pruebas | schema-invariants |
+| G1 | Detalle/miembros/invitaciones (sin token)/elegibles de workspace, catálogos, suplencia por titular reasignado, alta/edición con primera línea base inmutable, portafolio denso paginado, ficha con confidencialidad y cota BIGINT | g1-portfolio-http, schema-invariants, access-contracts |
 
 En la revisión final todos los casos anteriores y los scripts adicionales auth-http/auth-negative/recovery-http/projection/tcp-smoke terminaron con exit 0. TCP final: PID 24676, puerto 49403, proceso terminado al cerrar la prueba. typecheck:api, build:api y 8 pruebas puras de dominio pasaron; las pruebas puras heredadas de dominios aplazados no declaran esos servicios funcionales. pnpm audit completo: sin vulnerabilidades conocidas; audit signatures: 617 firmas verificadas tras corregir seis avisos del tooling de desarrollo. Overrides exactos: glob 13.0.6→14.0.2, minimatch 10.2.6→11.0.1 y fast-uri 3.1.8→3.1.9. Se revisaron fuentes, licencias, integridad, scripts, motores y antigüedad; no se habilitaron scripts nuevos ni excepciones de confianza/antigüedad. Storybook compiló; React Doctor en worktree limpio terminó con 0 errores y 31 advertencias preexistentes. No se modificaron componentes frontend.
 

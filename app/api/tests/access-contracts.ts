@@ -85,8 +85,10 @@ try{
   for(const [path,body] of [['proyectos',{...create(w.id,`BAD-${mark}`),rol:'ADMIN'}],[`proyectos/${p.id}`,{nombre:'No',version:p.version,workspaceId:other.id}]])
     assert.equal((await send(path==='proyectos'?'POST':'PATCH',path as string,owner.cookie,body)).status,422);
   assert.equal((await send('POST','sesion',undefined,{identifier:owner.email,password,rol:'ADMIN'})).status,422);
-  for(const query of ['limit=0','limit=101','after=-1','workspaceId=1'])assert.equal((await send('GET',`proyectos?${query}`,owner.cookie)).status,422);
+  for(const query of ['limit=0','limit=101','after=-1','after=9223372036854775808','workspaceId=1'])assert.equal((await send('GET',`proyectos?${query}`,owner.cookie)).status,422);
   assert.equal((await send('GET','proyectos/999999999999999999999999',owner.cookie)).status,422);
+  assert.equal((await send('GET','proyectos/9223372036854775808',owner.cookie)).status,422);
+  assert.equal((await send('GET','proyectos/9223372036854775807',head.cookie)).status,404);
   const paged=await data<Array<{id:string}>>(await send('GET','proyectos?limit=1&after=0',head.cookie));assert.equal(paged.length,1);
   const spec=await (await send('GET','openapi.json')).json() as {openapi:string;paths:Record<string,Record<string,{requestBody?:{content:Record<string,{schema:unknown}>}}>>};
   assert.equal(spec.openapi,'3.1.0');

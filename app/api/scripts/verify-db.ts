@@ -14,7 +14,7 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
     (SELECT count(*)::text FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pmo_cusn' AND NOT t.tgisinternal) triggers,
     (SELECT count(*)::text FROM pg_index i JOIN pg_class c ON c.oid=i.indrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pmo_cusn' AND i.indpred IS NOT NULL) partial,
     (SELECT count(*)::text FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace WHERE n.nspname='pmo_cusn' AND NOT c.convalidated) invalid`;
-  if(objects?.functions!=="9"||objects.triggers!=="13"||objects.partial!=="9"||objects.invalid!=="0")throw new Error(`Objetos/restricciones distintos: ${JSON.stringify(objects)}`);
+  if(objects?.functions!=="10"||objects.triggers!=="14"||objects.partial!=="9"||objects.invalid!=="0")throw new Error(`Objetos/restricciones distintos: ${JSON.stringify(objects)}`);
   const units=await db<{codigo:string}>`SELECT codigo FROM pmo_cusn.unidad_monetaria ORDER BY codigo`;
   if(units.map(r=>r.codigo).join(',')!=="ARS,BRL,CLP,COP,MXN,PAB,PEN,UF,USD")throw new Error("Unidades distintas del contrato.");
   const [roles]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn.rol`;
@@ -35,8 +35,8 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
     const [row]=await db.unsafe<{n:string}[]>(`SELECT count(*)::text n FROM ${fk.child} c LEFT JOIN ${fk.parent} p ON ${fk.keys.map((k,i)=>`c.${quote(k)}=p.${quote(fk.refs[i]!)}`).join(' AND ')} WHERE ${fk.keys.map(k=>`c.${quote(k)} IS NOT NULL`).join(' AND ')} AND p.${quote(fk.refs[0]!)} IS NULL`);
     if(row?.n!=="0")throw new Error(`FK huérfana en ${fk.child}`);
   }
-  const [migration]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn_meta.migracion WHERE version='011_pmo_cusn_v210.sql'`;
-  if(migration?.n!=="1")throw new Error("Baseline v2.1.0 no registrado.");
+  const [migration]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn_meta.migracion WHERE version IN ('011_pmo_cusn_v210.sql','012_g1_baseline_guard.sql')`;
+  if(migration?.n!=="2")throw new Error("Migraciones v2.1.0 (011 y 012) no registradas.");
   if(runtime){
     const [privileges]=await db<{elevated:boolean;ddl:boolean;read:boolean;insert:boolean;update:boolean;delete:boolean;event_update:boolean;matrix_write:boolean}>`SELECT
       (r.rolsuper OR r.rolcreatedb OR r.rolcreaterole OR r.rolreplication OR r.rolbypassrls) elevated,
@@ -50,7 +50,7 @@ export async function verifyDatabase(db:SQL,runtime=false):Promise<void> {
     if(!privileges||privileges.elevated||privileges.ddl||!privileges.read||!privileges.insert||!privileges.update||privileges.delete||privileges.event_update||privileges.matrix_write)throw new Error(`Privilegios runtime no válidos: ${JSON.stringify(privileges)}`);
     console.log("PASS runtime sin DDL ni privilegios elevados; DML de proyecto, eventos y matriz funcional protegidos.");
   }
-  console.log(`PASS 53 tablas, 9 funciones, 13 triggers, 9 índices parciales, ${foreignKeys.length} FKs sin huérfanos, 9 unidades, 4 roles y baseline v2.1.0.`);
+  console.log(`PASS 53 tablas, ${objects.functions} funciones, ${objects.triggers} triggers, ${objects.partial} índices parciales, ${foreignKeys.length} FKs sin huérfanos, 9 unidades, 4 roles y migraciones v2.1.0 (011–012).`);
 }
 if(import.meta.main){
   if(!Bun.env.DATABASE_URL)throw new Error("Falta DATABASE_URL.");

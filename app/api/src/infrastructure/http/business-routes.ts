@@ -3,9 +3,18 @@ import {z} from 'zod';
 import {ApiError,respond,respondError} from '../../errors';
 import {sql,readiness} from '../../db';
 import {assertOrigin,requireSession,sessionFrom,login,logout,renew,publicSession,sessionCookie,refreshCookie,expiredCookie,expiredRefreshCookie} from '../../session';
-import {activeActor,assertPermission,hasGrant} from '../../authorization';
+import {activeActor,hasGrant} from '../../authorization';
 import {createWorkspace} from '../../application/workspaces/create';
-import {enableProjectCreation,updateWorkspaceName,changeMembership} from '../../application/workspaces/manage';
+import {
+  enableProjectCreation,
+  updateWorkspaceName,
+  changeMembership,
+  listWorkspaces,
+  getWorkspaceDetail,
+  listWorkspaceMembers,
+  listWorkspaceInvitations,
+  listWorkspaceEligibleUsers,
+} from '../../application/workspaces/manage';
 import {acceptWorkspaceInvitation,inviteToWorkspace,revokeInvitation} from '../../application/workspaces/invitation';
 import {changeCorporateRole,deactivateUser,revokeCorporateRole} from '../../application/users/manage';
 import {issueRecovery,resetPassword} from '../../application/users/recovery';
@@ -14,22 +23,35 @@ import {editProjectName} from '../../application/projects/edit';
 import {transferProject} from '../../application/projects/transfer';
 import {designateSubstitution,revokeSubstitution} from '../../application/projects/substitution';
 import {addParticipant} from '../../application/projects/participation';
+import {
+  queryPortfolio,
+  getProjectPresentation,
+  getProjectAssignments,
+  getSelectionCatalogs,
+} from '../../application/projects/portfolio';
 import {id,inputs,outputs,errorSchema} from './contracts';
-import {findProject} from '../../repositories/projects';
 
 type RouteContext={actor:string;request:Request;param:(name:string)=>string;query:Record<string,string>};
 type Options={auth?:'none'|'optional'|'required';status?:number;query?:z.ZodType;policy:string};
 const grants:Record<string,string>={
   'GET /api/v1/workspaces':'workspaces.consultar','POST /api/v1/workspaces':'workspaces.crear',
+  'GET /api/v1/workspaces/:id':'workspaces.consultar',
   'PATCH /api/v1/workspaces/:id':'workspaces.configurar',
+  'GET /api/v1/workspaces/:id/miembros':'workspaces.consultar',
   'POST /api/v1/workspaces/:id/miembros/:userId/habilitacion-creacion':'workspaces.creacion_habilitar',
   'PATCH /api/v1/workspaces/:id/miembros/:userId':'workspaces.miembros.gestionar',
+  'GET /api/v1/workspaces/:id/invitaciones':'workspaces.miembros.invitar',
   'POST /api/v1/workspaces/:id/invitaciones':'workspaces.miembros.invitar',
   'POST /api/v1/workspaces/:id/invitaciones/:invitationId/revocacion':'workspaces.miembros.invitar',
+  'GET /api/v1/workspaces/:id/elegibles':'workspaces.consultar',
+  'GET /api/v1/workspaces/:id/proyectos':'proyectos.consultar',
   'POST /api/v1/usuarios/:id/rol':'usuarios.administrar','DELETE /api/v1/usuarios/:id/rol':'usuarios.administrar',
   'POST /api/v1/usuarios/:id/desactivacion':'usuarios.administrar','POST /api/v1/usuarios/:id/recuperacion':'usuarios.administrar',
+  'GET /api/v1/catalogos':'proyectos.consultar',
+  'GET /api/v1/portafolio':'proyectos.consultar',
   'POST /api/v1/proyectos':'proyectos.crear','GET /api/v1/proyectos':'proyectos.consultar',
   'GET /api/v1/proyectos/:id':'proyectos.consultar','PATCH /api/v1/proyectos/:id':'proyectos.editar',
+  'GET /api/v1/proyectos/:id/asignaciones':'proyectos.consultar',
   'POST /api/v1/proyectos/:id/transferencia':'proyectos.transferir',
   'POST /api/v1/proyectos/:id/participantes':'proyectos.miembros.gestionar',
   'POST /api/v1/proyectos/:id/suplencias':'suplencias.designar',
@@ -112,24 +134,26 @@ export function createBusinessApi(){
   route('POST','/api/v1/sesion/renovar',null,outputs.session,{auth:'none',policy:'Cookie refresh opaca de uso único; rotación atómica.'},async(ctx,_,c)=>{const s=await renew(ctx.request);setCookies(c,s);return publicSession(s);});
   route('DELETE','/api/v1/sesion',null,outputs.closed,{auth:'none',policy:'Revoca refresh y versión de acceso, cierre idempotente.'},async(ctx,_,c)=>{await logout(ctx.request);c.header('set-cookie',expiredCookie(),{append:true});c.header('set-cookie',expiredRefreshCookie(),{append:true});return {status:'closed'};});
   route('POST','/api/v1/workspaces',inputs.workspace,outputs.workspace,{status:201,policy:'ADMIN o PM; PM creador obtiene membresía habilitada atómicamente.'},async(ctx,v)=>createWorkspace(ctx.actor,v.nombre));
+  route('GET','/api/v1/workspaces',null,outputs.workspaces,{query:inputs.workspaceList,policy:'Head global; demás solo membresía activa, cursor after, búsqueda q y limit 1–100.'},async ctx=>listWorkspaces(ctx.actor,ctx.query));
+  route('GET','/api/v1/workspaces/:id',null,outputs.workspaceDetail,{policy:'Detalle de workspace autorizado; permisos contextuales y conteos reales. 403 sin revelar existencia a no miembros.'},async ctx=>getWorkspaceDetail(ctx.actor,ctx.param('id')));
   route('PATCH','/api/v1/workspaces/:id',inputs.workspaceEdit,outputs.workspace,{policy:'Head global; PM creador o habilitado. Slug inmutable; versión optimista.'},async(ctx,v)=>updateWorkspaceName(ctx.actor,ctx.param('id'),v.nombre,v.version));
+  route('GET','/api/v1/workspaces/:id/miembros',null,outputs.workspaceMembers,{query:inputs.workspaceMembersQuery,policy:'Miembros del workspace autorizado con estado, rol corporativo y elegibilidad de titular; oculta correos internos a externos.'},async ctx=>listWorkspaceMembers(ctx.actor,ctx.param('id'),ctx.query));
   route('POST','/api/v1/workspaces/:id/miembros/:userId/habilitacion-creacion',inputs.enable,outputs.enabled,{policy:'Solo Head; miembro PM interno activo.'},async(ctx,v)=>enableProjectCreation(ctx.actor,ctx.param('id'),ctx.param('userId'),v.habilitado));
   route('PATCH','/api/v1/workspaces/:id/miembros/:userId',inputs.member,outputs.member,{policy:'Head gestiona membresía; restricción diferida protege al titular.'},async(ctx,v)=>changeMembership(ctx.actor,ctx.param('id'),ctx.param('userId'),v.estado));
+  route('GET','/api/v1/workspaces/:id/invitaciones',null,outputs.workspaceInvitations,{query:inputs.workspaceInvitationsQuery,policy:'Solo Head o PM creador/habilitado del workspace. Nunca expone token ni hash.'},async ctx=>listWorkspaceInvitations(ctx.actor,ctx.param('id'),ctx.query));
   route('POST','/api/v1/workspaces/:id/invitaciones',inputs.invitation,outputs.invitation,{status:201,policy:'Head o PM creador/habilitado. Token solo en entrega administrativa controlada; PM no promueve.'},async(ctx,v)=>inviteToWorkspace(ctx.actor,ctx.param('id'),v.email,v.rol));
   route('POST','/api/v1/workspaces/:id/invitaciones/:invitationId/revocacion',null,outputs.revoked,{policy:'Head o invitador todavía autorizado; no borra historia.'},async ctx=>revokeInvitation(ctx.actor,ctx.param('id'),ctx.param('invitationId')));
   route('POST','/api/v1/invitaciones/aceptar',inputs.accept,outputs.accepted,{auth:'optional',policy:'Token de un solo uso; cuenta existente autenticada coincidente; nueva cuenta sin elección de rol.'},async(ctx,v)=>acceptWorkspaceInvitation(v.token,(await sessionFrom(ctx.request))?.userId??null,v.password));
+  route('GET','/api/v1/workspaces/:id/elegibles',null,outputs.workspaceEligible,{query:inputs.workspaceEligibleQuery,policy:'Solo Head o PM miembro activo del workspace; candidatos elegibles para titular, suplente, especialista u observador.'},async ctx=>listWorkspaceEligibleUsers(ctx.actor,ctx.param('id'),ctx.query));
+  route('GET','/api/v1/workspaces/:id/proyectos',null,outputs.portfolio,{query:inputs.workspacePortfolioQuery,policy:'Portafolio acotado al workspace autorizado con búsqueda, filtros, ordenamiento, paginación y conteo por estado.'},async ctx=>queryPortfolio(ctx.actor,ctx.query,ctx.param('id')));
   route('POST','/api/v1/usuarios/:id/rol',inputs.role,outputs.assignment,{policy:'Solo Head; sin autopromoción; externo solo VISUALIZADOR ASIGNADOS.'},async(ctx,v)=>changeCorporateRole(ctx.actor,ctx.param('id'),v.rol,v.alcance));
   route('DELETE','/api/v1/usuarios/:id/rol',null,outputs.roleRevoked,{policy:'Solo Head; revoca rol y sesiones; titular requiere reemplazo previo.'},async ctx=>revokeCorporateRole(ctx.actor,ctx.param('id')));
   route('POST','/api/v1/usuarios/:id/desactivacion',null,outputs.inactive,{policy:'Solo Head, sin autodesactivación; invalida sesiones.'},async ctx=>deactivateUser(ctx.actor,ctx.param('id')));
   route('POST','/api/v1/usuarios/:id/recuperacion',null,outputs.recovery,{status:201,policy:'Solo Head tras verificación administrativa. Token en entrega controlada, no notificación simulada.'},async ctx=>issueRecovery(ctx.actor,ctx.param('id')));
   route('POST','/api/v1/credenciales/restablecer',inputs.reset,outputs.reset,{auth:'none',policy:'Token de recuperación hash, plazo 30 minutos y uso único; revoca sesiones.'},async(_,v)=>resetPassword(v.token,v.password));
-  route('GET','/api/v1/workspaces',null,outputs.workspaces,{policy:'Head global; demás solo membresía activa, máximo 100.'},async ctx=>{
-    const actor=await activeActor(ctx.actor);
-    if(!actor||!await hasGrant(ctx.actor,'workspaces.consultar'))throw new ApiError(403,'FORBIDDEN','Acceso no autorizado.');
-    return actor.role==='ADMIN'?sql`SELECT id::text,nombre,slug,version::text FROM pmo_cusn.workspace WHERE estado='ACTIVO' ORDER BY id LIMIT 100`:
-      sql`SELECT w.id::text,w.nombre,w.slug,w.version::text FROM pmo_cusn.workspace w JOIN pmo_cusn.membresia_workspace m ON m.workspace_id=w.id WHERE m.usuario_id=${ctx.actor} AND m.estado='ACTIVA' AND w.estado='ACTIVO' ORDER BY w.id LIMIT 100`;
-  });
-  route('POST','/api/v1/proyectos',inputs.project,outputs.project,{status:201,policy:'Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global.'},async(ctx,v)=>createProject(ctx.actor,v));
+  route('GET','/api/v1/catalogos',null,outputs.catalogs,{query:inputs.catalogsQuery,policy:'Catálogos maestros activos (países, LOB, servicios LOB, squads, clientes y estados de proyecto) para actores internos.'},async ctx=>getSelectionCatalogs(ctx.actor,ctx.query));
+  route('GET','/api/v1/portafolio',null,outputs.portfolio,{query:inputs.portfolioQuery,policy:'Portafolio denso con visibilidad por perfil (Head/PM/Visualizador global; Especialista/Visualizador asignado/Externo solo asignados), búsqueda, filtros, ordenamiento, paginación y resumen por estado.'},async ctx=>queryPortfolio(ctx.actor,ctx.query));
+  route('POST','/api/v1/proyectos',inputs.project,outputs.project,{status:201,policy:'Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global; atributos base y primera línea base opcionales.'},async(ctx,v)=>createProject(ctx.actor,v));
   route('GET','/api/v1/proyectos',null,outputs.projects,{query:inputs.list,policy:'Head/PM global; Especialista asignado; Visualizador interno global/asignado; externo solo asignado. Cursor after y limit 1–100.'},async ctx=>{
     const actor=await activeActor(ctx.actor);
     if(!actor||!await hasGrant(ctx.actor,'proyectos.consultar'))throw new ApiError(403,'FORBIDDEN','Acceso no autorizado.');
@@ -138,16 +162,13 @@ export function createBusinessApi(){
     return global?sql`SELECT id::text,tvt,nombre,workspace_id::text AS "workspaceId",version::text,estado_actual AS estado FROM pmo_cusn.proyecto WHERE activo AND id>${after}::bigint ORDER BY id LIMIT ${limit}`:
       sql`SELECT p.id::text,p.tvt,p.nombre,p.workspace_id::text AS "workspaceId",p.version::text,p.estado_actual AS estado FROM pmo_cusn.proyecto p WHERE p.activo AND p.id>${after}::bigint AND EXISTS(SELECT 1 FROM pmo_cusn.participacion_proyecto pp WHERE pp.proyecto_id=p.id AND pp.usuario_id=${ctx.actor} AND pp.fecha_inicio<=now() AND (pp.fecha_fin IS NULL OR pp.fecha_fin>now())) ORDER BY p.id LIMIT ${limit}`;
   });
-  route('GET','/api/v1/proyectos/:id',null,outputs.projectDetail,{policy:'Consulta por objeto; prohibición 403 no revela existencia a perfiles sin alcance.'},async ctx=>{
-    await assertPermission(ctx.actor,'proyectos.consultar',ctx.param('id'));
-    const row=await findProject(ctx.param('id'));
-    if(!row)throw new ApiError(404,'NOT_FOUND','Proyecto no encontrado.');return row;
-  });
-  route('PATCH','/api/v1/proyectos/:id',inputs.projectEdit,outputs.project,{policy:'Head o titular/suplente vigente con permiso; lock y versión, 409 al conflicto.'},async(ctx,v)=>editProjectName(ctx.actor,ctx.param('id'),v.version,v.nombre));
+  route('GET','/api/v1/proyectos/:id',null,outputs.projectDetail,{policy:'Ficha de presentación del proyecto con identidad, gobierno, planificación, permisos contextuales y confidencialidad para externos; 403 no revela existencia.'},async ctx=>getProjectPresentation(ctx.actor,ctx.param('id')));
+  route('GET','/api/v1/proyectos/:id/asignaciones',null,outputs.projectAssignments,{policy:'Asignaciones del proyecto separando rol corporativo, membresía de workspace, titular PM, participaciones y suplencias vigentes.'},async ctx=>getProjectAssignments(ctx.actor,ctx.param('id')));
+  route('PATCH','/api/v1/proyectos/:id',inputs.projectEdit,outputs.project,{policy:'Head o titular/suplente vigente con permiso; edita atributos base y fija primera línea base inmutable; lock y versión, 409 al conflicto.'},async(ctx,v)=>editProjectName(ctx.actor,ctx.param('id'),v.version,v));
   route('POST','/api/v1/proyectos/:id/transferencia',inputs.transfer,outputs.transferred,{policy:'Solo Head; transferencia o reasignación, continuidad de titular y versión.'},async(ctx,v)=>transferProject(ctx.actor,ctx.param('id'),v));
   route('POST','/api/v1/proyectos/:id/participantes',inputs.participant,outputs.participant,{status:201,policy:'Head o titular; Especialista/observador sin edición implícita; membresía activa.'},async(ctx,v)=>addParticipant(ctx.actor,ctx.param('id'),v.userId,v.funcion));
-  route('POST','/api/v1/proyectos/:id/suplencias',inputs.substitution,outputs.substitution,{status:201,policy:'Head o PM titular y creador. PM suplente interno activo, UTC [inicio,fin), sin solapes.'},async(ctx,v)=>designateSubstitution(ctx.actor,ctx.param('id'),v));
-  route('POST','/api/v1/proyectos/:id/suplencias/:delegationId/revocacion',null,outputs.revoked,{policy:'Head o titular creador autorizado; historia conservada.'},async ctx=>revokeSubstitution(ctx.actor,ctx.param('id'),ctx.param('delegationId')));
+  route('POST','/api/v1/proyectos/:id/suplencias',inputs.substitution,outputs.substitution,{status:201,policy:'Head o PM titular vigente. PM suplente interno activo, UTC [inicio,fin), sin solapes.'},async(ctx,v)=>designateSubstitution(ctx.actor,ctx.param('id'),v));
+  route('POST','/api/v1/proyectos/:id/suplencias/:delegationId/revocacion',null,outputs.revoked,{policy:'Head o PM titular vigente autorizado; historia conservada.'},async ctx=>revokeSubstitution(ctx.actor,ctx.param('id'),ctx.param('delegationId')));
   app.get('/api/v1/openapi.json',c=>c.json({openapi:'3.1.0',info:{title:'PMO gobierno y acceso',version:'2.1.0'},components:{schemas:{ApiError:jsonSchema(errorSchema)},securitySchemes:{accessCookie:{type:'apiKey',in:'cookie',name:'pmo_access'},refreshCookie:{type:'apiKey',in:'cookie',name:'pmo_refresh'}}},paths}));
   app.notFound(c=>respondError(new ApiError(404,'NOT_FOUND','Ruta no encontrada.'),c.get('requestId')));
   return app;

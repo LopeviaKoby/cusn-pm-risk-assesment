@@ -1396,14 +1396,43 @@
       },
       "get": {
         "operationId": "get_api_v1_workspaces",
-        "description": "Head global; demás solo membresía activa, máximo 100.",
+        "description": "Head global; demás solo membresía activa, cursor after, búsqueda q y limit 1–100.",
         "x-permission": "workspaces.consultar",
         "security": [
           {
             "accessCookie": []
           }
         ],
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Éxito",
@@ -1575,6 +1604,314 @@
       }
     },
     "/api/v1/workspaces/{id}": {
+      "get": {
+        "operationId": "get_api_v1_workspaces__id_",
+        "description": "Detalle de workspace autorizado; permisos contextuales y conteos reales. 403 sin revelar existencia a no miembros.",
+        "x-permission": "workspaces.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "nombre": {
+                          "type": "string"
+                        },
+                        "slug": {
+                          "type": "string"
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "ACTIVO",
+                            "ARCHIVADO"
+                          ]
+                        },
+                        "version": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "creadoPorId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                        },
+                        "miMembresia": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "estado": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ACTIVA",
+                                    "SUSPENDIDA",
+                                    "RETIRADA"
+                                  ]
+                                },
+                                "puedeCrearProyectos": {
+                                  "type": "boolean"
+                                },
+                                "rol": {
+                                  "type": "string",
+                                  "enum": [
+                                    "ADMIN",
+                                    "PM",
+                                    "ESPECIALISTA",
+                                    "VISUALIZADOR"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "estado",
+                                "puedeCrearProyectos",
+                                "rol"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "permisos": {
+                          "type": "object",
+                          "properties": {
+                            "puedeConfigurar": {
+                              "type": "boolean"
+                            },
+                            "puedeCrearProyectos": {
+                              "type": "boolean"
+                            },
+                            "puedeInvitar": {
+                              "type": "boolean"
+                            },
+                            "puedeGestionarMiembros": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "puedeConfigurar",
+                            "puedeCrearProyectos",
+                            "puedeInvitar",
+                            "puedeGestionarMiembros"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "resumen": {
+                          "type": "object",
+                          "properties": {
+                            "miembrosActivos": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "proyectosActivos": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "invitacionesPendientes": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "miembrosActivos",
+                            "proyectosActivos",
+                            "invitacionesPendientes"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "nombre",
+                        "slug",
+                        "estado",
+                        "version",
+                        "creadoPorId",
+                        "createdAt",
+                        "updatedAt",
+                        "miMembresia",
+                        "permisos",
+                        "resumen"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "patch": {
         "operationId": "patch_api_v1_workspaces__id_",
         "description": "Head global; PM creador o habilitado. Slug inmutable; versión optimista.",
@@ -1665,6 +2002,341 @@
                         "nombre",
                         "slug",
                         "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/miembros": {
+      "get": {
+        "operationId": "get_api_v1_workspaces__id__miembros",
+        "description": "Miembros del workspace autorizado con estado, rol corporativo y elegibilidad de titular; oculta correos internos a externos.",
+        "x-permission": "workspaces.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVA",
+                "SUSPENDIDA",
+                "RETIRADA"
+              ]
+            }
+          },
+          {
+            "name": "rol",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ADMIN",
+                "PM",
+                "ESPECIALISTA",
+                "VISUALIZADOR"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "usuarioId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "tipoUsuario": {
+                                "type": "string",
+                                "enum": [
+                                  "INTERNO",
+                                  "EXTERNO"
+                                ]
+                              },
+                              "usuarioActivo": {
+                                "type": "boolean"
+                              },
+                              "rol": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN",
+                                      "PM",
+                                      "ESPECIALISTA",
+                                      "VISUALIZADOR"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "ACTIVA",
+                                  "SUSPENDIDA",
+                                  "RETIRADA"
+                                ]
+                              },
+                              "puedeCrearProyectos": {
+                                "type": "boolean"
+                              },
+                              "esElegibleTitular": {
+                                "type": "boolean"
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "usuarioId",
+                              "nombre",
+                              "email",
+                              "tipoUsuario",
+                              "usuarioActivo",
+                              "rol",
+                              "estado",
+                              "puedeCrearProyectos",
+                              "esElegibleTitular",
+                              "createdAt",
+                              "updatedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "nextCursor",
+                        "total"
                       ],
                       "additionalProperties": false
                     }
@@ -2251,6 +2923,304 @@
       }
     },
     "/api/v1/workspaces/{id}/invitaciones": {
+      "get": {
+        "operationId": "get_api_v1_workspaces__id__invitaciones",
+        "description": "Solo Head o PM creador/habilitado del workspace. Nunca expone token ni hash.",
+        "x-permission": "workspaces.miembros.invitar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PENDIENTE",
+                "ACEPTADA",
+                "REVOCADA",
+                "EXPIRADA"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "workspaceId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "emailDestinatario": {
+                                "type": "string"
+                              },
+                              "rolSolicitado": {
+                                "type": "string",
+                                "enum": [
+                                  "PM",
+                                  "ESPECIALISTA",
+                                  "VISUALIZADOR"
+                                ]
+                              },
+                              "puedeCrearProyectos": {
+                                "type": "boolean"
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "PENDIENTE",
+                                  "ACEPTADA",
+                                  "REVOCADA",
+                                  "EXPIRADA"
+                                ]
+                              },
+                              "invitadoPorId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "expiresAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "acceptedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "createdAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "workspaceId",
+                              "emailDestinatario",
+                              "rolSolicitado",
+                              "puedeCrearProyectos",
+                              "estado",
+                              "invitadoPorId",
+                              "expiresAt",
+                              "acceptedAt",
+                              "createdAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "nextCursor": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "total": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "nextCursor",
+                        "total"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "post_api_v1_workspaces__id__invitaciones",
         "description": "Head o PM creador/habilitado. Token solo en entrega administrativa controlada; PM no promueve.",
@@ -2756,6 +3726,965 @@
                       "required": [
                         "workspaceId",
                         "userId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/elegibles": {
+      "get": {
+        "operationId": "get_api_v1_workspaces__id__elegibles",
+        "description": "Solo Head o PM miembro activo del workspace; candidatos elegibles para titular, suplente, especialista u observador.",
+        "x-permission": "workspaces.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "para",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "PM_TITULAR",
+                "SUPLENTE_PM",
+                "ESPECIALISTA",
+                "OBSERVADOR"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "usuarioId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": "string"
+                              },
+                              "tipoUsuario": {
+                                "type": "string",
+                                "enum": [
+                                  "INTERNO",
+                                  "EXTERNO"
+                                ]
+                              },
+                              "rol": {
+                                "type": "string",
+                                "enum": [
+                                  "ADMIN",
+                                  "PM",
+                                  "ESPECIALISTA",
+                                  "VISUALIZADOR"
+                                ]
+                              },
+                              "miembroActivo": {
+                                "type": "boolean"
+                              },
+                              "puedeCrearProyectos": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "usuarioId",
+                              "nombre",
+                              "email",
+                              "tipoUsuario",
+                              "rol",
+                              "miembroActivo",
+                              "puedeCrearProyectos"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "items"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{id}/proyectos": {
+      "get": {
+        "operationId": "get_api_v1_workspaces__id__proyectos",
+        "description": "Portafolio acotado al workspace autorizado con búsqueda, filtros, ordenamiento, paginación y conteo por estado.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "paisId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "lobId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "squadId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "pmTitularId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Requiere P1P2",
+                "En ejecución",
+                "En transición",
+                "Detenido",
+                "Cancelado",
+                "Cerrado exitoso",
+                "Cerrado con observaciones"
+              ]
+            }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "ordenarPor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "id",
+                "tvt",
+                "nombre",
+                "cliente",
+                "estado",
+                "fechaTerminoActual",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "direccion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:0|[1-9][0-9]{0,3}|10000)$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "tvt": {
+                                "type": "string"
+                              },
+                              "tvtNormalizado": {
+                                "type": "string"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "Requiere P1P2",
+                                  "En ejecución",
+                                  "En transición",
+                                  "Detenido",
+                                  "Cancelado",
+                                  "Cerrado exitoso",
+                                  "Cerrado con observaciones"
+                                ]
+                              },
+                              "activo": {
+                                "type": "boolean"
+                              },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "workspace": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "slug": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "slug"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cliente": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "pais": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "lob": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "squad": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "pattern": "^[1-9][0-9]{0,18}$"
+                                      },
+                                      "nombre": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "nombre"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "titular": {
+                                "type": "object",
+                                "properties": {
+                                  "usuarioId": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "usuarioId",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "fechas": {
+                                "type": "object",
+                                "properties": {
+                                  "recepcionP1p2": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "inicio": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "terminoBaseline": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "terminoActual": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "recepcionP1p2",
+                                  "inicio",
+                                  "terminoBaseline",
+                                  "terminoActual"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "indicadoresPendientes": {
+                                "type": "object",
+                                "properties": {
+                                  "spi": {
+                                    "type": "null"
+                                  },
+                                  "cpi": {
+                                    "type": "null"
+                                  },
+                                  "complejidad": {
+                                    "type": "null"
+                                  },
+                                  "riesgosAbiertos": {
+                                    "type": "null"
+                                  },
+                                  "ahorroCompras": {
+                                    "type": "null"
+                                  },
+                                  "estadoModulos": {
+                                    "type": "string",
+                                    "const": "PENDIENTE_PAQUETES_P1_P5"
+                                  }
+                                },
+                                "required": [
+                                  "spi",
+                                  "cpi",
+                                  "complejidad",
+                                  "riesgosAbiertos",
+                                  "ahorroCompras",
+                                  "estadoModulos"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "tvt",
+                              "tvtNormalizado",
+                              "nombre",
+                              "estado",
+                              "activo",
+                              "version",
+                              "workspace",
+                              "cliente",
+                              "pais",
+                              "lob",
+                              "squad",
+                              "titular",
+                              "fechas",
+                              "updatedAt",
+                              "indicadoresPendientes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "paginacion": {
+                          "type": "object",
+                          "properties": {
+                            "limit": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "offset": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "total": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "nextOffset": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "nextCursor": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "limit",
+                            "offset",
+                            "total",
+                            "hasMore",
+                            "nextOffset",
+                            "nextCursor"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "resumenPorEstado": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "porEstado": {
+                              "type": "object",
+                              "properties": {
+                                "Requiere P1P2": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "En ejecución": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "En transición": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Detenido": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cancelado": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cerrado exitoso": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cerrado con observaciones": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "Requiere P1P2",
+                                "En ejecución",
+                                "En transición",
+                                "Detenido",
+                                "Cancelado",
+                                "Cerrado exitoso",
+                                "Cerrado con observaciones"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "porEstado"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "paginacion",
+                        "resumenPorEstado"
                       ],
                       "additionalProperties": false
                     }
@@ -3912,10 +5841,1039 @@
         }
       }
     },
+    "/api/v1/catalogos": {
+      "get": {
+        "operationId": "get_api_v1_catalogos",
+        "description": "Catálogos maestros activos (países, LOB, servicios LOB, squads, clientes y estados de proyecto) para actores internos.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "lobId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "paises": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "codigo": {
+                                "type": "string"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "codigo",
+                              "nombre"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "lobs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "serviciosLob": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "lobId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "lobId",
+                              "nombre"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "squads": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "clientes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "sector": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre",
+                              "sector"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "estadosProyecto": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "enum": [
+                              "Requiere P1P2",
+                              "En ejecución",
+                              "En transición",
+                              "Detenido",
+                              "Cancelado",
+                              "Cerrado exitoso",
+                              "Cerrado con observaciones"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "paises",
+                        "lobs",
+                        "serviciosLob",
+                        "squads",
+                        "clientes",
+                        "estadosProyecto"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portafolio": {
+      "get": {
+        "operationId": "get_api_v1_portafolio",
+        "description": "Portafolio denso con visibilidad por perfil (Head/PM/Visualizador global; Especialista/Visualizador asignado/Externo solo asignados), búsqueda, filtros, ordenamiento, paginación y resumen por estado.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            }
+          },
+          {
+            "name": "workspaceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "paisId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "lobId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "squadId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "clienteId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "pmTitularId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "estado",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Requiere P1P2",
+                "En ejecución",
+                "En transición",
+                "Detenido",
+                "Cancelado",
+                "Cerrado exitoso",
+                "Cerrado con observaciones"
+              ]
+            }
+          },
+          {
+            "name": "incluirInactivos",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "name": "ordenarPor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "id",
+                "tvt",
+                "nombre",
+                "cliente",
+                "estado",
+                "fechaTerminoActual",
+                "updatedAt"
+              ]
+            }
+          },
+          {
+            "name": "direccion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:0|[1-9][0-9]{0,3}|10000)$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "tvt": {
+                                "type": "string"
+                              },
+                              "tvtNormalizado": {
+                                "type": "string"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "Requiere P1P2",
+                                  "En ejecución",
+                                  "En transición",
+                                  "Detenido",
+                                  "Cancelado",
+                                  "Cerrado exitoso",
+                                  "Cerrado con observaciones"
+                                ]
+                              },
+                              "activo": {
+                                "type": "boolean"
+                              },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "workspace": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "slug": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "slug"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "cliente": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "pais": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "lob": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "squad": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "pattern": "^[1-9][0-9]{0,18}$"
+                                      },
+                                      "nombre": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "nombre"
+                                    ],
+                                    "additionalProperties": false
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "titular": {
+                                "type": "object",
+                                "properties": {
+                                  "usuarioId": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "usuarioId",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "fechas": {
+                                "type": "object",
+                                "properties": {
+                                  "recepcionP1p2": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "inicio": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "terminoBaseline": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "terminoActual": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "recepcionP1p2",
+                                  "inicio",
+                                  "terminoBaseline",
+                                  "terminoActual"
+                                ],
+                                "additionalProperties": false
+                              },
+                              "updatedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "indicadoresPendientes": {
+                                "type": "object",
+                                "properties": {
+                                  "spi": {
+                                    "type": "null"
+                                  },
+                                  "cpi": {
+                                    "type": "null"
+                                  },
+                                  "complejidad": {
+                                    "type": "null"
+                                  },
+                                  "riesgosAbiertos": {
+                                    "type": "null"
+                                  },
+                                  "ahorroCompras": {
+                                    "type": "null"
+                                  },
+                                  "estadoModulos": {
+                                    "type": "string",
+                                    "const": "PENDIENTE_PAQUETES_P1_P5"
+                                  }
+                                },
+                                "required": [
+                                  "spi",
+                                  "cpi",
+                                  "complejidad",
+                                  "riesgosAbiertos",
+                                  "ahorroCompras",
+                                  "estadoModulos"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "tvt",
+                              "tvtNormalizado",
+                              "nombre",
+                              "estado",
+                              "activo",
+                              "version",
+                              "workspace",
+                              "cliente",
+                              "pais",
+                              "lob",
+                              "squad",
+                              "titular",
+                              "fechas",
+                              "updatedAt",
+                              "indicadoresPendientes"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "paginacion": {
+                          "type": "object",
+                          "properties": {
+                            "limit": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "offset": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "total": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "nextOffset": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "nextCursor": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "limit",
+                            "offset",
+                            "total",
+                            "hasMore",
+                            "nextOffset",
+                            "nextCursor"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "resumenPorEstado": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "porEstado": {
+                              "type": "object",
+                              "properties": {
+                                "Requiere P1P2": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "En ejecución": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "En transición": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Detenido": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cancelado": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cerrado exitoso": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "Cerrado con observaciones": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              },
+                              "required": [
+                                "Requiere P1P2",
+                                "En ejecución",
+                                "En transición",
+                                "Detenido",
+                                "Cancelado",
+                                "Cerrado exitoso",
+                                "Cerrado con observaciones"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "porEstado"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "items",
+                        "paginacion",
+                        "resumenPorEstado"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/proyectos": {
       "post": {
         "operationId": "post_api_v1_proyectos",
-        "description": "Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global.",
+        "description": "Head elige titular elegible; PM habilitado se asigna a sí mismo. TVT único global; atributos base y primera línea base opcionales.",
         "x-permission": "proyectos.crear",
         "security": [
           {
@@ -3971,6 +6929,105 @@
                   "pmTitularId": {
                     "type": "string",
                     "pattern": "^[1-9][0-9]{0,18}$"
+                  },
+                  "squadId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]{0,18}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "descripcion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "situacionInicial": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaRecepcionP1p2": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaInicio": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaTerminoBaseline": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaSap": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaCeco": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaPep": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -4368,7 +7425,7 @@
     "/api/v1/proyectos/{id}": {
       "get": {
         "operationId": "get_api_v1_proyectos__id_",
-        "description": "Consulta por objeto; prohibición 403 no revela existencia a perfiles sin alcance.",
+        "description": "Ficha de presentación del proyecto con identidad, gobierno, planificación, permisos contextuales y confidencialidad para externos; 403 no revela existencia.",
         "x-permission": "proyectos.consultar",
         "security": [
           {
@@ -4418,7 +7475,499 @@
                           "pattern": "^[1-9][0-9]{0,18}$"
                         },
                         "estado": {
-                          "type": "string"
+                          "type": "string",
+                          "enum": [
+                            "Requiere P1P2",
+                            "En ejecución",
+                            "En transición",
+                            "Detenido",
+                            "Cancelado",
+                            "Cerrado exitoso",
+                            "Cerrado con observaciones"
+                          ]
+                        },
+                        "identidad": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "tvt": {
+                              "type": "string"
+                            },
+                            "tvtNormalizado": {
+                              "type": "string"
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "descripcion": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "situacionInicial": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "activo": {
+                              "type": "boolean"
+                            },
+                            "workspace": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "slug": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "slug"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "cliente": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "sector": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "sector"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "pais": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "codigo": {
+                                  "type": "string"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "codigo",
+                                "nombre"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "lob": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "squad": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "nombre": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "nombre"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "referenciasInternas": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "sap": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "ceco": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "pep": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "sap",
+                                    "ceco",
+                                    "pep"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "tvt",
+                            "tvtNormalizado",
+                            "nombre",
+                            "descripcion",
+                            "situacionInicial",
+                            "activo",
+                            "workspace",
+                            "cliente",
+                            "pais",
+                            "lob",
+                            "squad",
+                            "referenciasInternas"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "gobierno": {
+                          "type": "object",
+                          "properties": {
+                            "estadoActual": {
+                              "type": "string",
+                              "enum": [
+                                "Requiere P1P2",
+                                "En ejecución",
+                                "En transición",
+                                "Detenido",
+                                "Cancelado",
+                                "Cerrado exitoso",
+                                "Cerrado con observaciones"
+                              ]
+                            },
+                            "version": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "titular": {
+                              "type": "object",
+                              "properties": {
+                                "usuarioId": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "email": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "usuarioId",
+                                "nombre",
+                                "email"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "participantes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "usuarioId": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "funcion": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PM_TITULAR",
+                                      "ESPECIALISTA",
+                                      "OBSERVADOR",
+                                      "LIDER_TECNICO",
+                                      "TAM",
+                                      "SDM"
+                                    ]
+                                  },
+                                  "fechaInicio": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "usuarioId",
+                                  "nombre",
+                                  "funcion",
+                                  "fechaInicio"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "suplenciaEfectiva": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "delegadoId": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "delegadoNombre": {
+                                      "type": "string"
+                                    },
+                                    "inicio": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                    },
+                                    "fin": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                    },
+                                    "permisos": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "delegadoId",
+                                    "delegadoNombre",
+                                    "inicio",
+                                    "fin",
+                                    "permisos"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "updatedAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            }
+                          },
+                          "required": [
+                            "estadoActual",
+                            "version",
+                            "titular",
+                            "participantes",
+                            "suplenciaEfectiva",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "planificacion": {
+                          "type": "object",
+                          "properties": {
+                            "fechaRecepcionP1p2": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaInicio": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaTerminoBaseline": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaTerminoActual": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "baselineCongelada": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "fechaRecepcionP1p2",
+                            "fechaInicio",
+                            "fechaTerminoBaseline",
+                            "fechaTerminoActual",
+                            "baselineCongelada"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "accionesDisponibles": {
+                          "type": "object",
+                          "properties": {
+                            "puedeEditarFicha": {
+                              "type": "boolean"
+                            },
+                            "puedeFijarBaseline": {
+                              "type": "boolean"
+                            },
+                            "puedeTransferir": {
+                              "type": "boolean"
+                            },
+                            "puedeGestionarParticipantes": {
+                              "type": "boolean"
+                            },
+                            "puedeDesignarSuplencia": {
+                              "type": "boolean"
+                            },
+                            "puedeRevocarSuplencia": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "puedeEditarFicha",
+                            "puedeFijarBaseline",
+                            "puedeTransferir",
+                            "puedeGestionarParticipantes",
+                            "puedeDesignarSuplencia",
+                            "puedeRevocarSuplencia"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "modulosPendientes": {
+                          "type": "object",
+                          "properties": {
+                            "complejidad": {
+                              "type": "string",
+                              "const": "PENDIENTE_P1"
+                            },
+                            "riesgos": {
+                              "type": "string",
+                              "const": "PENDIENTE_P2"
+                            },
+                            "controlesCambio": {
+                              "type": "string",
+                              "const": "PENDIENTE_P3"
+                            },
+                            "seguimientoCurvaS": {
+                              "type": "string",
+                              "const": "PENDIENTE_P4"
+                            },
+                            "facturacionCpi": {
+                              "type": "string",
+                              "const": "PENDIENTE_P4"
+                            },
+                            "compras": {
+                              "type": "string",
+                              "const": "PENDIENTE_P5"
+                            },
+                            "checklistLeccionesCierre": {
+                              "type": "string",
+                              "const": "PENDIENTE_P6"
+                            }
+                          },
+                          "required": [
+                            "complejidad",
+                            "riesgos",
+                            "controlesCambio",
+                            "seguimientoCurvaS",
+                            "facturacionCpi",
+                            "compras",
+                            "checklistLeccionesCierre"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -4427,7 +7976,12 @@
                         "nombre",
                         "workspaceId",
                         "version",
-                        "estado"
+                        "estado",
+                        "identidad",
+                        "gobierno",
+                        "planificacion",
+                        "accionesDisponibles",
+                        "modulosPendientes"
                       ],
                       "additionalProperties": false
                     }
@@ -4564,7 +8118,7 @@
       },
       "patch": {
         "operationId": "patch_api_v1_proyectos__id_",
-        "description": "Head o titular/suplente vigente con permiso; lock y versión, 409 al conflicto.",
+        "description": "Head o titular/suplente vigente con permiso; edita atributos base y fija primera línea base inmutable; lock y versión, 409 al conflicto.",
         "x-permission": "proyectos.editar",
         "security": [
           {
@@ -4601,18 +8155,116 @@
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "type": "object",
                 "properties": {
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,18}$"
+                  },
                   "nombre": {
                     "type": "string",
                     "minLength": 1,
                     "maxLength": 200
                   },
-                  "version": {
-                    "type": "string",
-                    "pattern": "^[1-9][0-9]{0,18}$"
+                  "descripcion": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "situacionInicial": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 4000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "squadId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[1-9][0-9]{0,18}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaRecepcionP1p2": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaInicio": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "fechaTerminoBaseline": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaSap": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaCeco": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "referenciaPep": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 120
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
-                  "nombre",
                   "version"
                 ],
                 "additionalProperties": false
@@ -4657,6 +8309,422 @@
                         "nombre",
                         "workspaceId",
                         "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/asignaciones": {
+      "get": {
+        "operationId": "get_api_v1_proyectos__id__asignaciones",
+        "description": "Asignaciones del proyecto separando rol corporativo, membresía de workspace, titular PM, participaciones y suplencias vigentes.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "projectId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "titular": {
+                          "type": "object",
+                          "properties": {
+                            "participacionId": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "usuarioId": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "email": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "rolCorporativo": {
+                              "type": "string",
+                              "const": "PM"
+                            },
+                            "estadoMembresiaWorkspace": {
+                              "type": "string",
+                              "enum": [
+                                "ACTIVA",
+                                "SUSPENDIDA",
+                                "RETIRADA"
+                              ]
+                            },
+                            "fechaInicio": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            }
+                          },
+                          "required": [
+                            "participacionId",
+                            "usuarioId",
+                            "nombre",
+                            "email",
+                            "rolCorporativo",
+                            "estadoMembresiaWorkspace",
+                            "fechaInicio"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "participantes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "usuarioId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "email": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "tipoUsuario": {
+                                "type": "string",
+                                "enum": [
+                                  "INTERNO",
+                                  "EXTERNO"
+                                ]
+                              },
+                              "rolCorporativo": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ADMIN",
+                                      "PM",
+                                      "ESPECIALISTA",
+                                      "VISUALIZADOR"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "estadoMembresiaWorkspace": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "ACTIVA",
+                                      "SUSPENDIDA",
+                                      "RETIRADA"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "funcion": {
+                                "type": "string",
+                                "enum": [
+                                  "ESPECIALISTA",
+                                  "OBSERVADOR",
+                                  "LIDER_TECNICO",
+                                  "TAM",
+                                  "SDM"
+                                ]
+                              },
+                              "fechaInicio": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "usuarioId",
+                              "nombre",
+                              "email",
+                              "tipoUsuario",
+                              "rolCorporativo",
+                              "estadoMembresiaWorkspace",
+                              "funcion",
+                              "fechaInicio"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "suplenciasVigentes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "deleganteId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "delegadoId": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "delegadoNombre": {
+                                "type": "string"
+                              },
+                              "autorizadoPorId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "inicio": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "fin": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "PENDIENTE",
+                                  "ACTIVA"
+                                ]
+                              },
+                              "motivo": {
+                                "type": "string"
+                              },
+                              "permisos": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "deleganteId",
+                              "delegadoId",
+                              "delegadoNombre",
+                              "autorizadoPorId",
+                              "inicio",
+                              "fin",
+                              "estado",
+                              "motivo",
+                              "permisos"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "permisosDelegables": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "codigo": {
+                                "type": "string"
+                              },
+                              "descripcion": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "codigo",
+                              "descripcion"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "projectId",
+                        "workspaceId",
+                        "titular",
+                        "participantes",
+                        "suplenciasVigentes",
+                        "permisosDelegables"
                       ],
                       "additionalProperties": false
                     }
@@ -5264,7 +9332,7 @@
     "/api/v1/proyectos/{id}/suplencias": {
       "post": {
         "operationId": "post_api_v1_proyectos__id__suplencias",
-        "description": "Head o PM titular y creador. PM suplente interno activo, UTC [inicio,fin), sin solapes.",
+        "description": "Head o PM titular vigente. PM suplente interno activo, UTC [inicio,fin), sin solapes.",
         "x-permission": "suplencias.designar",
         "security": [
           {
@@ -5527,7 +9595,7 @@
     "/api/v1/proyectos/{id}/suplencias/{delegationId}/revocacion": {
       "post": {
         "operationId": "post_api_v1_proyectos__id__suplencias__delegationId__revocacion",
-        "description": "Head o titular creador autorizado; historia conservada.",
+        "description": "Head o PM titular vigente autorizado; historia conservada.",
         "x-permission": "suplencias.revocar",
         "security": [
           {

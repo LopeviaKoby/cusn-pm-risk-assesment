@@ -19,7 +19,7 @@ async function rejects(label:string,operation:()=>Promise<unknown>){
   let rejected=false;
   try{await operation();}catch(error){
     const state=(error as {errno?:string}).errno;
-    assert.ok(state && ['P0001','23505','23P01'].includes(state),`${label}: SQLSTATE inesperado ${state}`);
+    assert.ok(state && ['P0001','23505','23P01','23514'].includes(state),`${label}: SQLSTATE inesperado ${state}`);
     rejected=true;
   }
   assert.ok(rejected,label);
@@ -67,6 +67,9 @@ try{
   await rejects('T07 titular inactivo',()=>db.begin(async tx=>{
     await tx`UPDATE pmo_cusn.usuario SET activo=false WHERE id=${project.ownerId}`;
   }));
+  await db`UPDATE pmo_cusn.proyecto SET fecha_inicio='2026-11-01',fecha_termino_baseline='2026-12-31',fecha_termino_actual='2026-12-31' WHERE id=${project.id} AND fecha_termino_baseline IS NULL`;
+  await rejects('G1 baseline de término inmutable una vez fijada',()=>db`UPDATE pmo_cusn.proyecto SET fecha_termino_baseline='2027-01-31' WHERE id=${project.id}`);
+  await rejects('G1 fecha_termino_actual coherente con fecha_inicio',()=>db`UPDATE pmo_cusn.proyecto SET fecha_termino_actual='2026-10-15' WHERE id=${project.id}`);
   const [unchanged]=await db<{owner:boolean}>`SELECT EXISTS(SELECT 1 FROM pmo_cusn.membresia_workspace
     WHERE workspace_id=${project.workspaceId} AND usuario_id=${project.ownerId} AND estado='ACTIVA') AS owner`;
   assert.equal(unchanged?.owner,true);
