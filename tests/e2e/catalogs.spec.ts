@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+test.use({baseURL: process.env.STORYBOOK_BASE_URL ?? 'http://127.0.0.1:6008'});
 
 test('fixtures de catálogos: selección, modal, foco y reflow Light/Dark sin requests API', async ({ page }) => {
   const apiRequests: string[] = [], errors: string[] = [], missing: string[] = [];
@@ -35,6 +36,7 @@ test('fixtures de catálogos: selección, modal, foco y reflow Light/Dark sin re
     await page.setViewportSize({ width: 1440, height: 1000 });
     await page.getByLabel(/^Cliente/).click();
     await page.getByRole('button', { name: 'Agregar registro' }).click();
+    await page.getByLabel('Clasificación del cliente *').selectOption('NUEVO');
     await page.getByRole('button', { name: 'Guardar cliente' }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByLabel(/^Cliente/)).toContainText('Empresa nueva');
@@ -44,7 +46,8 @@ test('fixtures de catálogos: selección, modal, foco y reflow Light/Dark sin re
   }
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/iframe.html?id=catalog-fixtures--client-service-unavailable&globals=theme:dark');
-  await page.getByRole('button', { name: 'Guardar cliente' }).click();
+  await page.getByLabel('Clasificación del cliente *').selectOption('NUEVO');
+    await page.getByRole('button', { name: 'Guardar cliente' }).click();
   await expect(page.getByText('No pudimos guardar el cliente. Inténtalo más tarde.')).toBeVisible();
   expect(apiRequests).toEqual([]); expect(errors).toEqual([]); expect(missing).toEqual([]);
 });

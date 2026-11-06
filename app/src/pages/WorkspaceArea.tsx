@@ -39,7 +39,7 @@ export default function WorkspaceArea({ workspace, session: initialSession }: { 
     pending.current = true; setLoading(true); setError('');
     const controller = new AbortController(); request.current = controller;
     try {
-      const page = await listProjects(cursor.current, controller.signal);
+      const page = await listProjects(cursor.current, controller.signal, workspace.id);
       if (controller.signal.aborted) return;
       setRows(previous => [...previous, ...page.filter(project => !previous.some(item => item.id === project.id))]);
       cursor.current = page.at(-1)?.id ?? cursor.current;
@@ -54,5 +54,5 @@ export default function WorkspaceArea({ workspace, session: initialSession }: { 
     return () => { request.current?.abort(); };
   }, [workspace.id, inProjects, attempt]);
   const refresh = () => setAttempt(value => value + 1);
-  return <WorkspaceLayout workspace={workspace} projects={filtered}><RouteContent>{!inProjects ? <><p>Workspace / Inicio</p><h1>Te damos la bienvenida a {workspace.nombre}</h1><p>{workspace.slug}</p><section><h2>Proyectos de tu workspace</h2><p>Consulta los proyectos accesibles para tu sesión.</p><Link className="button button-primary button-md" href={projectListPath(workspace.id)}>Ver proyectos</Link></section></> : projectId === 'nuevo' ? <NewProject workspace={workspace} session={session} onRefresh={refresh} onAuthorizationError={authorizationError} /> : projectId ? <Project projectId={projectId} workspaceId={workspace.id} workspaceName={workspace.nombre} view={view} onAuthorizationError={authorizationError} /> : <Projects workspaceId={workspace.id} rows={filtered} loading={loading} error={error} hasMore={hasMore} canCreate={canCreate} onNext={() => { void nextPage(); }} onRetry={() => { void nextPage(); }} />}</RouteContent></WorkspaceLayout>;
+  return <WorkspaceLayout workspace={workspace} projects={filtered}><RouteContent>{!inProjects ? <><p>Workspace / Inicio</p><h1>Te damos la bienvenida a {workspace.nombre}</h1><p>{workspace.slug}</p><section><h2>Proyectos de tu workspace</h2><p>Consulta los proyectos accesibles para tu sesión.</p><Link className="button button-primary button-md" href={projectListPath(workspace.id)}>Ver proyectos</Link></section></> : projectId === 'nuevo' ? <NewProject workspace={workspace} session={session} onRefresh={refresh} onAuthorizationError={authorizationError} /> : projectId ? <Project projectId={projectId} workspaceId={workspace.id} workspaceName={workspace.nombre} view={view} permissions={session.permissions} onAuthorizationError={authorizationError} /> : <Projects workspaceId={workspace.id} rows={filtered} loading={loading} error={error} hasMore={hasMore} canCreate={canCreate} onNext={() => { void nextPage(); }} onRetry={() => { void nextPage(); }} />}</RouteContent></WorkspaceLayout>;
 }

@@ -12,6 +12,7 @@ interface Props {
 }
 export function CreateClientDialog({ initialName, create, onCreated, onCancel, onRestoreFocus, onRefresh, onAuthorizationError }: Props) {
   const [nombre, setNombre] = useState(initialName);
+  const [estadoCliente, setEstadoCliente] = useState<'' | 'NUEVO' | 'ANTIGUO'>('');
   const [fieldError, setFieldError] = useState('');
   const [error, setError] = useState('');
   const [conflict, setConflict] = useState(false);
@@ -22,10 +23,11 @@ export function CreateClientDialog({ initialName, create, onCreated, onCancel, o
     event.preventDefault(); if (pending.current) return;
     const clean = nombre.trim();
     if (!clean) { setFieldError('Ingresa el nombre del cliente.'); return; }
+    if (clean.length > 200 || !estadoCliente) { setFieldError('Completa nombre (máximo 200 caracteres) y clasificación del cliente.'); return; }
     if (!create) { setError('No pudimos guardar el cliente. Inténtalo más tarde.'); return; }
     pending.current = true; setBusy(true); setError(''); setConflict(false); setFieldError('');
     try {
-      const result = await create({ nombre: clean });
+      const result = await create({ nombre: clean, estadoCliente });
       if (!result || typeof result.id !== 'string' || !/^[1-9][0-9]{0,18}$/.test(result.id) || BigInt(result.id) > 9223372036854775807n || typeof result.nombre !== 'string' || !result.nombre.trim()) { setError('No pudimos confirmar el registro del cliente. Inténtalo más tarde.'); return; }
       onCreated(result);
     } catch (cause) {
@@ -40,6 +42,6 @@ export function CreateClientDialog({ initialName, create, onCreated, onCancel, o
   return <Dialog.Root open onOpenChange={open => { if (!open && !pending.current) onCancel(); }}><Dialog.Portal><Dialog.Overlay className="record-backdrop client-dialog-overlay" /><Dialog.Content className="record-dialog client-dialog" onOpenAutoFocus={event => { event.preventDefault(); nameInput.current?.focus(); }} onCloseAutoFocus={event => { event.preventDefault(); onRestoreFocus?.(); }} onEscapeKeyDown={event => { if (pending.current) event.preventDefault(); }} onInteractOutside={event => { if (pending.current) event.preventDefault(); }}>
     <header className="record-dialog-header"><Dialog.Title>Agregar cliente</Dialog.Title><Button variant="ghost" disabled={busy} aria-label="Cerrar alta de cliente" onClick={onCancel}><Icon glyph={LuX} /></Button></header>
     <Dialog.Description className="client-dialog-description">Registra un cliente y continúa con el proyecto.</Dialog.Description>
-    <form onSubmit={event => { void submit(event); }} noValidate><div className="record-dialog-body"><label htmlFor="client-name">Nombre del cliente *</label><TextInput ref={nameInput} id="client-name" name="nombre" required disabled={busy} value={nombre} onChange={event => { setNombre(event.target.value); setFieldError(''); }} error={!!fieldError} aria-describedby={fieldError ? 'client-name-error' : undefined} />{fieldError && <p id="client-name-error" role="alert" className="form-error">{fieldError}</p>}{error && <p role="alert" className="form-error">{error}</p>}{conflict && onRefresh && <Button onClick={() => { void Promise.resolve().then(onRefresh).catch(() => setError('No pudimos actualizar los clientes. Inténtalo más tarde.')); }}>Actualizar clientes para buscar el registro existente</Button>}</div><footer className="record-dialog-footer"><Button disabled={busy} onClick={onCancel}>Cancelar</Button><Button type="submit" variant="primary" loading={busy}>Guardar cliente</Button></footer></form>
+    <form onSubmit={event => { void submit(event); }} noValidate><div className="record-dialog-body"><label htmlFor="client-name">Nombre del cliente *</label><TextInput ref={nameInput} id="client-name" name="nombre" maxLength={200} required disabled={busy} value={nombre} onChange={event => { setNombre(event.target.value); setFieldError(''); }} error={!!fieldError} aria-describedby={fieldError ? 'client-name-error' : undefined} /><label htmlFor="client-classification">Clasificación del cliente *</label><select id="client-classification" value={estadoCliente} required disabled={busy} onChange={event => setEstadoCliente(event.target.value as typeof estadoCliente)}><option value="">Selecciona clasificación</option><option value="NUEVO">Nuevo</option><option value="ANTIGUO">Antiguo</option></select>{fieldError && <p id="client-name-error" role="alert" className="form-error">{fieldError}</p>}{error && <p role="alert" className="form-error">{error}</p>}{conflict && onRefresh && <Button onClick={() => { void Promise.resolve().then(onRefresh).catch(() => setError('No pudimos actualizar los clientes. Inténtalo más tarde.')); }}>Actualizar clientes para buscar el registro existente</Button>}</div><footer className="record-dialog-footer"><Button disabled={busy} onClick={onCancel}>Cancelar</Button><Button type="submit" variant="primary" loading={busy}>Guardar cliente</Button></footer></form>
   </Dialog.Content></Dialog.Portal></Dialog.Root>;
 }

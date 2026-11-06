@@ -1,3 +1,4 @@
+import {fillPlanning, planningPayload} from './pmo-helpers';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { SearchableSelect } from '../app/src/components/molecules/searchable-select';
@@ -19,7 +20,7 @@ function choose(label: string, value: RegExp) {
   fireEvent.click(screen.getByLabelText(new RegExp('^' + label)));
   fireEvent.click(within(screen.getByRole('group', { name: `Opciones de ${label}` })).getByRole('button', { name: value }));
 }
-function projectValues() {
+function projectValues() { fillPlanning();
   fireEvent.change(screen.getByLabelText(/^TVT/), { target: { value: 'TVT-TEST' } });
   fireEvent.change(screen.getByLabelText(/^Nombre del proyecto/), { target: { value: 'Proyecto conservado' } });
   choose('País', /Chile/); choose('LOB', /Cloud solutions/); choose('PM titular', /PM de prueba/);
@@ -29,7 +30,7 @@ function openClient(name = 'Empresa nueva') {
   fireEvent.change(screen.getByLabelText('Buscar cliente…'), { target: { value: name } });
   expect(within(screen.getByRole('group', { name: 'Opciones de Cliente' })).getByText('No hay coincidencias')).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Agregar registro' }));
-  return screen.getByRole('dialog', { name: 'Agregar cliente' });
+  fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); return screen.getByRole('dialog', { name: 'Agregar cliente' });
 }
 test('busca por nombre sin distinguir espacios, case ni acentos y selecciona el ID', () => {
   const onChange = vi.fn(); render(<SearchableSelect id="client-test" label="Cliente" value="" options={[{ value: '9007199254740993', label: '  Ácme   ANDINA' }]} onChange={onChange} searchLabel="Buscar cliente…" />);
@@ -75,10 +76,10 @@ test('alta confirmada selecciona ID, deduplica, refresca y envía país por ID i
   const model = props({ authorized: true, create, refresh }); render(<ProjectCreateForm {...model} />); projectValues();
   const dialog = openClient(); fireEvent.click(within(dialog).getByRole('button', { name: 'Guardar cliente' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-  expect(create).toHaveBeenCalledWith({ nombre: 'Empresa nueva' }); expect(refresh).toHaveBeenCalledOnce(); expect(screen.getByLabelText(/^Cliente/)).toHaveTextContent('Empresa nueva');
+  expect(create).toHaveBeenCalledWith({ nombre: 'Empresa nueva', estadoCliente: 'NUEVO' }); expect(refresh).toHaveBeenCalledOnce(); expect(screen.getByLabelText(/^Cliente/)).toHaveTextContent('Empresa nueva');
   expect(screen.getByLabelText(/^TVT/)).toHaveValue('TVT-TEST');
   fireEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }));
-  await waitFor(() => expect(model.onCreate).toHaveBeenCalledWith({ workspaceId: '12', tvt: 'TVT-TEST', nombre: 'Proyecto conservado', clienteId: '9007199254740993', paisId: '100', lobId: '20', pmTitularId: '30' }));
+  await waitFor(() => expect(model.onCreate).toHaveBeenCalledWith({ ...planningPayload, workspaceId: '12', tvt: 'TVT-TEST', nombre: 'Proyecto conservado', clienteId: '9007199254740993', paisId: '100', lobId: '20', pmTitularId: '30' }));
 });
 test.each([403, 409, 422, 503])('error %s no selecciona un cliente ni pierde el proyecto', async status => {
   const create = vi.fn(async () => { throw new ApiError(status, 'REJECTED', 'Registro rechazado', { nombre: 'Revisa el nombre' }); }); const refresh = vi.fn();
@@ -92,14 +93,14 @@ test('validación y doble guardado; no cierra mientras la respuesta está pendie
   let finish!: (value: { id: string; nombre: string }) => void;
   const create = vi.fn(() => new Promise<{ id: string; nombre: string }>(resolve => { finish = resolve; })); const created = vi.fn();
   render(<CreateClientDialog initialName="   " create={create} onCreated={created} onCancel={vi.fn()} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' })); expect(screen.getByText('Ingresa el nombre del cliente.')).toBeVisible(); expect(create).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByLabelText('Nombre del cliente *'), { target: { value: '  Nuevo  ' } }); const save = screen.getByRole('button', { name: 'Guardar cliente' }); fireEvent.click(save); fireEvent.click(save);
-  expect(create).toHaveBeenCalledOnce(); expect(create).toHaveBeenCalledWith({ nombre: 'Nuevo' }); expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();
+  fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' })); expect(screen.getByText('Ingresa el nombre del cliente.')).toBeVisible(); expect(create).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText('Nombre del cliente *'), { target: { value: '  Nuevo  ' } }); fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); const save = screen.getByRole('button', { name: 'Guardar cliente' }); fireEvent.click(save); fireEvent.click(save);
+  expect(create).toHaveBeenCalledOnce(); expect(create).toHaveBeenCalledWith({ nombre: 'Nuevo', estadoCliente: 'NUEVO' }); expect(screen.getByRole('button', { name: 'Cancelar' })).toBeDisabled();
   finish({ id: '5', nombre: 'Nuevo' }); await waitFor(() => expect(created).toHaveBeenCalledWith({ id: '5', nombre: 'Nuevo' }));
 });
 test('sin contrato de alta el error al guardar es contextual y no simula persistencia', () => {
   const created = vi.fn(); render(<CreateClientDialog initialName="Cliente" onCreated={created} onCancel={vi.fn()} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' })); expect(screen.getByText('No pudimos guardar el cliente. Inténtalo más tarde.')).toBeVisible(); expect(created).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' })); expect(screen.getByText('No pudimos guardar el cliente. Inténtalo más tarde.')).toBeVisible(); expect(created).not.toHaveBeenCalled();
 });
 test('una identidad ya presente se actualiza sin duplicar opciones', async () => {
   render(<ProjectCreateForm {...props({ authorized: true, create: async () => ({ id: '1', nombre: 'Empresa nueva' }) })} />);
@@ -111,7 +112,7 @@ test('una identidad ya presente se actualiza sin duplicar opciones', async () =>
 test('409 permite refrescar explícitamente sin fusionar entidades', async () => {
   const refresh = vi.fn(); const created = vi.fn();
   render(<CreateClientDialog initialName="Cliente" create={async () => { throw new ApiError(409, 'CONFLICT', 'Nombre en conflicto'); }} onCreated={created} onCancel={vi.fn()} onRefresh={refresh} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' }));
+  fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' }));
   fireEvent.click(await screen.findByRole('button', { name: /Actualizar clientes para buscar/ }));
   await waitFor(() => expect(refresh).toHaveBeenCalledOnce()); expect(created).not.toHaveBeenCalled();
 });
@@ -119,7 +120,7 @@ test('retirar autorización mientras el modal está abierto impide guardar', asy
   const create = vi.fn(async () => ({ id: '8', nombre: 'Empresa nueva' })); const model = props({ authorized: true, create });
   const view = render(<ProjectCreateForm {...model} />); openClient();
   view.rerender(<ProjectCreateForm {...model} clientCreation={{ authorized: false, create }} />);
-  fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' }));
+  fireEvent.change(screen.getByLabelText('Clasificación del cliente *'), {target: {value: 'NUEVO'}}); fireEvent.click(screen.getByRole('button', { name: 'Guardar cliente' }));
   await screen.findByText('No pudimos guardar el cliente. Inténtalo más tarde.'); expect(create).not.toHaveBeenCalled();
 });
 test('catálogo denegado y PM sin candidatos mantienen mensajes distintos', () => {
