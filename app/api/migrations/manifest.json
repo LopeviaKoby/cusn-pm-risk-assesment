@@ -1,6 +1,6 @@
 {
   "schema": "pmo_cusn",
-  "catalogSha256": "6597b0dd053a3383d1396bf2c8255e00bb752f2e6f895266cd3475850f9d5091",
+  "catalogSha256": "ffeeb9c707e73c91b840cb68c099f79679aca6639ae0138911d96bbbd646ca50",
   "source": "pmo_cusn_esquema_logico_v2_1_0.txt (baseline de desarrollo)",
   "legacyMigrations": [
     {
@@ -49,6 +49,11 @@
       "file": "011_pmo_cusn_v210.sql",
       "mode": "schema",
       "sha256": "1086974ab85ca82c7919dec353a05394b7d97472fc9571341e19ecabd22cc40d"
+    },
+    {
+      "file": "012_g1_baseline_guard.sql",
+      "mode": "schema",
+      "sha256": "238222263df86f8ecd961e70fa147ccd307b82ae855e5ef597d92480cc0e4e38"
     }
   ],
   "sourceSha256": "3d7346235175374a175670e9d8b1ce07b67b554ae63eba84958c7767bad98678"

@@ -30,6 +30,10 @@ try{
   assert.equal(created.status,201);
   const project=(await created.json()).data as {id:string;version:string};
   assert.equal((await request('GET',`proyectos/${project.id}`,cookies)).status,200);
+  assert.equal((await request('GET',`proyectos/${project.id}/asignaciones`,cookies)).status,200);
+  assert.equal((await request('GET',`workspaces/${wid}`,cookies)).status,200);
+  assert.equal((await request('GET',`portafolio?workspaceId=${wid}`,cookies)).status,200);
+  assert.equal((await request('GET','catalogos',cookies)).status,200);
   assert.equal((await request('PATCH',`proyectos/${project.id}`,cookies,{version:project.version,nombre:'Guardado TCP'})).status,200);
   assert.equal((await request('DELETE','sesion',cookies)).status,200);
   assert.equal((await request('GET','sesion',cookies)).status,401);

@@ -17,17 +17,21 @@ try{
   await db`CREATE TABLE pmo.sentinel(value text PRIMARY KEY)`;
   await db`INSERT INTO pmo.sentinel VALUES ('intacto')`;
   await migrate(db);await migrate(db);await verifyDatabase(db,false);
-  const manifest=JSON.parse(readFileSync('app/api/migrations/manifest.json','utf8')) as {migrations:Array<{sha256:string}>};
-  await db`UPDATE pmo_cusn_meta.migracion SET sha256=repeat('0',64)`;
+  const manifest=JSON.parse(readFileSync('app/api/migrations/manifest.json','utf8')) as {migrations:Array<{file:string;sha256:string}>};
+  await db`UPDATE pmo_cusn_meta.migracion SET sha256=repeat('0',64) WHERE version=${manifest.migrations[0]!.file}`;
   try{await assert.rejects(()=>migrate(db),/otro contenido/);}finally{
-    await db`UPDATE pmo_cusn_meta.migracion SET sha256=${manifest.migrations[0]!.sha256}`;
+    await db`UPDATE pmo_cusn_meta.migracion SET sha256=${manifest.migrations[0]!.sha256} WHERE version=${manifest.migrations[0]!.file}`;
   }
   await db`ALTER TABLE pmo_cusn.workspace ADD COLUMN drift_probe text`;
   try{await assert.rejects(()=>migrate(db),/Drift del catálogo/);}finally{
     await db`ALTER TABLE pmo_cusn.workspace DROP COLUMN drift_probe`;
   }
+  await db`DROP TRIGGER tr_proteger_baseline_termino ON pmo_cusn.proyecto`;
+  await db`DROP FUNCTION pmo_cusn.proteger_baseline_termino()`;
+  await db`ALTER TABLE pmo_cusn.proyecto DROP CONSTRAINT ck_proyecto_fecha_termino_actual`;
+  await db`DELETE FROM pmo_cusn_meta.migracion WHERE version='012_g1_baseline_guard.sql'`;
   await migrate(db);
-  console.log('PASS drift de checksum y de catálogo rechazados; base de prueba restaurada.');
+  console.log('PASS drift de checksum/catálogo rechazados y upgrade incremental 011→012 verificado.');
 }finally{await db.close();}
 const password=crypto.randomUUID()+crypto.randomUUID();
 const runtime=Bun.env.TEST_API_DATABASE_URL?new URL(Bun.env.TEST_API_DATABASE_URL):null;
@@ -39,7 +43,7 @@ const env={...Bun.env,DATABASE_URL:Bun.env.TEST_API_DATABASE_URL??raw,MIGRATOR_D
 const artifacts='.tools/backend-v210-evidence';mkdirSync(artifacts,{recursive:true});
 const results:Array<{script:string;exitCode:number|null;output:string}>=[];
 for(const script of [...(runtime?['scripts/bootstrap-db','scripts/verify-db']:[]),'scripts/bootstrap-head','tests/auth-smoke','tests/auth-http','tests/auth-negative','tests/workspace-http',
-  'tests/projects-http','tests/transfer-http','tests/substitution-http','tests/governance-http','tests/recovery-http','tests/schema-invariants','tests/access-contracts','tests/projection','tests/tcp-smoke','scripts/generate-models','scripts/export-openapi']){
+  'tests/projects-http','tests/transfer-http','tests/substitution-http','tests/governance-http','tests/recovery-http','tests/schema-invariants','tests/access-contracts','tests/g1-portfolio-http','tests/projection','tests/tcp-smoke','scripts/generate-models','scripts/export-openapi']){
   const child=spawnSync(process.execPath,[`app/api/${script}.ts`,...(script.startsWith('scripts/generate')||script==='scripts/export-openapi'?['--check']:[])],{env,encoding:'utf8'});
   const output=child.stdout+child.stderr;console.log(output.trim());
   results.push({script,exitCode:child.status,output});

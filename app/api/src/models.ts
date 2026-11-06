@@ -2757,6 +2757,12 @@ export const databaseConstraints = [
   },
   {
     "table_name": "proyecto",
+    "name": "ck_proyecto_fecha_termino_actual",
+    "kind": "c",
+    "definition": "CHECK (((fecha_inicio IS NULL) OR (fecha_termino_actual IS NULL) OR (fecha_termino_actual >= fecha_inicio)))"
+  },
+  {
+    "table_name": "proyecto",
     "name": "ck_proyecto_fechas",
     "kind": "c",
     "definition": "CHECK (((fecha_inicio IS NULL) OR (fecha_termino_baseline IS NULL) OR (fecha_termino_baseline >= fecha_inicio)))"

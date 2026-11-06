@@ -20,8 +20,9 @@ export async function migrate(sql: SQL): Promise<void> {
     await tx`CREATE TABLE IF NOT EXISTS pmo_cusn_meta.migracion (
       version text PRIMARY KEY, sha256 text NOT NULL, applied_at timestamptz NOT NULL DEFAULT now()
     )`;
+    if (manifest.migrations[0]?.file !== baseFile) throw new Error("El baseline inicial debe ser 011_pmo_cusn_v210.sql.");
     for (const item of manifest.migrations) {
-      if (!/^011_pmo_cusn_v210\.sql$/.test(item.file)) throw new Error("Archivo de migración no autorizado.");
+      if (!/^01[1-9]_[a-z0-9_]+\.sql$/.test(item.file)) throw new Error("Archivo de migración no autorizado.");
       const content = readFileSync(resolve(migrationDirectory, item.file), "utf8");
       const hash = createHash("sha256").update(content).digest("hex");
       if (hash !== item.sha256) throw new Error(`Checksum distinto: ${item.file}`);
@@ -31,9 +32,11 @@ export async function migrate(sql: SQL): Promise<void> {
         console.log(`= ${item.file} ya aplicada`);
         continue;
       }
+      const [existing] = await tx<{ name: string | null }>`SELECT to_regnamespace('pmo_cusn')::text AS name`;
       if (item.file === baseFile) {
-        const [existing] = await tx<{ name: string | null }>`SELECT to_regnamespace('pmo_cusn')::text AS name`;
         if (existing?.name) throw new Error("pmo_cusn existe sin registro de migración; no se sobrescribe.");
+      } else if (!existing?.name) {
+        throw new Error("No se puede aplicar una migración incremental sin el esquema base pmo_cusn.");
       }
       // La definición versionada incorpora las correcciones documentadas; Bun controla la transacción.
       const statements = content.replace(/^BEGIN;\s*$/m, "").replace(/^COMMIT;\s*$/m, "");

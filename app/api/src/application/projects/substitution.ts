@@ -12,7 +12,7 @@ async function assertDesignator(actorId:string,projectId:string,db:typeof sql){
       AND pp.funcion='PM_TITULAR' AND pp.fecha_fin IS NULL
     WHERE p.id=${projectId} AND p.activo FOR UPDATE OF p`;
   if(!project)throw new ApiError(404,"NOT_FOUND","Proyecto no encontrado.");
-  if(actor.role==='PM'&&(project.ownerId!==actorId||project.creatorId!==actorId))throw new ApiError(403,"FORBIDDEN","Solo el titular creador puede designar suplencia.");
+  if(actor.role==='PM'&&project.ownerId!==actorId)throw new ApiError(403,"FORBIDDEN","Solo Head o el PM titular vigente puede gestionar suplencias.");
   return project;
 }
 
