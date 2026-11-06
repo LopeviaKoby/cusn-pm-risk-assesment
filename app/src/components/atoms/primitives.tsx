@@ -3,9 +3,9 @@ import * as RadixTabs from "@radix-ui/react-tabs";
 import { Search } from "lucide-react";
 import { riskPresentation } from "@/data/presentation";
 
-// Native buttons and Radix tabs retain the existing GPL semantic tokens.
-export function Button({ variant = "secondary", className = "", type = "button", ...props }: ComponentProps<"button"> & { variant?: "secondary" | "primary" | "ghost" }) {
-  return <button {...props} type={type} className={`button button-${variant} ${className}`} />;
+// Canonical product button. Existing consumers keep their default and class contract.
+export function Button({ variant = "secondary", size = "md", loading = false, className = "", type = "button", disabled, children, ...props }: Omit<ComponentProps<"button">, "size"> & { variant?: "secondary" | "primary" | "ghost" | "destructive"; size?: "sm" | "md" | "lg"; loading?: boolean }) {
+  return <button {...props} type={type} disabled={disabled || loading} aria-busy={loading || undefined} className={`button button-${variant} button-${size} ${className}`}>{loading && <span className="atom-spinner atom-spinner-sm" aria-hidden="true" />}{children}</button>;
 }
 export const Tabs = RadixTabs.Root;
 export const TabsContent = RadixTabs.Content;
@@ -16,8 +16,8 @@ export function TabsTrigger(props: ComponentProps<typeof RadixTabs.Trigger>) {
   return <RadixTabs.Trigger {...props} className="tabs-trigger" />;
 }
 type BadgeTone = "neutral" | "info" | "danger" | "positive" | "review";
-export function Badge({ children, tone = "neutral" }: { children: ReactNode; tone?: BadgeTone }) {
-  return <span className={`badge badge-${tone}`}>{children}</span>;
+export function Badge({ children, tone = "neutral", className = "" }: { children: ReactNode; tone?: BadgeTone; className?: string }) {
+  return <span className={`badge badge-${tone} ${className}`}>{children}</span>;
 }
 export function ExposureBadge({ type, score, proposed = false }: { type: string; score: number | null; proposed?: boolean }) {
   if (score === null) return <span className="exposure" title="Sin evaluación">Sin evaluación</span>;
