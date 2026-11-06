@@ -1,0 +1,5 @@
+/* Keep Storybook's generated control tables within the docs canvas at mobile zoom. */
+.sbdocs-content div:has(> table.docblock-argstable) {
+  max-width: 100%;
+  overflow-x: auto;
+}

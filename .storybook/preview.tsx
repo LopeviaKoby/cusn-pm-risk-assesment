@@ -1,5 +1,6 @@
 import type { Preview } from "@storybook/react-vite";
 import "../app/src/design-system/app.css";
+import "./preview.css";
 
 /* Laboratorio permanente Light/Dark. Importa el mismo entry CSS de la app
  * (app.css → fonts.css + tokens.css). No copia tokens ni hardcodea HEX.

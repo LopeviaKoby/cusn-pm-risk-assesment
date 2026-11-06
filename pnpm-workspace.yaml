@@ -15,7 +15,8 @@ trustPolicyExclude:
 trustLockfile: false
 blockExoticSubdeps: true
 strictDepBuilds: true
-allowBuilds: {}
+allowBuilds:
+  esbuild@0.28.2: true
 skills:
   dirs: []
 pmOnFail: ignore
