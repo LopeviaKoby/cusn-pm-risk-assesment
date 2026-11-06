@@ -29,7 +29,3 @@ export function projectStatusTone(status: string) {
     default: return "neutral" as const;
   }
 }
-
-export function proposalStatusTone(status: string) {
-  return status === "accepted" ? "positive" as const : status === "pending" ? "info" as const : "neutral" as const;
-}

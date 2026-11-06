@@ -14,7 +14,7 @@ pnpm run dev:api
 pnpm run dev
 ```
 
-La API requiere `DATABASE_URL`, `JWT_SIGNING_KEY` de al menos 32 bytes y las variables documentadas en [`deploy/env.example`](deploy/env.example). Vite conserva `index.html` en la raíz; su entrada es `/app/src/main.tsx`, el alias `@` resuelve a `app/src`, y `/api` se proxifica a `http://127.0.0.1:3001` salvo `API_PROXY_TARGET`. Solo las variables con prefijo `VITE_` pueden entrar al bundle; no coloques secretos allí. El frontend muestra Login si no hay sesión, y muestra un error con opción de reintento si el bootstrap REST falla. No contiene datos de negocio de respaldo.
+La API requiere `DATABASE_URL`, `JWT_SIGNING_KEY` de al menos 32 bytes y las variables documentadas en [`deploy/env.example`](deploy/env.example). Vite conserva `index.html` en la raíz; su entrada es `/app/src/main.tsx`, el alias `@` resuelve a `app/src`, y `/api` se proxifica a `http://127.0.0.1:3001` salvo `API_PROXY_TARGET`. Solo las variables con prefijo `VITE_` pueden entrar al bundle; no coloques secretos allí. El frontend muestra Login si no hay sesión, y muestra un error con opción de reintento si una consulta REST falla. No contiene datos de negocio de respaldo.
 
 Para contenedores, configura un `.env` local a partir de `deploy/env.example` y consulta [`DEPLOY.md`](DEPLOY.md). `compose.yaml` levanta una base, aplica migraciones, configura el rol de aplicación, verifica el esquema y arranca API y web. El Dockerfile de la API usa el manifiesto y lockfile raíz para instalar dependencias de producción con `pnpm install --prod --frozen-lockfile`, y luego ejecuta Bun. Ningún archivo de entorno debe entrar a Git o a la imagen.
 
@@ -31,7 +31,7 @@ pnpm run storybook
 pnpm run build-storybook
 ```
 
-`test:db` ejecuta la suite v2.1 sobre una base local nueva y desechable; los handlers, importadores y smoke incompatibles v2.0 fueron retirados. En una base desechable `pmo_test_*`, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales después de `db:migrate`; `db:models` regenera ese archivo. Los DTO REST en `app/src/data/contracts.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
+`test:db` ejecuta la suite v2.1 sobre una base local nueva y desechable; los handlers, importadores y smoke incompatibles v2.0 fueron retirados. En una base desechable `pmo_test_*`, `db:models:check` compara `app/api/src/models.ts` con los metadatos reales después de `db:migrate`; `db:models` regenera ese archivo. Los contratos REST en `app/src/data/projects.ts` y `workspaces.ts` son proyecciones de transporte y no reemplazan las entidades derivadas del esquema.
 
 `NODE_ENV=test TEST_DATABASE_URL=postgres://.../pmo_test_v210_nueva TEST_API_DATABASE_URL=postgres://runtime:.../pmo_test_v210_nueva pnpm run test:db:v210` ejecuta el baseline, su segunda aplicación, bootstrap Head y pruebas de auth/gobierno sobre una base local nueva. La suite rechaza una base que ya contenga `pmo_cusn` y no elimina bases. Genera sus contraseñas aleatorias en memoria. T01–T20 ampliados, matriz de acceso, DTO/OpenAPI, Drizzle, auth y TCP pasaron en la revisión backend. Los comandos, contratos y límites operativos se documentan en DEPLOY.md.
 
@@ -39,22 +39,41 @@ pnpm run build-storybook
 
 ## Alcance funcional actual
 
-El acceso inicial usa `/workspace` para descubrir espacios y `/workspace/:id` para entrar al ID estable devuelto por PMO v2.1.0. El ID de la URL se resuelve únicamente contra el listado autorizado de la sesión; no se guarda un workspace seleccionado en almacenamiento local. Seleccionar es navegación frontend. La creación envía únicamente `{nombre}` (trim, 1–200 caracteres), vuelve a consultar el listado y entra al espacio. Al recuperar foco se revalidan sesión y permisos.
+La sesión y el onboarding usan `/workspace` y `/workspace/:id`. El ID se resuelve contra el listado autorizado y no se persiste otra selección en almacenamiento local. Las cookies siguen siendo HttpOnly, el cliente usa `same-origin` y Vite mantiene `changeOrigin:false` para la validación de Origin del servidor.
 
-| Ruta UI | Gate/provider | Endpoint y contrato | Estado / frontera |
-| --- | --- | --- | --- |
-| `/login` | AccessProvider | GET/POST/DELETE `/api/v1/sesion`, cookies de mismo origen | Autenticación vigente; se conserva la pantalla TIVIT |
-| `/workspace` | AccessGate → WorkspaceEntry | GET sesión + GET workspaces → `{id,nombre,slug,version}[]` | v2.1.0, sin bootstrap |
-| Creación en `/workspace` | WorkspaceEntry | POST workspaces `{nombre}` → objeto workspace | v2.1.0, permiso efectivo `workspaces.crear` |
-| `/workspace/:id` | WorkspaceEntry | Resuelve ID desde listado autorizado | Home mínimo, sin métricas ni proyectos inventados |
-| `/legacy/workspace`, módulos anteriores | DataProvider → ApiDataGate → Shell | GET `/api/v1/datos`, DTO `Bootstrap` | Legacy; su fallo queda delimitado con enlace de regreso |
+| Ruta/archivo anterior | Dependencia retirada | Sustitución / resultado |
+| --- | --- | --- |
+| App / ApiDataGate / Shell | DataProvider, GET `/api/v1/datos`, Bootstrap | AccessGate → WorkspaceEntry → WorkspaceArea; no bootstrap legacy |
+| `/proyectos`, Projects | DTO de proyectos con métricas y edición de metadatos antiguos | `/workspace/:workspaceId/proyectos`, listado REST paginado y filtrado por workspace |
+| ManualForms | Mensaje que afirmaba ausencia de alta | `/workspace/:workspaceId/proyectos/nuevo`, composición de alta con bloqueo explícito de catálogos |
+| Project / SuggestionReview | DTO antiguo, sugerencias y revisión IA | `/workspace/:workspaceId/proyectos/:id/resumen`, detalle REST y dashboard 360° |
+| `/legacy/workspace`, riesgos, portafolio, finanzas, complejidad, aprobaciones, compras anteriores | Consultas y formularios de endpoints retirados | Estado controlado de indisponibilidad con regreso a workspaces; sin requests antiguos |
 
-La frontera nueva no importa `bootstrap.tsx` ni `Bootstrap`. Las páginas anteriores se mantienen con sus contratos históricos; migrarlas requiere adaptadores específicos futuros. `GET /api/v1/datos` no forma parte del OpenAPI v2.1.0. El proxy Vite conserva `changeOrigin:false` y credenciales `same-origin`; el servidor continúa validando Origin y autorización. Las referencias visuales locales de `app/src/design-system/references/` permanecen ignoradas en Git.
+El alta envía exclusivamente `{workspaceId,tvt,nombre,clienteId,paisId,lobId,pmTitularId?}`. Los IDs/versiones se mantienen como strings. El listado devuelve un array por página: usa `after` con el último ID recibido y `limit=50`; una página completa permite solicitar la siguiente. Se filtra el workspace después de recibir cada página, sin presentar el subconjunto como total de portafolio. El detalle vuelve a comprobar que el workspace del proyecto coincide con la URL.
 
-- La API v2.1 ofrece creación, listado acotado y detalle de proyectos, edición de nombre con versión, transferencia Head y suplencias. Los DTO nuevos no sustituyen todavía el bootstrap visual anterior.
-- Complejidad, aprobaciones y compras se preservan en `app/src/pages/`; sus módulos backend, junto con riesgos, facturación y cierre, quedan fuera de este corte; las rutas obsoletas fueron retiradas.
-- No hay registro público ni login demo. Las cuentas se crean por bootstrap restringido o invitación controlada, con uno de los cuatro roles y comprobaciones por objeto en servidor.
-- La persistencia distingue `NULL` de cero y mantiene bigint/decimal sin pérdida de precisión. Las pruebas de la proyección verifican tipos y columnas generadas; esto no declara funcionales los dominios aplazados.
+| Campo | Regla del contrato / negocio | Fuente operativa |
+| --- | --- | --- |
+| workspaceId | Obligatorio, ID estable | Workspace autorizado seleccionado |
+| tvt | Obligatorio, trim, 1–80; unicidad global en servidor | Entrada de usuario |
+| nombre | Obligatorio, trim, 1–200 | Entrada de usuario |
+| clienteId, paisId, lobId | Obligatorios, IDs positivos string | Catálogos públicos ausentes: selects y submit bloqueados |
+| pmTitularId | Opcional en HTTP; requerido para ADMIN; PM autoasignado si es elegible | Catálogo de titulares elegibles ausente; no se inventan IDs |
+| Clasificación, fechas, línea base, descripción, TCV, moneda, presupuesto, documentos | Diferidos, fuera del POST estricto | Información no editable; sin persistencia simulada |
+
+`ProjectCreateForm` acepta catálogos tipados como punto de composición futuro; la aplicación entrega `null` porque el router v2.1.0 no publica esos catálogos. Solo las pruebas usan opciones sintéticas. El permiso `proyectos.crear` y el rol efectivo condicionan el acceso al formulario; la membresía/habilitación contextual y la elegibilidad final corresponden al servidor. Un POST no se reintenta automáticamente ante pérdida de red.
+
+| Sección 360° | Dato real disponible | Brecha / presentación actual |
+| --- | --- | --- |
+| Identificación | id, tvt, nombre, workspaceId, version, estado | Cliente, PM, clasificación y fechas: — |
+| Avance real/plan, SPI, desviación, riesgos, actualización | Ningún campo en detalle v2.1.0 | Sin datos disponibles; sin cálculos locales |
+| Curva S y último seguimiento | Sin series ni registro semanal público | Estados vacíos sin curvas, puntos ni actividades ficticias |
+| Finanzas | Sin proyección financiera ni períodos | TCV/exigible/facturado/cumplimiento y matriz Showprice/Planificado/Real sin importes |
+| Alertas y pendientes | Sin endpoint de riesgos, compromisos o vigencia | Indisponibilidad específica, sin semáforo calculado |
+| Eventos | Sin timeline de cambios/aprobaciones/actualizaciones | Estado vacío separado del seguimiento |
+
+Las ocho secciones del proyecto conservan URLs: Resumen, Seguimiento, Finanzas, Riesgos, Cambios, Compras, Documentos e Historial. Solo Resumen tiene composición ejecutiva; las otras comunican ausencia de contrato sin acciones falsas. No hay dashboard consolidado de portafolio. Las funciones de presentación de negocio históricas quedan sin imports desde el grafo productivo; no se modifican fórmulas financieras. Los 16 átomos conservan sus contratos.
+
+Las comprobaciones focalizadas están en `tests/projects.test.tsx`, `tests/frontend-boundary.test.ts` y `tests/e2e/projects.spec.ts`. La prueba estática recorre fuentes y el grafo de imports del entrypoint; las de navegador usan fixtures explícitos, rechazan endpoints imprevistos y verifican Light/Dark, reflow 100/200 % y movimiento reducido. Las capturas actuales y `references/legacy/` siguen siendo material local ignorado en Git.
 
 El diseño visual y Atomic Design se documentan en [`app/src/design-system/DESIGN.md`](app/src/design-system/DESIGN.md) y [`AGENTS.md`](AGENTS.md). `specs/migracion-apps-script-a-bun.md` conserva decisiones históricas previas a esta estructura; esta página y el código vigente describen el estado ejecutable.
 

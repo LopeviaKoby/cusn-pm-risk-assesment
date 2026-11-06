@@ -244,8 +244,6 @@ td small, th small { display: block; margin-top: 4px; }
 [data-band="opportunity-moderate"] { --exposure-background: var(--opportunity-moderate); --exposure-foreground: var(--opportunity-moderate-foreground); }
 [data-band="opportunity-high"] { --exposure-background: var(--opportunity-high); --exposure-foreground: var(--opportunity-high-foreground); }
 [data-band="opportunity-very-high"] { --exposure-background: var(--opportunity-very-high); --exposure-foreground: var(--opportunity-very-high-foreground); }
-.suggestions-table { min-width: 1080px; }
-.suggestions-table th:first-child { width: 28%; }
 .tab-note { color: var(--text-secondary); font-size: 12px; margin: 0 0 16px; }
 .section-heading { padding-bottom: 12px; margin-bottom: 16px; border-bottom: 1px solid var(--divider); }
 .portfolio-page .metric-strip { padding: 0; margin-bottom: 16px; flex-wrap: nowrap; }
@@ -386,7 +384,6 @@ td small, th small { display: block; margin-top: 4px; }
 .field input, .field textarea, .field select { width: 100%; min-width: 0; padding: 8px 12px; background: var(--background); border: 1px solid var(--input); border-radius: var(--gpl-radius-sm); font-size: 13px; color: var(--foreground); }
 .field textarea { resize: vertical; }
 .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.proposal-score { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--background); border-radius: var(--gpl-radius-sm); margin-bottom: 16px; font-size: 12px; }
 .review-page .scope-options { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
 .scope-options legend { margin-bottom: 12px; font-size: 12px; }
 .scope-options label, .approval-check { display: flex; align-items: flex-start; gap: 8px; font-size: 12px; }
