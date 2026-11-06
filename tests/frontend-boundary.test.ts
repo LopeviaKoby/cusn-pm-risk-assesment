@@ -7,7 +7,7 @@ test('el grafo frontend no importa DTO/provider legacy, backend ni funcionalidad
   for (const file of files(root)) {
     const source = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\/|^\s*\/\/.*$/gm, '');
     if (/\b(Bootstrap|DataProvider|useData|SuggestionReview|usuarioActualId|avancePlanificadoPct|spiRatio)\b/.test(source)) violations.push(`${file}: contrato antiguo`);
-    if (/\/api\/v1\/(datos|controles-cambio|compras|riesgos|facturacion|planificacion)(?:[/'"`]|$)/.test(source)) violations.push(`${file}: endpoint retirado`);
+    if (/\/api\/v1\/(datos|catalogos|controles-cambio|compras|riesgos|facturacion|planificacion)(?:[/'"`]|$)/.test(source)) violations.push(`${file}: endpoint retirado`);
     const edges: string[] = [];
     for (const match of source.matchAll(/(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)['"]([^'"]+)['"]/g)) {
       const name = match[1]!;

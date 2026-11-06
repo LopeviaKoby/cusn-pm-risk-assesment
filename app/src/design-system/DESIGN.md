@@ -88,6 +88,8 @@ colors:
 
 `ProgressChart` presenta series explícitas con Recharts 3.10.1 y carga diferida; sin puntos conserva el estado de indisponibilidad. Usa los alias de plan/real existentes, trazo discontinuo/continuo, tabla alternativa y no conecta períodos sin dato. No anima las series ni calcula métricas. No introducir paletas paralelas ni datos sintéticos en páginas productivas. Los fixtures de Storybook sirven para verificar ambos temas y reflow.
 
+Las composiciones operativas usan `operations.css`: tablas semánticas con región de scroll contenido y cabeceras sticky; TVT/nombre fijados en escritorio y liberados en reflow estrecho. `ColumnMenu` ofrece solo orden/filtros soportados; `ContextPanel` reutiliza Radix Dialog no modal, conserva el foco y bloquea cierre durante guardado financiero. `BillingMatrix` distingue unidades y null de cero; no resume monedas distintas. `DriveTree` mantiene nombres y padres persistidos. El estado del ciclo de vida no representa salud financiera ni riesgo. Las distribuciones analíticas indican si son globales o de la página.
+
 ## Typography
 
 Las 14 funciones siguientes reflejan exactamente tamaño, peso, interlineado y tracking de `fonts.css`. Google Sans sirve a cabeceras, subtítulo y métrica; Manrope a cuerpo y controles. Los archivos variables locales se sirven en WOFF2, generados sin subsetting desde los TTF con `scripts/convert-fonts.py`; conservan ejes, caracteres y licencias OFL. Fallback `"Segoe UI", sans-serif`, `font-display: swap` y `font-synthesis: none` en `app.css`. Usar números tabulares para métricas, fechas, porcentajes y columnas alineadas. Texto pequeño y metadatos deben seguir legibles y no reemplazar un arreglo de layout.

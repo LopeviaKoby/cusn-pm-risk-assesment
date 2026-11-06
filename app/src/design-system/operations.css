@@ -1,0 +1,53 @@
+.pmo-toolbar { display:flex; flex-wrap:wrap; gap:var(--space-3); align-items:end; margin-block:var(--space-4); }
+.pmo-toolbar label,.pmo-editor label { display:grid; gap:var(--space-2); min-width:0; }
+.pmo-content :is(select,input[type=month]),.pmo-context-panel select,.client-dialog select { background:var(--surface); color:var(--foreground); border:1px solid var(--input); border-radius:var(--radius-sm); padding:8px 12px; min-height:40px; max-width:100%; font:inherit; }
+.pmo-content fieldset { min-width:0; margin-block:var(--space-5); }
+.pmo-dense-region { max-width:100%; min-width:0; overflow:auto; max-height:68vh; border:1px solid var(--border); border-radius:var(--radius-md); margin-block:var(--space-4); }
+.pmo-dense-table { border-collapse:separate; border-spacing:0; width:max-content; min-width:100%; font-size:var(--type-body-sm-size); font-variant-numeric:tabular-nums; }
+.pmo-dense-table caption { text-align:start; padding:var(--space-3); color:var(--text-secondary); }
+.pmo-dense-table :is(th,td) { padding:8px 12px; border-bottom:1px solid var(--border); text-align:start; min-width:144px; max-width:280px; overflow-wrap:anywhere; background:var(--surface); }
+.pmo-dense-table thead th { position:sticky; top:0; z-index:3; background:var(--surface); }
+.pmo-dense-table tr>:first-child { position:sticky; left:0; min-width:120px; max-width:120px; width:120px; z-index:2; border-right:1px solid var(--border); }
+.pmo-portfolio-table tr>:nth-child(2) { position:sticky; left:120px; min-width:260px; max-width:260px; width:260px; z-index:2; border-right:1px solid var(--border); }
+.pmo-dense-table thead tr>:first-child,.pmo-portfolio-table thead tr>:nth-child(2) { z-index:4; }
+.pmo-dense-table tbody tr:hover>:is(th,td) { background:var(--accent); }
+.pmo-billing-matrix tr>:first-child { min-width:200px; max-width:200px; }
+.pmo-context-panel { position:fixed; inset:16px 16px 16px auto; width:min(640px,calc(100vw - 32px)); z-index:40; background:var(--surface); color:var(--foreground); border:1px solid var(--border); border-radius:var(--radius-md); box-shadow:var(--gpl-shadow-overlay); overflow:auto; padding:var(--space-5); font-family:var(--gpl-font-body); }
+.pmo-context-panel>header { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:start; gap:var(--space-3); }
+.pmo-context-panel :is(h2,h3) { font-family:var(--gpl-font-heading); }
+.pmo-context-panel .pmo-section { padding:var(--space-3); }
+.pmo-context-panel nav { display:flex; flex-wrap:wrap; gap:var(--space-3); }
+.pmo-editor { display:grid; gap:var(--space-3); min-width:0; }
+.pmo-editor fieldset { display:grid; gap:var(--space-3); }
+.pmo-inline-editor { display:grid; gap:var(--space-2); }
+.pmo-inline-editor label { white-space:normal; }
+.pmo-inline-editor input { max-width:100%; }
+.pmo-line-detail { border-bottom:1px solid var(--border); padding-block:var(--space-4); }
+.pmo-check-row { display:flex!important; flex-direction:row!important; align-items:center; gap:var(--space-2); }
+.pmo-drive-tree ul { padding-left:var(--space-5); display:grid; gap:var(--space-2); }
+.pmo-drive-tree small { display:block; color:var(--text-secondary); overflow-wrap:anywhere; }
+.pmo-drive-tree summary { cursor:pointer; }
+.pmo-column-menu { position:relative; }
+.pmo-column-menu summary { cursor:pointer; }
+.pmo-column-menu>div { display:grid; gap:var(--space-2); padding-block:var(--space-2); white-space:normal; }
+.pmo-name-button { text-align:left; white-space:normal; padding-left:0; text-decoration:underline; }
+.pmo-analytics { display:grid; gap:var(--space-4); }
+.pmo-analytics table { width:100%; text-align:start; }
+.pmo-state-chart { height:280px; min-width:0; width:100%; }
+.pmo-filter-chips { display:flex; flex-wrap:wrap; gap:var(--space-2); }
+.pmo-filter-chips .button { white-space:normal; overflow-wrap:anywhere; }
+@media(max-width:640px) { .pmo-toolbar>* { max-width:100%; } .pmo-dense-table tr>:first-child,.pmo-portfolio-table tr>:nth-child(2) { position:static; } .pmo-context-panel { padding:var(--space-3); } }
+
+.pmo-context-panel section { display:block; width:100%; max-width:none; margin:0; text-align:start; }
+
+.pmo-toolbar :is(select,input),.pmo-editor :is(select,input) { min-width:0; width:100%; }
+.pmo-toolbar label { flex:0 1 240px; }
+
+.pmo-drive-tree { min-width:0; overflow-wrap:anywhere; }
+.pmo-drive-tree ul { padding-inline-start:clamp(8px,2vw,20px); }
+
+.pmo-portfolio-kpis { grid-template-columns:repeat(auto-fit,minmax(min(128px,100%),1fr)); gap:var(--space-2); }
+.pmo-portfolio-kpis>div { padding:var(--space-3); gap:var(--space-1); }
+.pmo-portfolio-kpis dd { font-size:var(--type-h4-size); }
+.pmo-portfolio-kpis .button { padding:0; min-height:32px; text-align:start; }
+.pmo-portfolio-kpis dt { font-size:var(--type-caption-size); }

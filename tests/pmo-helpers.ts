@@ -1,0 +1,3 @@
+import {fireEvent, screen} from '@testing-library/react';
+export const planningPayload = {fechaInicio: '2026-01-01', fechaTerminoBaseline: '2026-12-31', fechaRecepcionP1p2: null, descripcion: null, situacionInicial: null, especialistaIds: [], condicionComercial: {tcvTipo: 'ILIMITADO', tcvValor: null, unidadCodigo: null}};
+export function fillPlanning() {fireEvent.change(screen.getByLabelText(/^Inicio planificado/), {target: {value: planningPayload.fechaInicio}}); fireEvent.change(screen.getByLabelText(/^Término baseline/), {target: {value: planningPayload.fechaTerminoBaseline}}); fireEvent.change(screen.getByLabelText('Tipo de TCV'), {target: {value: 'ILIMITADO'}});}

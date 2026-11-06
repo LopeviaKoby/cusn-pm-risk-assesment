@@ -1,0 +1,24 @@
+import {useRef, useState, type FormEvent} from 'react';
+import {Button, Checkbox, TextInput} from '@/components/atoms/catalog';
+import {ApiError} from '@/data/client';
+import {projectError} from '@/data/projects';
+import type {BillingInput, BillingLine} from '@/data/project-modules';
+export function BillingLineForm({line, onSave, onSaved, onConflict, onBusyChange}: {line?: BillingLine; onSave: (input: BillingInput) => Promise<unknown>; onSaved: () => void; onConflict: () => void; onBusyChange?: (value: boolean) => void}) {
+  const [value, setValue] = useState<BillingInput>(() => ({claveRegistro: line?.claveRegistro ?? crypto.randomUUID(), periodo: line?.periodo ?? '', unidadCodigo: line?.unidadCodigo ?? '', tipoHito: line?.tipoHito === 'Operación' ? 'Operación' : 'Proyecto', tipoCuota: line?.tipoCuota === 'Recurrente' ? 'Recurrente' : 'SetUp', showprice: line?.showprice ?? '', planificado: line?.planificado ?? '', realReportado: line?.realReportado ?? '', comentario: line?.comentario ?? ''}));
+  const [error, setError] = useState(''), [fields, setFields] = useState<Record<string, string>>({}), [busy, setBusy] = useState(false), [confirm, setConfirm] = useState(false), [denied, setDenied] = useState(false), [conflict, setConflict] = useState(false);
+  const pending = useRef(false), uncertainPayload = useRef<string | null>(null);
+  async function submit(event: FormEvent) {
+    event.preventDefault(); if (pending.current || denied || conflict) return;
+    const next: Record<string, string> = {};
+    if (!/^[0-9]{4}-(0[1-9]|1[0-2])$/.test(value.periodo)) next.periodo = 'Selecciona un período.';
+    if (!/^[A-Z]{2,3}$/.test(value.unidadCodigo)) next.unidadCodigo = 'Usa un código de unidad de 2–3 letras.';
+    for (const key of ['showprice', 'planificado', 'realReportado'] as const) if (!/^(0|[1-9][0-9]{0,15})(\.[0-9]{1,4})?$/.test(value[key])) next[key] = 'Importe positivo o cero, con máximo 4 decimales.';
+    if (!confirm) next.confirm = 'Confirma explícitamente el registro.';
+    setFields(next); if (Object.keys(next).length) return;
+    const payload = JSON.stringify(value);
+    if (uncertainPayload.current && uncertainPayload.current !== payload) {setError('El resultado anterior es incierto. Conserva el contenido original y comprueba los hitos antes de preparar otro registro.'); return;}
+    pending.current = true; setBusy(true); onBusyChange?.(true); setError('');
+    try {await onSave(value); onSaved();} catch (cause) {setError(projectError(cause)); if (cause instanceof ApiError) {setFields(cause.fields ?? {}); if (cause.status === 403) setDenied(true); if (cause.status === 409) setConflict(true);} else uncertainPayload.current = payload;} finally {pending.current = false; setBusy(false); onBusyChange?.(false);}
+  }
+  return <form className="pmo-editor" onSubmit={event => {void submit(event);}} noValidate><fieldset disabled={busy || denied || conflict}><legend>{line ? 'Editar hito MANUAL' : 'Nuevo hito manual'}</legend>{(['periodo', 'unidadCodigo', 'showprice', 'planificado', 'realReportado', 'comentario'] as const).map(key => <label key={key}>{{periodo: 'Período', unidadCodigo: 'Unidad / moneda', showprice: 'Showprice', planificado: 'Planificado', realReportado: 'Real reportado', comentario: 'Comentario'}[key]}<TextInput type={key === 'periodo' ? 'month' : 'text'} maxLength={key === 'comentario' ? 2000 : undefined} value={value[key] ?? ''} onChange={event => setValue(previous => ({...previous, [key]: event.target.value}))} error={!!fields[key]}/>{fields[key] && <span role="alert">{fields[key]}</span>}</label>)}<label>Tipo de hito<select value={value.tipoHito} onChange={event => setValue({...value, tipoHito: event.target.value as BillingInput['tipoHito']})}><option>Proyecto</option><option>Operación</option></select></label><label>Tipo de cuota<select value={value.tipoCuota} onChange={event => setValue({...value, tipoCuota: event.target.value as BillingInput['tipoCuota']})}><option>SetUp</option><option>Recurrente</option></select></label><p className="pmo-help">El registro manual no cambia el TCV ni la línea base comercial. Real reportado no equivale a cobro ni conciliación ERP. Showprice del hito se registra según el permiso vigente; no constituye una modificación contractual global.</p><label className="pmo-check-row"><Checkbox checked={confirm} onChange={event => setConfirm(event.target.checked)}/>Confirmo los importes y el período</label>{fields.confirm && <p role="alert">{fields.confirm}</p>}<Button type="submit" variant="primary" loading={busy}>Guardar hito</Button></fieldset>{error && <p role="alert">{error}</p>}{conflict && <Button onClick={onConflict}>Consultar versión vigente (descarta este editor)</Button>}<p className="pmo-help">Clave idempotente: {value.claveRegistro}. Un fallo de red conserva esta clave y el contenido para un reintento explícito idéntico.</p></form>;
+}

@@ -5,6 +5,7 @@ import { NavigationProvider, safeReturn, useNavigation } from '@/navigation';
 const WorkspaceEntry = loadScreen(() => import('@/pages/WorkspaceEntry'));
 const Login = loadScreen(() => import('@/pages/Login'));
 const UnavailablePage = loadScreen(() => import('@/pages/UnavailablePage'));
+const Portfolio = loadScreen(() => import('@/pages/Portfolio'));
 export default function App() {
   return <NavigationProvider><ThemeProvider><AccessProvider><AccessGate /></AccessProvider></ThemeProvider></NavigationProvider>;
 }
@@ -21,5 +22,5 @@ function AccessGate() {
   if (checking) return <main className="page"><h1>Verificando sesión…</h1></main>;
   if (!signedIn) return <RouteContent><Login /></RouteContent>;
   const workspaceRoute = path === '/' || login || /^\/workspace(?:\/[^/]+(?:\/proyectos(?:\/[^/]+(?:\/[^/]+)?)?)?)?$/.test(path);
-  return <RouteContent>{workspaceRoute ? <WorkspaceEntry /> : <UnavailablePage />}</RouteContent>;
+  return <RouteContent>{path === '/portafolio' ? <Portfolio/> : workspaceRoute ? <WorkspaceEntry /> : <UnavailablePage />}</RouteContent>;
 }

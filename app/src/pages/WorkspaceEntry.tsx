@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { LuMoon, LuSun, LuArrowRight } from 'react-icons/lu';
+import { LuArrowRight } from 'react-icons/lu';
 import { Button, TextInput, Icon, Spinner } from '@/components/atoms/catalog';
-import { useAccess, useTheme } from '@/data/access';
+import { useAccess } from '@/data/access';
 import { ApiError } from '@/data/client';
 import { createWorkspace, listWorkspaces, workspacePath, workspaceSession, type WorkspaceSummary, type WorkspaceSession } from '@/data/workspaces';
-import { Link, useNavigation } from '@/navigation';
-import logo from '@/assets/img/tivit-logo-no-bg.png';
+import { useNavigation } from '@/navigation';
+import {ApplicationHeader} from '@/components/organisms/application-header';
 import '@/design-system/workspaces.css';
 import WorkspaceArea from './WorkspaceArea';
 
 export default function WorkspaceEntry() {
   const { url, navigate } = useNavigation();
   const { signOut } = useAccess();
-  const { light, toggle } = useTheme();
+
   const [session, setSession] = useState<WorkspaceSession | null>(null);
   const [items, setItems] = useState<WorkspaceSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,14 +71,14 @@ export default function WorkspaceEntry() {
     finally { pending.current = false; setBusy(false); }
   }
   return <div className="workspace-experience">
-    <header className="workspace-header"><Link href="/workspace"><img src={logo} alt="TIVIT" /><span>PMO</span></Link><div><span>{session?.identifier}</span><Button variant="ghost" aria-label="Cambiar tema" onClick={toggle}><Icon glyph={light ? LuMoon : LuSun} /></Button><Button variant="ghost" onClick={() => { void signOut().then(() => navigate('/login', true)).catch(report); }}>Cerrar sesión</Button></div></header>
+    <ApplicationHeader identifier={session?.identifier} onError={report}/>
     {selected && !creating && !loading && !error ? <WorkspaceArea workspace={selected} session={session!} /> : <main id="contenido" className="workspace-onboarding">
       {loading ? <><Spinner /><h1>Cargando workspaces…</h1></> : <>
         <h1>{creating || (!items.length && canCreate && !error) ? 'Crea tu workspace' : 'Tus workspaces'}</h1>
         {error && <div role="alert"><p>{error}</p><Button onClick={() => { void load(); }}>Reintentar</Button></div>}
         {id && !selected && !error && <p role="alert">El workspace no está disponible para tu sesión. Selecciona otro espacio.</p>}
         {!error && !items.length && !canCreate && <p>No tienes workspaces accesibles ni permiso para crear uno. Solicita acceso a tu administrador.</p>}
-        {(creating || (!items.length && canCreate && !error)) && canCreate ? <form onSubmit={event => { void submit(event); }} noValidate><p>Define el nombre de tu espacio de trabajo.</p><label htmlFor="workspace-name">Nombre del workspace</label><TextInput id="workspace-name" name="nombre" required maxLength={200} value={nombre} onChange={event => { setNombre(event.target.value); setFieldError(''); }} error={!!fieldError} aria-describedby={fieldError ? 'workspace-name-error' : undefined} /><p id="workspace-name-error" role={fieldError ? 'alert' : undefined}>{fieldError}</p><div><Button type="submit" variant="primary" loading={busy}>Crear workspace</Button>{items.length > 0 && <Button disabled={busy} onClick={() => setCreating(false)}>Volver</Button>}</div></form> : <><div className="workspace-options">{!error && items.map(item => <Button key={item.id} onClick={() => navigate(workspacePath(item.id))}><span><strong>{item.nombre}</strong><small>{item.slug}</small></span><Icon glyph={LuArrowRight} /></Button>)}</div>{canCreate && !error && <Button variant="primary" onClick={() => setCreating(true)}>Crear workspace</Button>}</>}
+        {(creating || (!items.length && canCreate && !error)) && canCreate ? <form onSubmit={event => { void submit(event); }} noValidate><p>Crea tu workspace</p><label htmlFor="workspace-name">Nombre del workspace</label><TextInput id="workspace-name" name="nombre" required maxLength={200} value={nombre} onChange={event => { setNombre(event.target.value); setFieldError(''); }} error={!!fieldError} aria-describedby={fieldError ? 'workspace-name-error' : undefined} /><p id="workspace-name-error" role={fieldError ? 'alert' : undefined}>{fieldError}</p><div><Button type="submit" variant="primary" loading={busy}>Crear workspace</Button>{items.length > 0 && <Button disabled={busy} onClick={() => setCreating(false)}>Volver</Button>}</div></form> : <><div className="workspace-options">{!error && items.map(item => <Button key={item.id} onClick={() => navigate(workspacePath(item.id))}><span><strong>{item.nombre}</strong><small>{item.slug}</small></span><Icon glyph={LuArrowRight} /></Button>)}</div>{canCreate && !error && <Button variant="primary" onClick={() => setCreating(true)}>Crear workspace</Button>}</>}
       </>}
     </main>}
   </div>;
