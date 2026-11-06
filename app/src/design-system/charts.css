@@ -1,0 +1,7 @@
+.pmo-progress-chart { min-width: 0; color: var(--foreground); font-family: var(--gpl-font-body); }
+.pmo-progress-plot { width: 100%; height: 320px; min-width: 0; font-size: 12px; }
+.pmo-progress-chart summary { cursor: pointer; margin-block: 16px; }
+.pmo-chart-table { max-width: 100%; overflow-x: auto; }
+.pmo-chart-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.pmo-chart-table :is(th, td) { padding: 8px; border-bottom: 1px solid var(--border); text-align: start; }
+@media (max-width: 480px) { .pmo-progress-plot { height: 280px; } }
