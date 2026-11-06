@@ -81,3 +81,30 @@ test('401 al crear termina la sesión y vuelve a login sin bootstrap',async()=>{
   await screen.findByRole('heading',{name:'Inicia sesión'});
   expect(location.pathname).toBe('/login');expect(calls).not.toContain('/api/v1/datos');
 });
+test('login real por contrato llega al selector sin datos legacy',async()=>{
+  let authenticated=false;const calls:string[]=[];
+  vi.stubGlobal('fetch',vi.fn(async(path:string,init?:RequestInit)=>{
+    calls.push(path);
+    if(path==='/api/v1/sesion') {
+      if(init?.method==='POST'){expect(JSON.parse(String(init.body))).toEqual({identifier:'persona@example.test',password:'clave-prueba'});authenticated=true;}
+      return new Response(JSON.stringify(authenticated?{data:session}:{error:{message:'Sin sesión'}}),{status:authenticated?200:401});
+    }
+    return new Response(JSON.stringify({data:[workspace]}));
+  }));
+  render(<App/>);
+  fireEvent.change(await screen.findByLabelText('Identificación'),{target:{value:'persona@example.test'}});
+  fireEvent.change(screen.getByLabelText('Contraseña'),{target:{value:'clave-prueba'}});
+  fireEvent.click(screen.getByRole('button',{name:/Entrar a mi espacio/}));
+  await screen.findByRole('button',{name:/Equipo PMO/});expect(calls).not.toContain('/api/v1/datos');
+});
+test('doble envío solo inicia una creación',async()=>{
+  let finish!:()=>void;let posts=0;
+  vi.stubGlobal('fetch',vi.fn(async(path:string,init?:RequestInit)=>{
+    if(path==='/api/v1/sesion')return new Response(JSON.stringify({data:session}));
+    if(init?.method==='POST'){posts++;await new Promise<void>(resolve=>{finish=resolve;});return new Response(JSON.stringify({data:workspace}),{status:201});}
+    return new Response(JSON.stringify({data:posts?[workspace]:[]}));
+  }));
+  render(<App/>);fireEvent.change(await screen.findByLabelText('Nombre del workspace'),{target:{value:'Equipo PMO'}});
+  const button=screen.getByRole('button',{name:'Crear workspace'});fireEvent.click(button);fireEvent.click(button);
+  expect(posts).toBe(1);expect(button).toBeDisabled();finish();await screen.findByRole('heading',{name:'Te damos la bienvenida a Equipo PMO'});
+});
