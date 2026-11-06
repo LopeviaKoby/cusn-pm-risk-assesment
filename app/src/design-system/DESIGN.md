@@ -82,6 +82,12 @@ colors:
   chart-5-dark: "#BEA0FF"
 ```
 
+## Composiciones de selección y gráficos
+
+`SearchableSelect` es una molécula de búsqueda sin acceso API, compuesta con Button, TextInput, Icon y Spinner canónicos. Distingue consulta pendiente, resultados completos/parciales, vacío, error y disabled; solo un vacío confirmado puede ofrecer una acción contextual autorizada. `CreateClientDialog` reutiliza Radix Dialog y los átomos; no define permisos ni persistencia local.
+
+`ProgressChart` presenta series explícitas con Recharts 3.10.1 y carga diferida; sin puntos conserva el estado de indisponibilidad. Usa los alias de plan/real existentes, trazo discontinuo/continuo, tabla alternativa y no conecta períodos sin dato. No anima las series ni calcula métricas. No introducir paletas paralelas ni datos sintéticos en páginas productivas. Los fixtures de Storybook sirven para verificar ambos temas y reflow.
+
 ## Typography
 
 Las 14 funciones siguientes reflejan exactamente tamaño, peso, interlineado y tracking de `fonts.css`. Google Sans sirve a cabeceras, subtítulo y métrica; Manrope a cuerpo y controles. Los archivos variables locales se sirven en WOFF2, generados sin subsetting desde los TTF con `scripts/convert-fonts.py`; conservan ejes, caracteres y licencias OFL. Fallback `"Segoe UI", sans-serif`, `font-display: swap` y `font-synthesis: none` en `app.css`. Usar números tabulares para métricas, fechas, porcentajes y columnas alineadas. Texto pequeño y metadatos deben seguir legibles y no reemplazar un arreglo de layout.

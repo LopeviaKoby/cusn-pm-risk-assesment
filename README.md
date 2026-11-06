@@ -56,11 +56,25 @@ El alta envía exclusivamente `{workspaceId,tvt,nombre,clienteId,paisId,lobId,pm
 | workspaceId | Obligatorio, ID estable | Workspace autorizado seleccionado |
 | tvt | Obligatorio, trim, 1–80; unicidad global en servidor | Entrada de usuario |
 | nombre | Obligatorio, trim, 1–200 | Entrada de usuario |
-| clienteId, paisId, lobId | Obligatorios, IDs positivos string | Catálogos públicos ausentes: selects y submit bloqueados |
-| pmTitularId | Opcional en HTTP; requerido para ADMIN; PM autoasignado si es elegible | Catálogo de titulares elegibles ausente; no se inventan IDs |
+| clienteId, paisId, lobId | Obligatorios, IDs positivos string | GET /api/v1/catalogos según disponibilidad del entorno; IDs persistentes, nunca ISO |
+| pmTitularId | Opcional en HTTP; requerido para ADMIN; PM autoasignado si es elegible | GET /api/v1/workspaces/:id/elegibles?para=PM_TITULAR; sin usuarios inventados |
 | Clasificación, fechas, línea base, descripción, TCV, moneda, presupuesto, documentos | Diferidos, fuera del POST estricto | Información no editable; sin persistencia simulada |
 
-`ProjectCreateForm` acepta catálogos tipados como punto de composición futuro; la aplicación entrega `null` porque el router v2.1.0 no publica esos catálogos. Solo las pruebas usan opciones sintéticas. El permiso `proyectos.crear` y el rol efectivo condicionan el acceso al formulario; la membresía/habilitación contextual y la elegibilidad final corresponden al servidor. Un POST no se reintenta automáticamente ante pérdida de red.
+`ProjectCreateForm` es la única composición de alta. `useProjectCatalogs` consulta los contratos registrados en el router y OpenAPI locales mediante `api()` y cookies de mismo origen. Cliente y PM buscan en servidor (`q`, debounce y cancelación); País y LOB filtran los registros recibidos. Los límites de 100 sin cursor impiden afirmar exhaustividad cuando se alcanza el límite: se indica resultado parcial. La búsqueda remota sigue las coincidencias del servidor; el filtro local ignora case, acentos y espacios para presentación. Cada campo tiene disponibilidad independiente; errores no son catálogos vacíos. Un 404 del entorno muestra indisponibilidad y reintento sin opciones falsas.
+
+`SearchableSelect` compone botones e input nativos, sin API ni semántica ARIA de combobox incompleta. `CreateClientDialog` usa Radix Dialog y solicita solo nombre; conserva el proyecto, valida identidad string de respuesta, deduplica por ID y selecciona tras éxito persistente. La aplicación **no habilita Agregar registro**: aún no hay ruta ni permiso de alta de clientes verificados. Los callbacks sintéticos viven solo en tests/Storybook; guardar sin servicio muestra un error contextual sin simular persistencia. `proyectos.crear` no concede alta de clientes. LOB, País y PM no tienen alta inline. La autorización final corresponde al servidor. No se reintenta automáticamente un POST incierto.
+
+| Necesidad backend | Contrato local comprobado / pendiente | Respuesta y condiciones |
+| --- | --- | --- |
+| Clientes, países y LOB activos | Existente: `GET /api/v1/catalogos?limit=100&q=…` | `{data:{clientes:[{id,nombre,sector}],paises:[{id,codigo,nombre}],lobs:[{id,nombre}],…}}`; actor interno con `proyectos.consultar`; 401/403/422/5xx. `q` filtra clientes; países/LOB limitados a 100. Falta cursor/metadatos de exhaustividad para catálogos mayores. |
+| PM elegibles por workspace | Existente: `GET /api/v1/workspaces/:id/elegibles?para=PM_TITULAR&limit=100&q=…` | `{data:{items:[{usuarioId,nombre,email,tipoUsuario,rol,miembroActivo,puedeCrearProyectos}]}}`; autorización contextual Head/PM. Solo candidatos internos PM con membresía activa; sin invitar. Sin cursor: se informa parcial al alcanzar límite. |
+| Alta de cliente | **Propuesto, no implementado: URL y permiso por definir en backend** | Entrada mínima `{nombre}`; opcionales solo tras contrato HTTP. Respuesta persistente mínima `{data:{id:string,nombre:string}}`, status por definir. Permiso propio, validación 422, 401/403/5xx y regla de duplicación/concurrencia definida antes de atribuir 409 a duplicado. Sin fusión automática. |
+
+### Gráficos de presentación
+
+Recharts **3.10.1** (MIT, peer React 19) se carga de forma diferida por `ProgressChart`/`progress-plot`. `react-is` es una dependencia directa **19.3.0**, igual que React, según el [README oficial de Recharts 3.10.1](https://github.com/recharts/recharts/blob/v3.10.1/README.md). No hay override de react-is en package.json ni pnpm-workspace.yaml: Recharts 3 consume el peer explícito; otras herramientas conservan sus dependencias compatibles. Se mantienen los overrides de seguridad ajenos a esta biblioteca.
+
+Las líneas usan `--chart-planned`/`--chart-real`, texto/superficies/bordes canónicos y Manrope; planificado discontinuo y real continuo, tabla alternativa y huecos `null` sin conectar. No hay animación ni cálculos de dominio. El resumen utiliza el componente sin series y conserva su estado vacío; Recharts no se descarga hasta que existan puntos. Storybook tiene series sintéticas claramente identificadas, excluidas del producto.
 
 | Sección 360° | Dato real disponible | Brecha / presentación actual |
 | --- | --- | --- |
@@ -77,7 +91,7 @@ Las comprobaciones focalizadas están en `tests/projects.test.tsx`, `tests/front
 
 El diseño visual y Atomic Design se documentan en [`app/src/design-system/DESIGN.md`](app/src/design-system/DESIGN.md) y [`AGENTS.md`](AGENTS.md). `specs/migracion-apps-script-a-bun.md` conserva decisiones históricas previas a esta estructura; esta página y el código vigente describen el estado ejecutable.
 
-Storybook es un laboratorio local sin API ni datos reales. El canvas importa `app/src/design-system/app.css` y conmuta las clases reales `.light`/`.dark`; conserva las cuatro foundations y presenta exclusivamente 16 átomos. `app/src/stories/atoms/Catalog.stories.tsx` documenta Button, IconButton, TextInput, Checkbox, RadioButton, Switch, Badge, Avatar, TextLink, BreadcrumbItem, TabItem, Spinner, Skeleton, Tooltip, Icon y Divider. `Button` y `Badge` conservan su implementación canónica en `primitives.tsx`; los demás viven en `catalog.tsx`. `tests/atoms-catalog.test.tsx` cubre los contratos funcionales y `scripts/verify-atoms-browser.mjs` comprueba el build servido en Chrome. Las fuentes WOFF2 se regeneran desde los TTF con `py -3 scripts/convert-fonts.py` (FontTools 4.60.1 y Brotli 1.1.0); los OFL permanecen junto a los originales.
+Storybook es un laboratorio local sin API ni datos reales. El canvas importa `app/src/design-system/app.css` y conmuta las clases reales `.light`/`.dark`; conserva las cuatro foundations y los 16 átomos, y añade composiciones sintéticas en Fixtures para catálogos/modal y gráficos. `app/src/stories/atoms/Catalog.stories.tsx` documenta Button, IconButton, TextInput, Checkbox, RadioButton, Switch, Badge, Avatar, TextLink, BreadcrumbItem, TabItem, Spinner, Skeleton, Tooltip, Icon y Divider. `Button` y `Badge` conservan su implementación canónica en `primitives.tsx`; los demás viven en `catalog.tsx`. `tests/atoms-catalog.test.tsx` cubre los contratos funcionales y `scripts/verify-atoms-browser.mjs` comprueba el build servido en Chrome. Las fuentes WOFF2 se regeneran desde los TTF con `py -3 scripts/convert-fonts.py` (FontTools 4.60.1 y Brotli 1.1.0); los OFL permanecen junto a los originales.
 
 ## Foundry (solo `dev-tvt-foundry`)
 

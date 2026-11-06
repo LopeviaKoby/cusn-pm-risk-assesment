@@ -1,5 +1,34 @@
 import { expect, test } from '@playwright/test';
 
+test('catálogos HTTP permiten seleccionar IDs persistentes y crear como ADMIN sin bootstrap', async ({ page }) => {
+  const calls: string[] = []; let payload: unknown;
+  const project = { id: '9007199254740994', workspaceId: '12', tvt: 'TVT-CAT', nombre: 'Proyecto catálogo', version: '1', estado: 'p1p2-required' };
+  await page.route('**/api/**', async route => {
+    const url = new URL(route.request().url()); calls.push(url.pathname); let data: unknown;
+    if (url.pathname === '/api/v1/sesion') data = { identifier: 'fixture@example.invalid', expiresAt: '2099-01-01T00:00:00Z', role: 'ADMIN', permissions: ['workspaces.consultar', 'proyectos.consultar', 'proyectos.crear'] };
+    else if (url.pathname === '/api/v1/workspaces') data = [{ id: '12', nombre: 'Workspace de prueba', slug: 'prueba', version: '1' }];
+    else if (url.pathname === '/api/v1/catalogos') data = { clientes: [{ id: '9007199254740993', nombre: 'Cliente sintético', sector: null }], paises: [{ id: '100', nombre: 'Chile', codigo: 'CHL' }], lobs: [{ id: '20', nombre: 'LOB sintético' }] };
+    else if (url.pathname === '/api/v1/workspaces/12/elegibles') data = { items: [{ usuarioId: '30', nombre: 'PM sintético', email: 'fixture@example.invalid', rol: 'PM', tipoUsuario: 'INTERNO', miembroActivo: true, puedeCrearProyectos: true }] };
+    else if (url.pathname === '/api/v1/proyectos' && route.request().method() === 'POST') { payload = route.request().postDataJSON(); await route.fulfill({ status: 201, json: { data: project } }); return; }
+    else if (url.pathname === '/api/v1/proyectos') data = [];
+    else if (url.pathname === `/api/v1/proyectos/${project.id}`) data = project;
+    else throw new Error('Endpoint inesperado: ' + url.pathname);
+    await route.fulfill({ json: { data } });
+  });
+  await page.goto('/workspace/12/proyectos/nuevo');
+  await page.getByLabel(/^TVT/).fill(' TVT-CAT ');
+  await page.getByLabel(/^Nombre del proyecto/).fill(' Proyecto catálogo ');
+  for (const [field, option] of [['Cliente', 'Cliente sintético'], ['País', 'Chile'], ['LOB', 'LOB sintético'], ['PM titular', 'PM sintético']]) {
+    await expect(page.getByLabel(new RegExp('^' + field))).toBeEnabled();
+    await page.getByLabel(new RegExp('^' + field)).click();
+    await page.getByRole('group', { name: 'Opciones de ' + field }).getByRole('button', { name: new RegExp(option!) }).click();
+  }
+  await page.getByRole('button', { name: 'Crear proyecto', exact: true }).click();
+  await expect(page.getByRole('heading', { name: project.nombre })).toBeVisible();
+  expect(payload).toEqual({ workspaceId: '12', tvt: 'TVT-CAT', nombre: 'Proyecto catálogo', clienteId: '9007199254740993', paisId: '100', lobId: '20', pmTitularId: '30' });
+  expect(calls).not.toContain('/api/v1/datos');
+});
+
 test('listado, formulario bloqueado y ficha 360 sin endpoints retirados ni contenido ficticio', async ({ page }) => {
   const unexpected: string[] = [], errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
@@ -10,6 +39,7 @@ test('listado, formulario bloqueado y ficha 360 sin endpoints retirados ni conte
     else if (url.pathname === '/api/v1/workspaces') data = [{ id: '12', nombre: 'Workspace de pruebas', slug: 'workspace-test', version: '1' }];
     else if (url.pathname === '/api/v1/proyectos' && route.request().method() === 'GET') data = [project];
     else if (url.pathname === `/api/v1/proyectos/${project.id}`) data = project;
+    else if (url.pathname === '/api/v1/catalogos' || url.pathname === '/api/v1/workspaces/12/elegibles') { await route.fulfill({ status: 404, json: { error: { message: 'Catálogo no disponible en este entorno de prueba' } } }); return; }
     else { unexpected.push(route.request().method() + ' ' + url.pathname); await route.fulfill({ status: 404, json: { error: { message: 'Endpoint no permitido' } } }); return; }
     await route.fulfill({ status: 200, json: { data } });
   });

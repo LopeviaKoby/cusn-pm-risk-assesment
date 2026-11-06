@@ -1,0 +1,20 @@
+.catalog-field { position:relative; min-width:0; display:flex; flex-direction:column; gap:var(--space-2); font-size:var(--type-label-size); }
+.catalog-field>label { display:block; }
+.catalog-field .catalog-trigger { width:100%; min-width:0; justify-content:space-between; text-align:left; font-weight:var(--font-weight-regular); border-color:var(--input); border-radius:var(--radius-sm); white-space:normal; }
+.catalog-trigger>span { min-width:0; overflow-wrap:anywhere; }
+.catalog-field .catalog-panel { position:absolute; top:calc(100% + var(--space-1)); left:0; width:100%; min-width:0; z-index:10; max-height:min(360px,70vh); overflow-y:auto; padding:var(--space-2); border:1px solid var(--input); border-radius:var(--radius-sm); background:var(--surface); color:var(--foreground); box-shadow:var(--gpl-shadow-overlay); }
+.catalog-search { display:flex; gap:var(--space-2); align-items:center; padding:var(--space-1); border-bottom:1px solid var(--divider); margin-bottom:var(--space-1); }
+.catalog-search .atom-input { width:100%; min-width:0; border:0; background:transparent; padding:var(--space-1); min-height:32px; }
+.catalog-options { list-style:none; margin:0; padding:0; display:grid; gap:var(--space-1); }
+.catalog-options .button { width:100%; justify-content:space-between; border-radius:var(--radius-sm); text-align:left; white-space:normal; padding:var(--space-2); font-weight:var(--font-weight-regular); }
+.catalog-options .button[aria-pressed=true] { background:var(--accent); color:var(--foreground); }
+.catalog-options small { display:block; }
+.catalog-feedback { padding:var(--space-2); display:flex; flex-wrap:wrap; gap:var(--space-2); align-items:center; font-size:var(--type-body-sm-size); }
+.catalog-field .catalog-add-link { padding:0; min-height:32px; text-decoration:underline; text-underline-offset:3px; color:var(--link); font-size:var(--type-body-sm-size); }
+.client-dialog-overlay { z-index:30; }
+.record-dialog.client-dialog { z-index:31; width:min(520px,calc(100vw - 32px)); color:var(--foreground); font-family:var(--gpl-font-body); }
+.client-dialog-description { padding:var(--space-4) var(--space-6) 0; color:var(--text-secondary); }
+.client-dialog .record-dialog-body { display:grid; gap:var(--space-3); }
+.client-dialog .atom-input { width:100%; }
+.client-dialog .record-dialog-footer { display:flex; flex-wrap:wrap; }
+.client-dialog .button { white-space:normal; }
