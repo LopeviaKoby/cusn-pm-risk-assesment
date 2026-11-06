@@ -1,0 +1,46 @@
+/* Atom contracts use the existing semantic theme roles. */
+.button:is(.button-sm,.button-md,.button-lg) { font-family: var(--font-body); font-size: var(--type-action-size); line-height: var(--type-action-line); font-weight: var(--type-action-weight); transition: background-color .15s ease, transform .1s ease, opacity .15s ease; }
+.button.button-sm { min-height: 32px; padding: var(--space-1) var(--space-2); }
+.button.button-md { min-height: 40px; padding: var(--space-2) var(--space-3); }
+.button.button-lg { min-height: 48px; padding: var(--space-3) var(--space-4); }
+.button.button-destructive { background: var(--color-danger-surface); color: var(--color-danger); border-color: var(--color-danger); }
+.button.button-destructive:hover { background: color-mix(in srgb, var(--color-danger-surface) 75%, var(--color-danger)); }
+.button:active:not(:disabled) { transform: translateY(1px); }
+.button:disabled { opacity: .55; cursor: not-allowed; }
+.atom-icon-button { padding: 0; aspect-ratio: 1; flex: none; }
+.atom-icon { display: inline-block; flex: none; color: currentColor; stroke-width: 0; }
+.atom-icon-sm { width: 16px; height: 16px; }
+.atom-icon-md { width: 20px; height: 20px; }
+.atom-icon-lg { width: 24px; height: 24px; }
+.atom-input { width: min(100%, 320px); min-width: 0; border: 1px solid var(--input); border-radius: var(--radius-sm); background: var(--surface); color: var(--foreground); padding: var(--space-2) var(--space-3); font-family: var(--font-body); font-size: var(--type-entry-size); line-height: var(--type-entry-line); }
+.atom-input-sm { min-height: 32px; } .atom-input-md { min-height: 40px; } .atom-input-lg { min-height: 48px; }
+.atom-input[aria-invalid="true"] { border-color: var(--color-danger); box-shadow: 0 0 0 1px var(--color-danger); }
+.atom-input:disabled { background: var(--muted); opacity: .6; cursor: not-allowed; }
+.atom-check, .atom-radio { width: 20px; height: 20px; margin: 0; accent-color: var(--link); cursor: pointer; }
+.atom-check:disabled, .atom-radio:disabled, .atom-switch:disabled { opacity: .5; cursor: not-allowed; }
+.atom-switch { appearance: none; position: relative; width: 44px; height: 24px; margin: 0; border: 1px solid var(--input); border-radius: var(--gpl-radius-full); background: var(--muted); cursor: pointer; transition: background-color .15s ease; }
+.atom-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--foreground); transition: transform .15s ease; }
+.atom-switch:checked { background: var(--link); }
+.atom-switch:checked::after { transform: translateX(20px); background: var(--background); }
+.atom-avatar { display: inline-flex; align-items: center; justify-content: center; flex: none; overflow: hidden; border-radius: var(--gpl-radius-full); background: var(--accent); color: var(--foreground); border: 1px solid var(--border); font: var(--font-weight-semibold) var(--type-caption-size)/1 var(--font-body); }
+.atom-avatar-sm { width: 28px; height: 28px; } .atom-avatar-md { width: 36px; height: 36px; } .atom-avatar-lg { width: 48px; height: 48px; }
+.atom-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.atom-link, .atom-breadcrumb { color: var(--link); text-underline-offset: 3px; }
+.atom-link { display: inline-flex; gap: var(--space-1); align-items: center; overflow-wrap: anywhere; }
+.atom-link:hover, .atom-breadcrumb:hover { text-decoration-thickness: 2px; }
+.atom-breadcrumb[aria-current="page"] { color: var(--foreground); font-weight: var(--font-weight-semibold); }
+.atom-tab { min-height: 40px; padding: var(--space-2) var(--space-3); border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--text-secondary); font: var(--type-action-weight) var(--type-action-size)/var(--type-action-line) var(--font-body); }
+.atom-tab:hover { color: var(--foreground); background: var(--accent); }
+.atom-tab[data-selected="true"] { border-bottom-color: var(--link); color: var(--foreground); }
+.atom-tab:disabled { opacity: .5; cursor: not-allowed; }
+.atom-spinner { display: inline-block; flex: none; width: 20px; height: 20px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: atom-spin .7s linear infinite; }
+.atom-spinner-sm { width: 16px; height: 16px; } .atom-spinner-lg { width: 28px; height: 28px; }
+@keyframes atom-spin { to { transform: rotate(360deg); } }
+.atom-skeleton { display: block; max-width: 100%; border-radius: var(--radius-sm); background: var(--accent); animation: atom-pulse 1.5s ease-in-out infinite alternate; }
+@keyframes atom-pulse { to { opacity: .45; } }
+.atom-tooltip { position: relative; display: inline-flex; }
+.atom-tooltip-bubble { position: absolute; z-index: 2; bottom: calc(100% + var(--space-2)); left: 50%; transform: translateX(-50%); width: max-content; max-width: min(280px, 80vw); padding: var(--space-2) var(--space-3); border-radius: var(--radius-sm); background: var(--foreground); color: var(--background); font: var(--type-caption-weight, 500) var(--type-caption-size)/var(--type-caption-line) var(--font-body); opacity: 0; pointer-events: none; }
+.atom-tooltip:hover .atom-tooltip-bubble, .atom-tooltip:focus-within .atom-tooltip-bubble { opacity: 1; }
+.atom-divider { display: block; align-self: stretch; background: var(--divider); }
+.atom-divider-horizontal { width: 100%; height: 1px; } .atom-divider-vertical { width: 1px; min-height: 24px; }
+@media (prefers-reduced-motion: reduce) { .button, .atom-switch, .atom-switch::after { transition: none; } .atom-spinner, .atom-skeleton { animation: none; } }

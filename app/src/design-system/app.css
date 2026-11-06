@@ -1,6 +1,7 @@
 @import "tailwindcss" source(none);
 @import "./fonts.css";
 @import "./tokens.css";
+@import "./atoms.css";
 @source "../";
 @source "../../../index.html";
 
