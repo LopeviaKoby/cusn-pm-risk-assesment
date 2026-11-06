@@ -11,8 +11,6 @@ export const projectViews = [
 ] as const;
 const lifecycle: Record<string, string> = { 'p1p2-required': 'Requiere P1P2', 'in-progress': 'En ejecución', 'in-handover': 'En transición', 'on-hold': 'Detenido', cancelled: 'Cancelado', 'closed-successfully': 'Cerrado exitoso', 'closed-with-observations': 'Cerrado con observaciones' };
 export const projectStateLabel = (value: string) => lifecycle[value] ?? value;
-// No catalog endpoint is registered in PMO v2.1.0. Never synthesize options.
-export const availableProjectCatalogs: ProjectCatalogs | null = null;
 export const projectListPath = (workspaceId: string) => `/workspace/${encodeURIComponent(workspaceId)}/proyectos`;
 export const projectPath = (workspaceId: string, id: string, view = 'resumen') => `${projectListPath(workspaceId)}/${encodeURIComponent(id)}/${view}`;
 export const PROJECT_PAGE_SIZE = 50;

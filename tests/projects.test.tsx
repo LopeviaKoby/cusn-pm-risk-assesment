@@ -1,15 +1,15 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { ProjectCreateForm } from '../app/src/components/organisms/project-create-form';
 import { ProjectOverview } from '../app/src/components/organisms/project-overview';
 import { createProject, type ProjectCatalogs, type ProjectSummary } from '../app/src/data/projects';
 import App from '../app/src/App';
 
-// Explicit test-only catalogs exercise the future enabled composition. Production passes null.
-vi.mock('@/data/projects', async importOriginal => {
-  const actual = await importOriginal<typeof import('../app/src/data/projects')>();
+// Explicit test-only catalogs isolate router tests; HTTP contracts have their own suite.
+vi.mock('@/data/use-project-catalogs', () => {
   const values = [{ id: '7', nombre: 'Opción sintética de test' }];
-  return { ...actual, availableProjectCatalogs: { clientes: values, paises: values, lobs: values, titulares: values } };
+  const resource = { status: 'ready', options: values, complete: true };
+  return { useProjectCatalogs: () => ({ sources: { clientes: resource, paises: resource, lobs: resource, titulares: resource }, retry: vi.fn() }) };
 });
 
 const workspace = { id: '9007199254740993', nombre: 'Workspace de prueba', slug: 'workspace-prueba', version: '1' };
@@ -26,13 +26,16 @@ function form(role = 'PM', sources: ProjectCatalogs | null = catalogs, permissio
 function fill(admin = false) {
   fireEvent.change(screen.getByLabelText(/^TVT/), { target: { value: '  TVT-PRUEBA  ' } });
   fireEvent.change(screen.getByLabelText(/^Nombre del proyecto/), { target: { value: '  Proyecto de prueba  ' } });
-  for (const label of [/^Cliente/, /^País/, /^LOB/, ...(admin ? [/^PM titular/] : [])]) fireEvent.change(screen.getByLabelText(label), { target: { value: '7' } });
+  for (const label of ['Cliente', 'País', 'LOB', ...(admin ? ['PM titular'] : [])]) {
+    fireEvent.click(screen.getByLabelText(new RegExp('^' + label)));
+    fireEvent.click(within(screen.getByRole('group', { name: `Opciones de ${label}` })).getByRole('button', { name: /Opción sintética/ }));
+  }
 }
 test('sin catálogos el alta está bloqueada sin IDs ni requests inventados', () => {
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher); form('PM', null);
   expect(screen.getByRole('button', { name: 'Crear proyecto' })).toBeDisabled();
   expect(screen.getByLabelText(/^Cliente/)).toBeDisabled();
-  expect(screen.getByText('Creación bloqueada por catálogos no disponibles')).toBeVisible();
+  expect(screen.getByText('Algunos catálogos no están disponibles')).toBeVisible();
   expect(fetcher).not.toHaveBeenCalled();
 });
 test.each(['PM', 'ADMIN'])('201 envía únicamente el contrato estricto para %s', async role => {
@@ -44,8 +47,7 @@ test.each(['PM', 'ADMIN'])('201 envía únicamente el contrato estricto para %s'
 });
 test('ADMIN requiere titular y PM lo delega al servidor', async () => {
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher); form('ADMIN'); fill();
-  fireEvent.click(screen.getByRole('button', { name: 'Crear proyecto' }));
-  expect(await screen.findByText('Selecciona una opción válida.')).toBeVisible(); expect(fetcher).not.toHaveBeenCalled();
+  expect(screen.getByRole('button', { name: 'Crear proyecto' })).toBeDisabled(); expect(fetcher).not.toHaveBeenCalled();
 });
 test('required y límites se comprueban sin POST', async () => {
   const fetcher = vi.fn(); vi.stubGlobal('fetch', fetcher); form(); fill();
