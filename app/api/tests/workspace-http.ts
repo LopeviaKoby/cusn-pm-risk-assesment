@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import { strict as assert } from "node:assert";
 import { SQL } from "bun";
 
@@ -19,7 +20,7 @@ const { closeDatabase } = await import("../src/db");
 const origin = "http://127.0.0.1:4173";
 const request = (method: string, path: string, body?: unknown, cookie?: string) => new Request(`http://127.0.0.1:43001/api/v1/${path}`, {
   method, headers: { origin, ...(cookie ? { cookie } : {}), ...(body ? { "content-type": "application/json" } : {}) },
-  body: body ? JSON.stringify(body) : undefined,
+  body: body ? JSON.stringify(registrationFixture(method,path,body)) : undefined,
 });
 async function cookie(email: string) {
   const response = await handleRequest(request("POST","sesion",{identifier:email,password}));

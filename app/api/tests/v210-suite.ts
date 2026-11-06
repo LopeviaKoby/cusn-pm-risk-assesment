@@ -16,7 +16,17 @@ try{
   await db`CREATE SCHEMA pmo`;
   await db`CREATE TABLE pmo.sentinel(value text PRIMARY KEY)`;
   await db`INSERT INTO pmo.sentinel VALUES ('intacto')`;
+  await migrate(db,'012_g1_baseline_guard.sql');
+  const [g1]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn_meta.migracion`;
+  assert.equal(g1?.n,'2');
+  await migrate(db,'013_clientes_crear.sql');
+  await db`INSERT INTO pmo_cusn.cliente(nombre) VALUES ('Testigo actualización G1')`;
+  await migrate(db,'014_flujo11_arranque.sql');
+  await migrate(db,'015_facturacion_manual.sql');
   await migrate(db);await migrate(db);await verifyDatabase(db,false);
+  const [preserved]=await db<{n:string}>`SELECT count(*)::text n FROM pmo_cusn.cliente WHERE nombre='Testigo actualización G1'`;
+  assert.equal(preserved?.n,'1');
+  console.log('PASS actualización incremental real 011–015 G1/Flujo1.1/Facturacion → 016, preservando cliente existente.');
   const manifest=JSON.parse(readFileSync('app/api/migrations/manifest.json','utf8')) as {migrations:Array<{file:string;sha256:string}>};
   await db`UPDATE pmo_cusn_meta.migracion SET sha256=repeat('0',64) WHERE version=${manifest.migrations[0]!.file}`;
   try{await assert.rejects(()=>migrate(db),/otro contenido/);}finally{
@@ -36,14 +46,14 @@ try{
 const password=crypto.randomUUID()+crypto.randomUUID();
 const runtime=Bun.env.TEST_API_DATABASE_URL?new URL(Bun.env.TEST_API_DATABASE_URL):null;
 if(runtime && (runtime.hostname!==url.hostname||runtime.port!==url.port||runtime.pathname!==url.pathname))throw new Error('Runtime y owner deben usar la misma base aislada.');
-const env={...Bun.env,DATABASE_URL:Bun.env.TEST_API_DATABASE_URL??raw,MIGRATOR_DATABASE_URL:raw,TEST_PASSWORD:password,TEST_HEAD_PASSWORD:password,
+const env={...Bun.env,DRIVE_PROVISIONING_ENABLED:'false',DATABASE_URL:Bun.env.TEST_API_DATABASE_URL??raw,MIGRATOR_DATABASE_URL:raw,TEST_PASSWORD:password,TEST_HEAD_PASSWORD:password,
   ...(runtime?{APP_DB_ROLE:decodeURIComponent(runtime.username),APP_DB_PASSWORD:decodeURIComponent(runtime.password)}:{}),
   JWT_SIGNING_KEY:crypto.randomUUID()+crypto.randomUUID(),APP_ORIGINS:'http://127.0.0.1:4173',COOKIE_SECURE:'false',
   BOOTSTRAP_CONFIRM_DATABASE:url.pathname.slice(1),BOOTSTRAP_HEAD_EMAIL:'head@example.invalid',BOOTSTRAP_HEAD_PASSWORD:password};
 const artifacts='.tools/backend-v210-evidence';mkdirSync(artifacts,{recursive:true});
 const results:Array<{script:string;exitCode:number|null;output:string}>=[];
 for(const script of [...(runtime?['scripts/bootstrap-db','scripts/verify-db']:[]),'scripts/bootstrap-head','tests/auth-smoke','tests/auth-http','tests/auth-negative','tests/workspace-http',
-  'tests/projects-http','tests/transfer-http','tests/substitution-http','tests/governance-http','tests/recovery-http','tests/schema-invariants','tests/access-contracts','tests/g1-portfolio-http','tests/projection','tests/tcp-smoke','scripts/generate-models','scripts/export-openapi']){
+  'tests/projects-http','tests/transfer-http','tests/substitution-http','tests/governance-http','tests/recovery-http','tests/schema-invariants','tests/access-contracts','tests/g1-portfolio-http','tests/client-resources-http','tests/projection','tests/billing-http','tests/drive-http','tests/tcp-smoke','scripts/generate-models','scripts/export-openapi']){
   const child=spawnSync(process.execPath,[`app/api/${script}.ts`,...(script.startsWith('scripts/generate')||script==='scripts/export-openapi'?['--check']:[])],{env,encoding:'utf8'});
   const output=child.stdout+child.stderr;console.log(output.trim());
   results.push({script,exitCode:child.status,output});

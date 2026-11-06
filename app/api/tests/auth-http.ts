@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import { strict as assert } from "node:assert";
 import { SQL } from "bun";
 
@@ -12,7 +13,7 @@ const { handleRequest } = await import("../src/index");
 const { closeDatabase } = await import("../src/db");
 const url = "http://127.0.0.1:43001/api/v1/sesion";
 const request = (method: string, path = "", body?: unknown, cookie?: string, origin = "http://127.0.0.1:4173") => new Request(url + path, {
-  method, headers: { origin, ...(cookie ? { cookie } : {}), ...(body ? { "content-type": "application/json" } : {}) }, body: body ? JSON.stringify(body) : undefined,
+  method, headers: { origin, ...(cookie ? { cookie } : {}), ...(body ? { "content-type": "application/json" } : {}) }, body: body ? JSON.stringify(registrationFixture(method,path,body)) : undefined,
 });
 try {
   const denied = await handleRequest(request("POST", "", { identifier: "head@example.invalid", password: "wrong" }));

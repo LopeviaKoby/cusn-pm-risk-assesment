@@ -61,6 +61,7 @@ export async function editProjectName(
     if (!trimmed || trimmed.length > 200) throw new ApiError(422, "INVALID_NAME", "Nombre de proyecto no válido.");
   }
 
+  if (input.fechaInicio !== undefined || input.fechaTerminoBaseline !== undefined) throw new ApiError(422,'IMMUTABLE_PLAN','La planificacion inicial no es editable.');
   const nextP1p2 = parseOptionalDate("fechaRecepcionP1p2", input.fechaRecepcionP1p2);
   const nextInicio = parseOptionalDate("fechaInicio", input.fechaInicio);
   const nextBaseline = parseOptionalDate("fechaTerminoBaseline", input.fechaTerminoBaseline);

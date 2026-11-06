@@ -23,10 +23,10 @@ export async function catalogHash(db:SQL){
     JOIN pmo_cusn.rol r ON r.id=rp.rol_id JOIN pmo_cusn.permiso p ON p.id=rp.permiso_id ORDER BY r.codigo,p.codigo`;
   return createHash('sha256').update(JSON.stringify({columns,constraints,indexes,functions,triggers,roles,permissions,grants})).digest('hex');
 }
-export async function assertCatalog(db:SQL){
+export async function assertCatalog(db:SQL,expected?:string){
   const manifest=JSON.parse(readFileSync(resolve(import.meta.dirname,'../migrations/manifest.json'),'utf8')) as {catalogSha256:string};
   const actual=await catalogHash(db);
-  if(!manifest.catalogSha256||actual!==manifest.catalogSha256)throw new Error('Drift del catálogo v2.1.0; no se generan modelos ni se acepta la migración.');
+  if(!(expected??manifest.catalogSha256)||actual!==(expected??manifest.catalogSha256))throw new Error('Drift del catálogo v2.1.0; no se generan modelos ni se acepta la migración.');
 }
 if(import.meta.main){
   const db=new SQL({url:Bun.env.MIGRATOR_DATABASE_URL,max:1});

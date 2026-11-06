@@ -1,3 +1,4 @@
+import {registrationFixture} from './registration-fixture';
 import { strict as assert } from 'node:assert';
 import { SQL } from 'bun';
 
@@ -23,7 +24,7 @@ const {handleRequest}=await import('../src/index');
 const {closeDatabase,sql}=await import('../src/db');
 const origin='http://127.0.0.1:4173';
 const send=(method:string,path:string,cookie?:string,body?:unknown)=>handleRequest(new Request(`http://127.0.0.1:43001/api/v1/${path}`,{
-  method,headers:{origin,...(cookie?{cookie}:{}),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(body):undefined}));
+  method,headers:{origin,...(cookie?{cookie}:{}),...(body?{'content-type':'application/json'}:{})},body:body?JSON.stringify(registrationFixture(method,path,body)):undefined}));
 async function cookie(email:string){const response=await send('POST','sesion',undefined,{identifier:email,password});assert.equal(response.status,200);
   return response.headers.getSetCookie().find(value=>value.startsWith('pmo_access='))!.split(';')[0]!;}
 try {

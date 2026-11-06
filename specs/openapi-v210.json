@@ -4357,11 +4357,26 @@
                                   },
                                   "nombre": {
                                     "type": "string"
+                                  },
+                                  "estadoCliente": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "NUEVO",
+                                          "ANTIGUO"
+                                        ]
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
-                                  "nombre"
+                                  "nombre",
+                                  "estadoCliente"
                                 ],
                                 "additionalProperties": false
                               },
@@ -4469,6 +4484,17 @@
                                       }
                                     ]
                                   },
+                                  "inicioReal": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
                                   "terminoBaseline": {
                                     "anyOf": [
                                       {
@@ -4495,6 +4521,7 @@
                                 "required": [
                                   "recepcionP1p2",
                                   "inicio",
+                                  "inicioReal",
                                   "terminoBaseline",
                                   "terminoActual"
                                 ],
@@ -5841,10 +5868,10 @@
         }
       }
     },
-    "/api/v1/catalogos": {
+    "/api/v1/clientes": {
       "get": {
-        "operationId": "get_api_v1_catalogos",
-        "description": "Catálogos maestros activos (países, LOB, servicios LOB, squads, clientes y estados de proyecto) para actores internos.",
+        "operationId": "get_api_v1_clientes",
+        "description": "ADMIN/PM internos activos con consulta de proyectos. Clientes activos; q literal parcial sin distinción de mayúsculas; orden id ASC; cursor after, limit 1–100 (defecto 50). Total del filtro completo, nextCursor solo si hasMore.",
         "x-permission": "proyectos.consultar",
         "security": [
           {
@@ -5863,21 +5890,21 @@
             }
           },
           {
-            "name": "lobId",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "pattern": "^[1-9][0-9]{0,18}$"
-            }
-          },
-          {
             "name": "limit",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string",
               "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
             }
           }
         ],
@@ -5893,96 +5920,7 @@
                     "data": {
                       "type": "object",
                       "properties": {
-                        "paises": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "pattern": "^[1-9][0-9]{0,18}$"
-                              },
-                              "codigo": {
-                                "type": "string"
-                              },
-                              "nombre": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "codigo",
-                              "nombre"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "lobs": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "pattern": "^[1-9][0-9]{0,18}$"
-                              },
-                              "nombre": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "nombre"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "serviciosLob": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "pattern": "^[1-9][0-9]{0,18}$"
-                              },
-                              "lobId": {
-                                "type": "string",
-                                "pattern": "^[1-9][0-9]{0,18}$"
-                              },
-                              "nombre": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "lobId",
-                              "nombre"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "squads": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "id": {
-                                "type": "string",
-                                "pattern": "^[1-9][0-9]{0,18}$"
-                              },
-                              "nombre": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "id",
-                              "nombre"
-                            ],
-                            "additionalProperties": false
-                          }
-                        },
-                        "clientes": {
+                        "items": {
                           "type": "array",
                           "items": {
                             "type": "object",
@@ -5999,41 +5937,651 @@
                                   "string",
                                   "null"
                                 ]
+                              },
+                              "estadoCliente": {
+                                "anyOf": [
+                                  {
+                                    "type": "string",
+                                    "enum": [
+                                      "NUEVO",
+                                      "ANTIGUO"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
                               }
                             },
                             "required": [
                               "id",
                               "nombre",
-                              "sector"
+                              "sector",
+                              "estadoCliente"
                             ],
                             "additionalProperties": false
                           }
                         },
-                        "estadosProyecto": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "enum": [
-                              "Requiere P1P2",
-                              "En ejecución",
-                              "En transición",
-                              "Detenido",
-                              "Cancelado",
-                              "Cerrado exitoso",
-                              "Cerrado con observaciones"
-                            ]
-                          }
+                        "paginacion": {
+                          "type": "object",
+                          "properties": {
+                            "limit": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "total": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "nextCursor": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "limit",
+                            "total",
+                            "hasMore",
+                            "nextCursor"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
-                        "paises",
-                        "lobs",
-                        "serviciosLob",
-                        "squads",
-                        "clientes",
-                        "estadosProyecto"
+                        "items",
+                        "paginacion"
                       ],
                       "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "post_api_v1_clientes",
+        "description": "Propuesta G1 del propietario para desarrollo: ADMIN/PM internos activos y permiso independiente clientes.crear. Producción requiere ratificación. Nombres repetidos permitidos; inserción y auditoría atómicas.",
+        "x-permission": "clientes.crear",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Origen exacto autorizado por APP_ORIGINS; defensa CSRF."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "nombre": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "estadoCliente": {
+                    "type": "string",
+                    "enum": [
+                      "NUEVO",
+                      "ANTIGUO"
+                    ]
+                  }
+                },
+                "required": [
+                  "nombre",
+                  "estadoCliente"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "nombre": {
+                          "type": "string"
+                        },
+                        "sector": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "estadoCliente": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "NUEVO",
+                                "ANTIGUO"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "nombre",
+                        "sector",
+                        "estadoCliente"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/paises": {
+      "get": {
+        "operationId": "get_api_v1_paises",
+        "description": "Lectura G1 de países activos preestablecidos para actores internos con proyectos.consultar. Lista completa, sin truncamiento; sin administración.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]{0,18}$"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "nombre": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "codigo",
+                          "nombre"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/lobs": {
+      "get": {
+        "operationId": "get_api_v1_lobs",
+        "description": "Lectura G1 de LOB activas preestablecidas para actores internos con proyectos.consultar. Lista completa, sin truncamiento; sin administración.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "pattern": "^[1-9][0-9]{0,18}$"
+                          },
+                          "nombre": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "nombre"
+                        ],
+                        "additionalProperties": false
+                      }
                     }
                   },
                   "required": [
@@ -6407,11 +6955,26 @@
                                   },
                                   "nombre": {
                                     "type": "string"
+                                  },
+                                  "estadoCliente": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "enum": [
+                                          "NUEVO",
+                                          "ANTIGUO"
+                                        ]
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
                                   }
                                 },
                                 "required": [
                                   "id",
-                                  "nombre"
+                                  "nombre",
+                                  "estadoCliente"
                                 ],
                                 "additionalProperties": false
                               },
@@ -6519,6 +7082,17 @@
                                       }
                                     ]
                                   },
+                                  "inicioReal": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string",
+                                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
                                   "terminoBaseline": {
                                     "anyOf": [
                                       {
@@ -6545,6 +7119,7 @@
                                 "required": [
                                   "recepcionP1p2",
                                   "inicio",
+                                  "inicioReal",
                                   "terminoBaseline",
                                   "terminoActual"
                                 ],
@@ -6900,6 +7475,54 @@
                 "$schema": "https://json-schema.org/draft/2020-12/schema",
                 "type": "object",
                 "properties": {
+                  "condicionComercial": {
+                    "type": "object",
+                    "properties": {
+                      "tcvTipo": {
+                        "type": "string",
+                        "enum": [
+                          "DEFINIDO",
+                          "ILIMITADO"
+                        ]
+                      },
+                      "tcvValor": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[0-9]{1,16}(\\.[0-9]{1,4})?$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "unidadCodigo": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[A-Z]{3}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "tcvTipo",
+                      "tcvValor",
+                      "unidadCodigo"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "especialistaIds": {
+                    "maxItems": 100,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[1-9][0-9]{0,18}$"
+                    }
+                  },
                   "workspaceId": {
                     "type": "string",
                     "pattern": "^[1-9][0-9]{0,18}$"
@@ -6975,26 +7598,12 @@
                     ]
                   },
                   "fechaInicio": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
                   "fechaTerminoBaseline": {
-                    "anyOf": [
-                      {
-                        "type": "string",
-                        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
+                    "type": "string",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
                   },
                   "referenciaSap": {
                     "anyOf": [
@@ -7031,12 +7640,15 @@
                   }
                 },
                 "required": [
+                  "condicionComercial",
                   "workspaceId",
                   "tvt",
                   "nombre",
                   "clienteId",
                   "paisId",
-                  "lobId"
+                  "lobId",
+                  "fechaInicio",
+                  "fechaTerminoBaseline"
                 ],
                 "additionalProperties": false
               }
@@ -7072,6 +7684,565 @@
                         "version": {
                           "type": "string",
                           "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "Requiere P1P2",
+                            "En ejecución",
+                            "En transición",
+                            "Detenido",
+                            "Cancelado",
+                            "Cerrado exitoso",
+                            "Cerrado con observaciones"
+                          ]
+                        },
+                        "identidad": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "tvt": {
+                              "type": "string"
+                            },
+                            "tvtNormalizado": {
+                              "type": "string"
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "descripcion": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "situacionInicial": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "activo": {
+                              "type": "boolean"
+                            },
+                            "workspace": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "slug": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "slug"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "cliente": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "sector": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "estadoCliente": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "NUEVO",
+                                        "ANTIGUO"
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "sector",
+                                "estadoCliente"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "pais": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "codigo": {
+                                  "type": "string"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "codigo",
+                                "nombre"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "lob": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "squad": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "nombre": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "nombre"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "referenciasInternas": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "sap": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "ceco": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    },
+                                    "pep": {
+                                      "type": [
+                                        "string",
+                                        "null"
+                                      ]
+                                    }
+                                  },
+                                  "required": [
+                                    "sap",
+                                    "ceco",
+                                    "pep"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "tvt",
+                            "tvtNormalizado",
+                            "nombre",
+                            "descripcion",
+                            "situacionInicial",
+                            "activo",
+                            "workspace",
+                            "cliente",
+                            "pais",
+                            "lob",
+                            "squad",
+                            "referenciasInternas"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "gobierno": {
+                          "type": "object",
+                          "properties": {
+                            "estadoActual": {
+                              "type": "string",
+                              "enum": [
+                                "Requiere P1P2",
+                                "En ejecución",
+                                "En transición",
+                                "Detenido",
+                                "Cancelado",
+                                "Cerrado exitoso",
+                                "Cerrado con observaciones"
+                              ]
+                            },
+                            "version": {
+                              "type": "string",
+                              "pattern": "^[1-9][0-9]{0,18}$"
+                            },
+                            "titular": {
+                              "type": "object",
+                              "properties": {
+                                "usuarioId": {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "email": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "usuarioId",
+                                "nombre",
+                                "email"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "participantes": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "usuarioId": {
+                                    "type": "string",
+                                    "pattern": "^[1-9][0-9]{0,18}$"
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "funcion": {
+                                    "type": "string",
+                                    "enum": [
+                                      "PM_TITULAR",
+                                      "ESPECIALISTA",
+                                      "OBSERVADOR",
+                                      "LIDER_TECNICO",
+                                      "TAM",
+                                      "SDM"
+                                    ]
+                                  },
+                                  "fechaInicio": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "usuarioId",
+                                  "nombre",
+                                  "funcion",
+                                  "fechaInicio"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "suplenciaEfectiva": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "delegadoId": {
+                                      "type": "string",
+                                      "pattern": "^[1-9][0-9]{0,18}$"
+                                    },
+                                    "delegadoNombre": {
+                                      "type": "string"
+                                    },
+                                    "inicio": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                    },
+                                    "fin": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                                    },
+                                    "permisos": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "delegadoId",
+                                    "delegadoNombre",
+                                    "inicio",
+                                    "fin",
+                                    "permisos"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            "updatedAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            }
+                          },
+                          "required": [
+                            "estadoActual",
+                            "version",
+                            "titular",
+                            "participantes",
+                            "suplenciaEfectiva",
+                            "createdAt",
+                            "updatedAt"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "condicionComercial": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tcvTipo": {
+                                  "type": "string",
+                                  "enum": [
+                                    "DEFINIDO",
+                                    "ILIMITADO"
+                                  ]
+                                },
+                                "tcvValor": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "unidadCodigo": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "tcvTipo",
+                                "tcvValor",
+                                "unidadCodigo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "planificacion": {
+                          "type": "object",
+                          "properties": {
+                            "fechaRecepcionP1p2": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaInicio": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaInicioReal": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaTerminoBaseline": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaTerminoActual": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "baselineCongelada": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "fechaRecepcionP1p2",
+                            "fechaInicio",
+                            "fechaInicioReal",
+                            "fechaTerminoBaseline",
+                            "fechaTerminoActual",
+                            "baselineCongelada"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "accionesDisponibles": {
+                          "type": "object",
+                          "properties": {
+                            "puedeEditarFicha": {
+                              "type": "boolean"
+                            },
+                            "puedeFijarBaseline": {
+                              "type": "boolean"
+                            },
+                            "puedeTransferir": {
+                              "type": "boolean"
+                            },
+                            "puedeGestionarParticipantes": {
+                              "type": "boolean"
+                            },
+                            "puedeDesignarSuplencia": {
+                              "type": "boolean"
+                            },
+                            "puedeRevocarSuplencia": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "puedeEditarFicha",
+                            "puedeFijarBaseline",
+                            "puedeTransferir",
+                            "puedeGestionarParticipantes",
+                            "puedeDesignarSuplencia",
+                            "puedeRevocarSuplencia"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "modulosPendientes": {
+                          "type": "object",
+                          "properties": {
+                            "complejidad": {
+                              "type": "string",
+                              "const": "PENDIENTE_P1"
+                            },
+                            "riesgos": {
+                              "type": "string",
+                              "const": "PENDIENTE_P2"
+                            },
+                            "controlesCambio": {
+                              "type": "string",
+                              "const": "PENDIENTE_P3"
+                            },
+                            "seguimientoCurvaS": {
+                              "type": "string",
+                              "const": "PENDIENTE_P4"
+                            },
+                            "facturacionCpi": {
+                              "type": "string",
+                              "const": "PENDIENTE_P4"
+                            },
+                            "compras": {
+                              "type": "string",
+                              "const": "PENDIENTE_P5"
+                            },
+                            "checklistLeccionesCierre": {
+                              "type": "string",
+                              "const": "PENDIENTE_P6"
+                            }
+                          },
+                          "required": [
+                            "complejidad",
+                            "riesgos",
+                            "controlesCambio",
+                            "seguimientoCurvaS",
+                            "facturacionCpi",
+                            "compras",
+                            "checklistLeccionesCierre"
+                          ],
+                          "additionalProperties": false
                         }
                       },
                       "required": [
@@ -7079,7 +8250,14 @@
                         "tvt",
                         "nombre",
                         "workspaceId",
-                        "version"
+                        "version",
+                        "estado",
+                        "identidad",
+                        "gobierno",
+                        "condicionComercial",
+                        "planificacion",
+                        "accionesDisponibles",
+                        "modulosPendientes"
                       ],
                       "additionalProperties": false
                     }
@@ -7422,6 +8600,1677 @@
         }
       }
     },
+    "/api/v1/proyectos/{id}/drive/carpetas": {
+      "get": {
+        "operationId": "get_api_v1_proyectos__id__drive_carpetas",
+        "description": "Referencias documentales internas: Head o titular/suplente con consulta y edición contextual. Sin contenido ni garantía de ACL del usuario; NO_SOLICITADO es ausencia de intención durable. No concede permisos Drive.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "proyectoId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "NO_SOLICITADO",
+                            "PENDIENTE",
+                            "EN_PROCESO",
+                            "COMPLETADO",
+                            "ERROR"
+                          ]
+                        },
+                        "intentos": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "errorCodigo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "updatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "carpetas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "clave": {
+                                "type": "string"
+                              },
+                              "driveId": {
+                                "type": "string"
+                              },
+                              "parentDriveId": {
+                                "type": "string"
+                              },
+                              "ruta": {
+                                "type": "string"
+                              },
+                              "checkedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+                              },
+                              "errorCodigo": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "webViewLink": {
+                                "type": "string",
+                                "format": "uri"
+                              }
+                            },
+                            "required": [
+                              "clave",
+                              "driveId",
+                              "parentDriveId",
+                              "ruta",
+                              "checkedAt",
+                              "errorCodigo",
+                              "webViewLink"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "nota": {
+                          "type": "string",
+                          "const": "REFERENCIAS_NO_VERIFICAN_CONTENIDO_NI_ACL_DEL_USUARIO"
+                        }
+                      },
+                      "required": [
+                        "proyectoId",
+                        "estado",
+                        "intentos",
+                        "errorCodigo",
+                        "updatedAt",
+                        "carpetas",
+                        "nota"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/facturacion": {
+      "get": {
+        "operationId": "get_api_v1_proyectos__id__facturacion",
+        "description": "Finanzas internas del proyecto: consulta y facturacion.reportar contextual (Head/titular/suplente). Ventana hasta 60 meses; defecto año UTC actual; hitos cursor ID, totales ventana completa; máximo 10000 filas, exceso 422. Real reportado no conciliado ERP.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "desde",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+            }
+          },
+          {
+            "name": "hasta",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?:[1-9]|[1-9][0-9]|100)$"
+            }
+          },
+          {
+            "name": "after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(0|[1-9][0-9]{0,18})$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "proyectoId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "contrato": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tcvTipo": {
+                                  "type": "string",
+                                  "enum": [
+                                    "DEFINIDO",
+                                    "ILIMITADO"
+                                  ]
+                                },
+                                "tcvValor": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "unidadCodigo": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "tcvTipo",
+                                "tcvValor",
+                                "unidadCodigo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "ventana": {
+                          "type": "object",
+                          "properties": {
+                            "desde": {
+                              "type": "string",
+                              "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                            },
+                            "hasta": {
+                              "type": "string",
+                              "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                            }
+                          },
+                          "required": [
+                            "desde",
+                            "hasta"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "hitos": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              },
+                              "periodo": {
+                                "type": "string",
+                                "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "unidadCodigo": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "tipoHito": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "tipoCuota": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "showprice": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "planificado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "realReportado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "comentario": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "origen": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "claveRegistro": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "version": {
+                                "type": "string",
+                                "pattern": "^[1-9][0-9]{0,18}$"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "periodo",
+                              "unidadCodigo",
+                              "tipoHito",
+                              "tipoCuota",
+                              "showprice",
+                              "planificado",
+                              "realReportado",
+                              "comentario",
+                              "origen",
+                              "claveRegistro",
+                              "version"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "paginacion": {
+                          "type": "object",
+                          "properties": {
+                            "limit": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "hasMore": {
+                              "type": "boolean"
+                            },
+                            "nextCursor": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^[1-9][0-9]{0,18}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "limit",
+                            "total",
+                            "hasMore",
+                            "nextCursor"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "porMes": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "periodo": {
+                                "type": "string",
+                                "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                              },
+                              "unidadCodigo": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "showprice": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "planificado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "realReportado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "periodo",
+                              "unidadCodigo",
+                              "showprice",
+                              "planificado",
+                              "realReportado"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "totales": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "unidadCodigo": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "showprice": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "planificado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "realReportado": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "unidadCodigo",
+                              "showprice",
+                              "planificado",
+                              "realReportado"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "CON_HITOS",
+                            "SIN_HITOS"
+                          ]
+                        },
+                        "notaReal": {
+                          "type": "string",
+                          "const": "REPORTADO_POR_GESTOR_NO_CONCILIADO_ERP"
+                        }
+                      },
+                      "required": [
+                        "proyectoId",
+                        "contrato",
+                        "ventana",
+                        "hitos",
+                        "paginacion",
+                        "porMes",
+                        "totales",
+                        "estado",
+                        "notaReal"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/facturacion/indicadores": {
+      "get": {
+        "operationId": "get_api_v1_proyectos__id__facturacion_indicadores",
+        "description": "CPI interno por moneda, corte mensual inclusivo requerido. Sin exigibles null; base cero pendiente de política. Mismo alcance financiero interno.",
+        "x-permission": "proyectos.consultar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "corte",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "proyectoId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "corte": {
+                          "type": "string",
+                          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "CON_HITOS_EXIGIBLES",
+                            "SIN_HITOS_EXIGIBLES"
+                          ]
+                        },
+                        "porMoneda": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "unidadCodigo": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "valor": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "estado": {
+                                "type": "string",
+                                "enum": [
+                                  "CALCULADO",
+                                  "SIN_HITOS_EXIGIBLES",
+                                  "DATOS_INCOMPLETOS",
+                                  "BASE_CERO_PENDIENTE_POLITICA"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "unidadCodigo",
+                              "valor",
+                              "estado"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "proyectoId",
+                        "corte",
+                        "estado",
+                        "porMoneda"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/facturacion/hitos": {
+      "post": {
+        "operationId": "post_api_v1_proyectos__id__facturacion_hitos",
+        "description": "Hito MANUAL, titular/suplente con facturacion.reportar o Head. claveRegistro UUID única por proyecto: reintento idéntico retorna mismo hito; contenido distinto 409. No modifica contrato.",
+        "x-permission": "facturacion.reportar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Origen exacto autorizado por APP_ORIGINS; defensa CSRF."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "claveRegistro": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "unidadCodigo": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2,3}$"
+                  },
+                  "tipoHito": {
+                    "type": "string",
+                    "enum": [
+                      "Proyecto",
+                      "Operación"
+                    ]
+                  },
+                  "tipoCuota": {
+                    "type": "string",
+                    "enum": [
+                      "SetUp",
+                      "Recurrente"
+                    ]
+                  },
+                  "showprice": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "planificado": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "realReportado": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "comentario": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "claveRegistro",
+                  "periodo",
+                  "unidadCodigo",
+                  "tipoHito",
+                  "tipoCuota",
+                  "showprice",
+                  "planificado",
+                  "realReportado",
+                  "comentario"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "periodo": {
+                          "type": "string",
+                          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                        },
+                        "unidadCodigo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "tipoHito": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "tipoCuota": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "showprice": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "planificado": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "realReportado": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "comentario": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "origen": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "claveRegistro": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "version": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "periodo",
+                        "unidadCodigo",
+                        "tipoHito",
+                        "tipoCuota",
+                        "showprice",
+                        "planificado",
+                        "realReportado",
+                        "comentario",
+                        "origen",
+                        "claveRegistro",
+                        "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/facturacion/hitos/{hitoId}": {
+      "patch": {
+        "operationId": "patch_api_v1_proyectos__id__facturacion_hitos__hitoId_",
+        "description": "Reemplaza campos editables del hito MANUAL del proyecto; version y claveRegistro requeridas. Clave/proyecto/origen inmutables; conflicto versión 409.",
+        "x-permission": "facturacion.reportar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "hitoId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Origen exacto autorizado por APP_ORIGINS; defensa CSRF."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "claveRegistro": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "periodo": {
+                    "type": "string",
+                    "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                  },
+                  "unidadCodigo": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2,3}$"
+                  },
+                  "tipoHito": {
+                    "type": "string",
+                    "enum": [
+                      "Proyecto",
+                      "Operación"
+                    ]
+                  },
+                  "tipoCuota": {
+                    "type": "string",
+                    "enum": [
+                      "SetUp",
+                      "Recurrente"
+                    ]
+                  },
+                  "showprice": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "planificado": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "realReportado": {
+                    "type": "string",
+                    "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,4})?$"
+                  },
+                  "comentario": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,18}$"
+                  }
+                },
+                "required": [
+                  "claveRegistro",
+                  "periodo",
+                  "unidadCodigo",
+                  "tipoHito",
+                  "tipoCuota",
+                  "showprice",
+                  "planificado",
+                  "realReportado",
+                  "comentario",
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "periodo": {
+                          "type": "string",
+                          "pattern": "^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])$"
+                        },
+                        "unidadCodigo": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "tipoHito": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "tipoCuota": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "showprice": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "planificado": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "realReportado": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "comentario": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "origen": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "claveRegistro": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "version": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "periodo",
+                        "unidadCodigo",
+                        "tipoHito",
+                        "tipoCuota",
+                        "showprice",
+                        "planificado",
+                        "realReportado",
+                        "comentario",
+                        "origen",
+                        "claveRegistro",
+                        "version"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/proyectos/{id}": {
       "get": {
         "operationId": "get_api_v1_proyectos__id_",
@@ -7553,12 +10402,27 @@
                                     "string",
                                     "null"
                                   ]
+                                },
+                                "estadoCliente": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string",
+                                      "enum": [
+                                        "NUEVO",
+                                        "ANTIGUO"
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
                                 }
                               },
                               "required": [
                                 "id",
                                 "nombre",
-                                "sector"
+                                "sector",
+                                "estadoCliente"
                               ],
                               "additionalProperties": false
                             },
@@ -7834,6 +10698,43 @@
                           ],
                           "additionalProperties": false
                         },
+                        "condicionComercial": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "tcvTipo": {
+                                  "type": "string",
+                                  "enum": [
+                                    "DEFINIDO",
+                                    "ILIMITADO"
+                                  ]
+                                },
+                                "tcvValor": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                },
+                                "unidadCodigo": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "tcvTipo",
+                                "tcvValor",
+                                "unidadCodigo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
                         "planificacion": {
                           "type": "object",
                           "properties": {
@@ -7849,6 +10750,17 @@
                               ]
                             },
                             "fechaInicio": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "fechaInicioReal": {
                               "anyOf": [
                                 {
                                   "type": "string",
@@ -7888,6 +10800,7 @@
                           "required": [
                             "fechaRecepcionP1p2",
                             "fechaInicio",
+                            "fechaInicioReal",
                             "fechaTerminoBaseline",
                             "fechaTerminoActual",
                             "baselineCongelada"
@@ -7979,6 +10892,7 @@
                         "estado",
                         "identidad",
                         "gobierno",
+                        "condicionComercial",
                         "planificacion",
                         "accionesDisponibles",
                         "modulosPendientes"
@@ -8725,6 +11639,231 @@
                         "participantes",
                         "suplenciasVigentes",
                         "permisosDelegables"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "data"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Error controlado; no contiene SQL ni secretos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/proyectos/{id}/inicio": {
+      "post": {
+        "operationId": "post_api_v1_proyectos__id__inicio",
+        "description": "Head o PM titular/suplente con proyectos.editar; version requerida; arranque unico Requiere P1P2 a En ejecución, fecha civil America/Santiago sellada por servidor; repeticion 409.",
+        "x-permission": "proyectos.editar",
+        "security": [
+          {
+            "accessCookie": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "pattern": "^[1-9][0-9]{0,18}$"
+            }
+          },
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "Origen exacto autorizado por APP_ORIGINS; defensa CSRF."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$schema": "https://json-schema.org/draft/2020-12/schema",
+                "type": "object",
+                "properties": {
+                  "version": {
+                    "type": "string",
+                    "pattern": "^[1-9][0-9]{0,18}$"
+                  }
+                },
+                "required": [
+                  "version"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Éxito",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "tvt": {
+                          "type": "string"
+                        },
+                        "nombre": {
+                          "type": "string"
+                        },
+                        "workspaceId": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        },
+                        "version": {
+                          "type": "string",
+                          "pattern": "^[1-9][0-9]{0,18}$"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "tvt",
+                        "nombre",
+                        "workspaceId",
+                        "version"
                       ],
                       "additionalProperties": false
                     }

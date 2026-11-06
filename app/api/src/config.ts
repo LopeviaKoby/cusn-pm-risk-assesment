@@ -35,6 +35,8 @@ if (!cookieSecure && origins.some(origin => !/^http:\/\/(127\.0\.0\.1|localhost)
 }
 
 export const config = {
+  driveProvisioningEnabled: boolean("DRIVE_PROVISIONING_ENABLED",false),
+  driveRootFolderId: Bun.env.DRIVE_ROOT_FOLDER_ID?.trim()??'',
   databaseUrl: required("DATABASE_URL"),
   hostname: Bun.env.API_HOST?.trim() || "127.0.0.1",
   port: integer("API_PORT", 3001, 1, 65535),
@@ -45,3 +47,5 @@ export const config = {
   cookieSecure,
   dbPoolMax: integer("DB_POOL_MAX", 8, 1, 50),
 };
+
+if(config.driveProvisioningEnabled&&!config.driveRootFolderId)throw new Error("DRIVE_ROOT_FOLDER_ID requerido al habilitar Drive.");

@@ -276,3 +276,10 @@ Orden recomendado por dependencias (no es backlog; no implementar todavía):
 
 ---
 *Rectificado por inspección estática + grep en `011` y barrido de 625 combinaciones de complejidad. Referencias activas verificadas en archivos citados; `[H]` = histórico `007–010` no activo. Pruebas: `app/api/tests/unit/business.test.ts`, `tests/business.test.ts`, suite `v210-suite.ts` T01–T20. Sin cambios de código, migraciones, datos ni dependencias.*
+
+
+## Actualización efectiva: facturación manual backend
+
+Este corte sustituye las propuestas históricas de inyección financiera por CC (BR-FIN-043/BR-CC-063): TCV/moneda contractual inmutables y CC solo fecha de término revisada. BR-FIN-040 y la integración de CPI interno cuentan con application/billing/index.ts, domain/performance/billing.ts y cuatro rutas por proyecto registradas en business-routes.ts/OpenAPI. Solo MANUAL; importes string/numeric(20,4), UF sin FX, real informado por gestor sin conciliación ERP. La lectura financiera exige alcance interno de titular/suplente/Head además de proyectos.consultar, y las escrituras facturacion.reportar; portafolio global no concede acceso financiero.
+
+CPI: null/SIN_HITOS_EXIGIBLES sin filas al corte, null/BASE_CERO_PENDIENTE_POLITICA con suma planificada cero, null/DATOS_INCOMPLETOS en históricos incompletos; no 100 ni verde por ausencia. Pruebas billing-http y tcp-smoke conectadas a PostgreSQL real, más unit/billing.test.ts. No se implementan margen, recurrente automática, CC económico ni frontend. Drive B0 pudo crear/verificar una carpeta; B1 dispone ahora del documento exacto aportado por el propietario; su implementación y validación se registran en DEPLOY.md. Ver DEPLOY.md para contratos y evidencia.

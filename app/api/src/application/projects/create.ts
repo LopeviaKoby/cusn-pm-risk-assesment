@@ -1,9 +1,13 @@
+import {enqueueDrive} from '../drive/enqueue';
+import {config} from '../../config';
 import { sql } from "../../db";
-import { activeActor } from "../../authorization";
+import { activeActor, hasGrant } from "../../authorization";
 import { ApiError } from "../../errors";
 import { civilDate } from "../../domain/shared/civil-date";
 
 export type NewProject = {
+  condicionComercial: { tcvTipo: 'DEFINIDO' | 'ILIMITADO'; tcvValor: string | null; unidadCodigo: string | null };
+  especialistaIds?: string[];
   workspaceId: string;
   tvt: string;
   nombre: string;
@@ -40,6 +44,7 @@ export async function createProject(actorId: string, input: NewProject) {
       fechaTerminoBaseline: "Debe ser mayor o igual a fechaInicio.",
     });
   }
+  if (!fechaInicio || !fechaTerminoBaseline) throw new ApiError(422,'INCOMPLETE_PROJECT','Inicio y termino planificados requeridos.');
   const squadId = input.squadId ?? null;
   const descripcion = input.descripcion?.trim() || null;
   const situacionInicial = input.situacionInicial?.trim() || null;
@@ -49,7 +54,7 @@ export async function createProject(actorId: string, input: NewProject) {
 
   return sql.begin(async tx => {
     const actor = await activeActor(actorId, tx);
-    if (!actor || !["ADMIN", "PM"].includes(actor.role)) throw new ApiError(403, "FORBIDDEN", "No puedes crear proyectos.");
+    if (!actor || actor.kind !== "INTERNO" || !["ADMIN", "PM"].includes(actor.role) || !await hasGrant(actorId,"proyectos.crear",tx)) throw new ApiError(403, "FORBIDDEN", "No puedes crear proyectos.");
     const [workspace] = await tx<{ id: string }>`SELECT id::text FROM pmo_cusn.workspace WHERE id::text=${input.workspaceId} AND estado='ACTIVO' FOR UPDATE`;
     if (!workspace) throw new ApiError(404, "NOT_FOUND", "Workspace no encontrado.");
     if (actor.role === "PM") {
@@ -92,10 +97,20 @@ export async function createProject(actorId: string, input: NewProject) {
       )
       RETURNING id::text,tvt,nombre,workspace_id::text AS "workspaceId",version::text`;
     await tx`INSERT INTO pmo_cusn.participacion_proyecto(proyecto_id,usuario_id,funcion) VALUES (${created!.id},${ownerId},'PM_TITULAR')`;
+    const contract=input.condicionComercial;
+    await tx`INSERT INTO pmo_cusn.condicion_comercial(proyecto_id,tcv_tipo,tcv_valor,unidad_codigo)
+      VALUES (${created!.id},${contract.tcvTipo},${contract.tcvValor},${contract.unidadCodigo})`;
+    for (const specialistId of new Set(input.especialistaIds ?? [])) {
+      const person=await activeActor(specialistId,tx);
+      const [member]=await tx`SELECT id FROM pmo_cusn.membresia_workspace WHERE workspace_id=${workspace.id} AND usuario_id=${specialistId} AND estado='ACTIVA' FOR SHARE`;
+      if (!person || person.kind!=='INTERNO' || person.role!=='ESPECIALISTA' || !member) throw new ApiError(422,'INVALID_SPECIALIST','Especialista no elegible.');
+      await tx`INSERT INTO pmo_cusn.participacion_proyecto(proyecto_id,usuario_id,funcion) VALUES (${created!.id},${specialistId},'ESPECIALISTA')`;
+    }
     await tx`INSERT INTO pmo_cusn.evento_proyecto(proyecto_id,actor_id,tipo_evento,estado_nuevo,detalle)
       VALUES (${created!.id},${actorId},'CREACION_PROYECTO','Requiere P1P2',${JSON.stringify({ workspaceId: workspace.id, pmTitularId: ownerId })}::jsonb)`;
     await tx`INSERT INTO pmo_cusn.auditoria_seguridad(actor_id,workspace_id,proyecto_id,operacion,recurso_tipo,recurso_id,resultado)
       VALUES (${actorId},${workspace.id},${created!.id},'proyectos.crear','proyecto',${created!.id},'PERMITIDO')`;
+    if(config.driveProvisioningEnabled)await enqueueDrive(tx,created!.id,config.driveRootFolderId);
     return created!;
   });
 }

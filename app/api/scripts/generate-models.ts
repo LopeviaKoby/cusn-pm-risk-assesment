@@ -14,7 +14,7 @@ try {
     JOIN pg_class c ON c.oid=r.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='pmo_cusn' ORDER BY c.relname,r.conname`;
   const indexes=await db<{table_name:string;name:string;definition:string}>`SELECT tablename AS table_name,indexname AS name,indexdef AS definition FROM pg_indexes WHERE schemaname='pmo_cusn' ORDER BY tablename,indexname`;
   const names=[...new Set(columns.map(c=>c.table_name))];
-  if(names.length!==53)throw new Error(`Se esperaban 53 tablas, se obtuvo ${names.length}.`);
+  if(names.length!==55)throw new Error(`Se esperaban 55 tablas, se obtuvo ${names.length}.`);
   const pascal=(s:string)=>s.split('_').map(v=>v[0]!.toUpperCase()+v.slice(1)).join('');
   const output=["// Generado por db:models desde el catálogo PostgreSQL del DDL v2.1.0. No editar a mano.",
     "// bigint y numeric se reciben como string; date/timestamptz como Date en Bun SQL.",
@@ -69,10 +69,10 @@ try {
   if(process.argv.includes('--check')) {
     if(readFileSync(target,'utf8')!==generated)throw new Error('Modelos divergentes de las migraciones aplicadas. Ejecuta db:models en una BD aislada.');
     if(readFileSync(schemaTarget,'utf8')!==schemaOutput)throw new Error('Proyección Drizzle divergente.');
-    console.log('53 modelos coinciden con las migraciones aplicadas.');
+    console.log('55 modelos coinciden con las migraciones aplicadas.');
   } else {
     writeFileSync(target,generated);
     writeFileSync(schemaTarget,schemaOutput);
-    console.log('53 modelos generados, con claves, relaciones, checks e índices del catálogo.');
+    console.log('55 modelos generados, con claves, relaciones, checks e índices del catálogo.');
   }
 }finally{await db.close();}
