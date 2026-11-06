@@ -4,6 +4,7 @@ import { ChartPie, ChevronRight, FolderKanban, LayoutGrid, Menu, Moon, Sun, Tria
 import { Button } from "@/components/atoms/primitives";
 import { DataProvider, useData } from "@/data/bootstrap";
 const Workspace = loadScreen(() => import("@/pages/Workspace"));
+const WorkspaceEntry = loadScreen(() => import("@/pages/WorkspaceEntry"));
 const Projects = loadScreen(() => import("@/pages/Projects"));
 const Risks = loadScreen(() => import("@/pages/Risks"));
 const Portfolio = loadScreen(() => import("@/pages/Portfolio"));
@@ -17,7 +18,7 @@ const RiskDetail = loadScreen(() => import("@/pages/RiskDetail"));
 import { contextualPath, Link, NavigationProvider, safeReturn, useNavigation } from "@/navigation";
 
 const destinations = [
-  { path: "/workspace", label: "Workspace", icon: LayoutGrid, screen: Workspace },
+  { path: "/legacy/workspace", label: "Workspace anterior", icon: LayoutGrid, screen: Workspace },
   { path: "/proyectos", label: "Proyectos", icon: FolderKanban, screen: Projects },
   { path: "/riesgos", label: "Riesgos", icon: TriangleAlert, screen: Risks },
   { path: "/portafolio", label: "Portafolio", icon: ChartPie, screen: Portfolio },
@@ -75,11 +76,13 @@ function AccessGate() {
     if (signedIn && login) navigate(safeReturn(new URLSearchParams(url.split("?")[1]).get("destino"), "/workspace"), true);
   }, [signedIn, checking, login, url, navigate]);
   if (checking) return <div className="page"><h1>Verificando sesión…</h1><p>Consultando la sesión.</p></div>;
-  return signedIn ? <DataProvider><ApiDataGate /></DataProvider> : <RouteContent><Login /></RouteContent>;
+  if (!signedIn) return <RouteContent><Login /></RouteContent>;
+  const path = url.split("?")[0];
+  return path === "/" || path === "/login" || path === "/workspace" || path?.startsWith("/workspace/") ? <RouteContent><WorkspaceEntry /></RouteContent> : <DataProvider><ApiDataGate /></DataProvider>;
 }
 function ApiDataGate() {
   const { data, loading, error, refresh } = useData();
   if (loading) return <div className="page"><h1>Cargando</h1><p>Cargando datos del servicio…</p></div>;
-  if (error || !data) return <div className="page"><h1>No se pudieron cargar los datos</h1><p className="form-error" role="alert">{error}</p><Button onClick={() => { void refresh(); }}>Reintentar</Button></div>;
+  if (error || !data) return <div className="page"><h1>No se pudieron cargar los datos</h1><p className="form-error" role="alert">{error}</p><Button onClick={() => { void refresh(); }}>Reintentar</Button><Link href="/workspace">Volver a workspaces</Link></div>;
   return <Shell />;
 }

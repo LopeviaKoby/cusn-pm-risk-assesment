@@ -34,7 +34,7 @@ export function Link({ href, onClick, ...props }: ComponentProps<"a"> & { href: 
   }} />;
 }
 export function safeReturn(value: string | null, fallback: string) {
-  if (!value || !/^\/(workspace|proyectos|riesgos|portafolio|aprobaciones|complejidad|compras)(\/|\?|$)/.test(value)) return fallback;
+  if (!value || !/^\/(workspace|legacy\/workspace|proyectos|riesgos|portafolio|aprobaciones|complejidad|compras)(\/|\?|$)/.test(value)) return fallback;
   return value;
 }
 export function contextualPath(path: string, current: string, origin = false) {
