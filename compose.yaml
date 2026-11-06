@@ -96,10 +96,9 @@ services:
       APP_ORIGINS: ${APP_ORIGINS:-http://127.0.0.1:8080}
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       DB_POOL_MAX: ${DB_POOL_MAX:-8}
-      GPL_USER: ${GPL_USER:-pmo@example.com}
-      GPL_PASSWORD_HASH_B64: ${GPL_PASSWORD_HASH_B64:-}
-      GPL_AS_OF_DATE: ${GPL_AS_OF_DATE:-2026-10-20}
-      GPL_SESSION_MINUTES: ${GPL_SESSION_MINUTES:-60}
+      JWT_SIGNING_KEY: ${JWT_SIGNING_KEY:?Define JWT_SIGNING_KEY en .env}
+      ACCESS_TOKEN_MINUTES: ${ACCESS_TOKEN_MINUTES:-5}
+      REFRESH_TOKEN_DAYS: ${REFRESH_TOKEN_DAYS:-14}
     depends_on:
       db:
         condition: service_healthy

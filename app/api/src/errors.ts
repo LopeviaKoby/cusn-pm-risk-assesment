@@ -31,7 +31,7 @@ export function respondError(error: unknown, requestId: string): Response {
 
   const value = error as { code?: string; errno?: string; message?: string };
   const sqlState = value.errno ?? value.code ?? "";
-  if (sqlState === "23505" || sqlState === "P0001" || value.message?.includes("duplicate key")) {
+  if (["23505","23P01","P0001","40001","40P01"].includes(sqlState)) {
     return new Response(
       JSON.stringify({ error: { code: "CONFLICT", message: "El registro ya existe o entra en conflicto con otro." }, requestId }),
       { status: 409, headers: headers(requestId) },
@@ -43,7 +43,7 @@ export function respondError(error: unknown, requestId: string): Response {
       { status: 422, headers: headers(requestId) },
     );
   }
-  if (value.code?.startsWith("ERR_POSTGRES") || value.code?.startsWith("ECONN")) {
+  if (sqlState.startsWith('08') || ['57P01','57P02','57P03'].includes(sqlState) || value.code?.startsWith("ECONN") || value.code==='ERR_POSTGRES_CONNECTION_CLOSED' || value.code==='ERR_POSTGRES_CONNECTION_TIMEOUT') {
     return new Response(
       JSON.stringify({ error: { code: "DATABASE_UNAVAILABLE", message: "La base de datos no está disponible." }, requestId }),
       { status: 503, headers: headers(requestId) },
