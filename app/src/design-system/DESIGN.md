@@ -84,7 +84,7 @@ colors:
 
 ## Typography
 
-Las 14 funciones siguientes reflejan exactamente tamaño, peso, interlineado y tracking de `fonts.css`. Google Sans sirve a cabeceras, subtítulo y métrica; Manrope a cuerpo y controles. Los archivos variables locales conservan sus licencias OFL; fallback `"Segoe UI", sans-serif`, `font-display: swap` y `font-synthesis: none` en `app.css`. Usar números tabulares para métricas, fechas, porcentajes y columnas alineadas. Texto pequeño y metadatos deben seguir legibles y no reemplazar un arreglo de layout.
+Las 14 funciones siguientes reflejan exactamente tamaño, peso, interlineado y tracking de `fonts.css`. Google Sans sirve a cabeceras, subtítulo y métrica; Manrope a cuerpo y controles. Los archivos variables locales se sirven en WOFF2, generados sin subsetting desde los TTF con `scripts/convert-fonts.py`; conservan ejes, caracteres y licencias OFL. Fallback `"Segoe UI", sans-serif`, `font-display: swap` y `font-synthesis: none` en `app.css`. Usar números tabulares para métricas, fechas, porcentajes y columnas alineadas. Texto pequeño y metadatos deben seguir legibles y no reemplazar un arreglo de layout.
 
 ```yaml
 typography:
@@ -214,7 +214,7 @@ rounded:
 
 ## Components
 
-Describir y reutilizar patrones presentes: `atoms/primitives.tsx` aporta Button, Badge, encabezados y métricas; `molecules/` combina indicadores, series de gráficos y carga de ruta; `organisms/` reúne herramientas de tabla, analítica y diálogo de registro. `components.json` configura estilo `radix-vega` y alias de UI a `atoms`. El diálogo de registro usa Radix Dialog; el proyecto incluye Radix Tabs donde se encuentre en código. Los controles mantienen etiquetas, estados, foco visible, teclado y tema. Formularios usan campos identificables y confirmación de descarte; tablas muestran encabezados, ordenación y acciones con señales adicionales al color; chips y bandas conservan texto legible. La organización y los límites de imports se especifican en [AGENTS.md](../../AGENTS.md). No asumir variantes o componentes no implementados.
+Describir y reutilizar patrones presentes: `atoms/primitives.tsx` aporta Button y Badge canónicos; `atoms/catalog.tsx` añade los otros 14 átomos de presentación sin API. Su CSS está en `atoms.css`, importado por `app.css`, y utiliza los roles Light/Dark de `tokens.css`. La iconografía de estos átomos usa importaciones estáticas de Lucide mediante `react-icons/lu`; consumidores existentes de `lucide-react` siguen con su contrato actual. Storybook carga el mismo CSS, cuatro foundations y las 16 historias de `app/src/stories/atoms/Catalog.stories.tsx`. `molecules/` combina indicadores, series de gráficos y carga de ruta; `organisms/` reúne herramientas de tabla, analítica y diálogo de registro. `components.json` configura estilo `radix-vega` y alias de UI a `atoms`. El diálogo de registro usa Radix Dialog; el proyecto incluye Radix Tabs donde se encuentre en código. Los controles mantienen etiquetas, estados, foco visible, teclado y tema. Formularios usan campos identificables y confirmación de descarte; tablas muestran encabezados, ordenación y acciones con señales adicionales al color; chips y bandas conservan texto legible. La organización y los límites de imports se especifican en [AGENTS.md](../../AGENTS.md). No asumir variantes o componentes no implementados.
 
 ```yaml
 components:
